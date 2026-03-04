@@ -58,7 +58,13 @@ nav {
 }
 .logo span { color: var(--accent); }
 
-.nav-center { display: flex; align-items: center; gap: 2px; }
+.nav-center {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  justify-content: center;
+}
 .nav-center a {
   color: var(--g600); text-decoration: none; font-size: 0.875rem;
   padding: 6px 12px; border-radius: 6px; font-weight: 500;
@@ -68,7 +74,12 @@ nav {
 .nav-center a.active { color: var(--ink); }
 
 /* explicitly ensure the container doesn't shrink and hide buttons */
-.nav-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
 
 /* Desktop explicitly defined display properties to prevent collapsing */
 .nav-login {
@@ -457,20 +468,29 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 
 <nav>
   <div class="nav-inner">
-    <div class="logo" onclick="go('home')">Code<span>Mango</span></div>
-    <nav class="nav-center">
-      <a onclick="go('home')"    id="nl-home"    class="active">Home</a>
+
+    <div class="logo" onclick="go('home')">
+      Code<span>Mango</span>
+    </div>
+
+    <div class="nav-center">
+      <a onclick="go('home')" id="nl-home" class="active">Home</a>
       <a onclick="go('ageinx')" id="nl-ageinx">Ageinx</a>
-      <a onclick="go('about')"   id="nl-about">About</a>
+      <a onclick="go('about')" id="nl-about">About</a>
       <a onclick="go('contact')" id="nl-contact">Contact</a>
-    </nav>
+    </div>
+
     <div class="nav-right">
       <button class="btn-s nav-login" onclick="go('auth')">Log in</button>
       <button class="nav-cta" onclick="go('auth')">Get started</button>
+
       <button class="ham" id="ham" onclick="toggleMenu()" aria-label="Open menu">
-        <span></span><span></span><span></span>
+        <span></span>
+        <span></span>
+        <span></span>
       </button>
     </div>
+
   </div>
 </nav>
 
@@ -690,7 +710,7 @@ sx.insight.<span class="fn">log</span>({ event: <span class="str">'user.signup'<
 
   <footer><div class="ft">
     <div class="ft-logo">Code<span>Mango</span></div>
-    <div class="ft-copy">© 2025 CodeMango. All rights reserved.</div>
+    <div class="ft-copy">© 2026 CodeMango. All rights reserved.</div>
     <div class="ft-links">
       <a onclick="go('home')">Home</a>
       <a onclick="go('ageinx')">Ageinx</a>
