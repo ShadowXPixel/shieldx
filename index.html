@@ -742,13 +742,13 @@ const API = 'https://shieldx-api-hwp9.onrender.com';
 
 function go(id) {
   PAGES.forEach(p => {
-  yId('page-'+p).classList.remove('active');
+  document.getElementById('page-'+p).classList.remove('active');
     ['nl','ml'].forEach(pfx => {
       const el = document.getElementById(pfx+'-'+p);
       if (el) el.classList.remove('active');
     });
   });
-yId('page-'+id).classList.add('active');
+document.getElementById('page-'+id).classList.add('active');
   ['nl','ml'].forEach(pfx => {
     const el = document.getElementById(pfx+'-'+id);
     if (el) el.classList.add('active');
@@ -767,8 +767,8 @@ function toggleMenu() {
 }
 
 function closeMenu() {
-yId('ham').classList.remove('open');
-yId('mobMenu').classList.remove('open');
+document.getElementById('ham').classList.remove('open');
+document.getElementById('mobMenu').classList.remove('open');
 }
 
 // Hash routing — load correct page on refresh/direct URL
@@ -783,13 +783,13 @@ window.addEventListener('hashchange', () => {
   const valid = PAGES.includes(hash) ? hash : 'home';
   // avoid re-triggering go() loop
   PAGES.forEach(p => {
-  yId('page-'+p).classList.remove('active');
+  document.getElementById('page-'+p).classList.remove('active');
     ['nl','ml'].forEach(pfx => {
       const el = document.getElementById(pfx+'-'+p);
       if (el) el.classList.remove('active');
     });
   });
-yId('page-'+valid).classList.add('active');
+document.getElementById('page-'+valid).classList.add('active');
   ['nl','ml'].forEach(pfx => {
     const el = document.getElementById(pfx+'-'+valid);
     if (el) el.classList.add('active');
@@ -799,10 +799,10 @@ yId('page-'+valid).classList.add('active');
 
 // Auth tab toggle
 function authTab(tab) {
-yId('tab-signup').classList.toggle('auth-tab-active', tab==='signup');
-yId('tab-login').classList.toggle('auth-tab-active', tab==='login');
-yId('form-signup').style.display = tab==='signup' ? 'block' : 'none';
-yId('form-login').style.display = tab==='login' ? 'block' : 'none';
+document.getElementById('tab-signup').classList.toggle('auth-tab-active', tab==='signup');
+document.getElementById('tab-login').classList.toggle('auth-tab-active', tab==='login');
+document.getElementById('form-signup').style.display = tab==='signup' ? 'block' : 'none';
+document.getElementById('form-login').style.display = tab==='login' ? 'block' : 'none';
 }
 
 // Signup
@@ -828,10 +828,10 @@ async function handleSignup() {
     const data = await res.json();
     if (!res.ok) { showMsg(msg, data.detail || 'Signup failed.', 'error'); return; }
     showMsg(msg, `✅ Account created! Your API key: <code>${data.api_key}</code><br/>Save it — it won't be shown again.`, 'success');
-  yId('su-email').value = '';
-  yId('su-password').value = '';
-  yId('su-slug').value = '';
-  yId('su-callback').value = '';
+  document.getElementById('su-email').value = '';
+  document.getElementById('su-password').value = '';
+  document.getElementById('su-slug').value = '';
+  document.getElementById('su-callback').value = '';
   } catch(e) {
     showMsg(msg, 'Network error. Try again.', 'error');
   } finally {
