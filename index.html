@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>CodeMango — Aegrix </title>
+<title>CodeMango — Ageinx </title>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -202,7 +202,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 /* ════════════ AEGRIX ════════════ */
 .sx-hdr { padding: 72px 28px 56px; max-width: 1120px; margin: 0 auto; border-bottom: 1px solid var(--border); }
 
-/* What is Aegrix */
+/* What is Ageinx */
 .sx-intro { padding: 64px 28px; max-width: 1120px; margin: 0 auto; border-bottom: 1px solid var(--border); }
 .sx-intro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
 .sx-intro-text p { font-size: 0.875rem; color: var(--g600); line-height: 1.75; margin-bottom: 14px; }
@@ -217,7 +217,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 .mod-sub { font-size: 0.77rem; color: var(--g600); margin-top: 1px; }
 .mod-tag { margin-left: auto; font-size: 0.67rem; font-weight: 600; color: var(--accent); background: #e8f0fe; padding: 3px 9px; border-radius: 100px; white-space: nowrap; flex-shrink: 0; }
 
-/* Pricing inside Aegrix */
+/* Pricing inside Ageinx */
 .sx-pricing { padding: 64px 28px; max-width: 1120px; margin: 0 auto; border-bottom: 1px solid var(--border); }
 .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 40px; }
 .plan {
@@ -352,9 +352,63 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 .auth-msg-error { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
 .auth-divider { text-align: center; font-size: 0.75rem; color: var(--g400); margin: 20px 0 16px; }
 
+/* ════════════ 3D ANIMATIONS ════════════ */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(32px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.hero h1 { animation: fadeSlideUp 0.7s ease both; }
+.hero-badge { animation: fadeSlideUp 0.5s ease both; }
+.hero-sub { animation: fadeSlideUp 0.7s 0.1s ease both; }
+.hero-btns { animation: fadeSlideUp 0.7s 0.2s ease both; }
+
+.f-card { animation: scaleIn 0.5s ease both; }
+.f-card:nth-child(1) { animation-delay: 0.05s; }
+.f-card:nth-child(2) { animation-delay: 0.1s; }
+.f-card:nth-child(3) { animation-delay: 0.15s; }
+.f-card:nth-child(4) { animation-delay: 0.2s; }
+.f-card:nth-child(5) { animation-delay: 0.25s; }
+
+.plan { animation: fadeSlideUp 0.6s ease both; }
+.plan:nth-child(1) { animation-delay: 0.05s; }
+.plan:nth-child(2) { animation-delay: 0.15s; }
+.plan:nth-child(3) { animation-delay: 0.25s; }
+
+.auth-card { animation: scaleIn 0.4s ease both; }
+
+.stat { animation: fadeSlideIn 0.5s ease both; }
+.stat:nth-child(1) { animation-delay: 0s; }
+.stat:nth-child(2) { animation-delay: 0.08s; }
+.stat:nth-child(3) { animation-delay: 0.16s; }
+.stat:nth-child(4) { animation-delay: 0.24s; }
+
+.mod-row { transition: transform 0.2s ease, background 0.15s; }
+.mod-row:hover { transform: translateX(6px); }
+
+.val { transition: transform 0.2s ease; }
+.val:hover { transform: translateX(5px); }
+
+.team-card { transition: transform 0.25s ease, border-color 0.2s, box-shadow 0.2s; }
+.team-card:hover { transform: translateY(-5px) scale(1.01); border-color: var(--accent); }
+
+.plan { transition: transform 0.25s ease, border-color 0.2s, box-shadow 0.2s; }
+.plan:hover { transform: translateY(-5px); box-shadow: var(--sh-lg); }
+
+.f-card { transition: background 0.15s, transform 0.2s ease; }
+.f-card:hover { background: var(--off); transform: translateY(-3px); }
+
 @media (max-width: 820px) {
   nav { padding: 0 18px; }
-  .nav-center, .nav-cta { display: none; }
+  .nav-center, .nav-cta, .nav-login { display: none; }
   .ham { display: flex; }
 
   .hero { padding: 52px 18px 44px; }
@@ -397,12 +451,12 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
     <div class="logo" onclick="go('home')">Code<span>Mango</span></div>
     <nav class="nav-center">
       <a onclick="go('home')"    id="nl-home"    class="active">Home</a>
-      <a onclick="go('aegrix')" id="nl-aegrix">Aegrix</a>
+      <a onclick="go('ageinx')" id="nl-ageinx">Ageinx</a>
       <a onclick="go('about')"   id="nl-about">About</a>
       <a onclick="go('contact')" id="nl-contact">Contact</a>
     </nav>
     <div class="nav-right">
-      <button class="btn-s" style="font-size:0.875rem;padding:7px 14px;" onclick="go('auth')">Log in</button>
+      <button class="btn-s nav-login" style="font-size:0.875rem;padding:7px 14px;" onclick="go('auth')">Log in</button>
       <button class="nav-cta" onclick="go('auth')">Get started</button>
       <button class="ham" id="ham" onclick="toggleMenu()" aria-label="Open menu">
         <span></span><span></span><span></span>
@@ -414,7 +468,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 <!-- MOBILE DRAWER -->
 <div class="mob-menu" id="mobMenu">
   <a onclick="go('home')"    id="ml-home"    class="active">Home</a>
-  <a onclick="go('aegrix')" id="ml-aegrix">Aegrix</a>
+  <a onclick="go('ageinx')" id="ml-ageinx">Ageinx</a>
   <a onclick="go('about')"   id="ml-about">About Us</a>
   <a onclick="go('contact')" id="ml-contact">Contact</a>
   <a onclick="go('auth')" id="ml-auth">Log in</a>
@@ -425,11 +479,11 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 <div class="page active" id="page-home">
 
   <div class="hero">
-    <div class="hero-badge">Aegrix — Now available</div>
+    <div class="hero-badge">Ageinx — Now available</div>
     <h1>One Platform.<br/>Your entire backend<br/><em>security layer.</em></h1>
-    <p class="hero-sub">CodeMango built Aegrix so developers can add auth, protection, hashed storage, threat scanning, and logging to any web app — with a single key.</p>
+    <p class="hero-sub">CodeMango built Ageinx so developers can add auth, protection, hashed storage, threat scanning, and logging to any web app — with a single key.</p>
     <div class="hero-btns">
-      <button class="btn-p" onclick="go('aegrix')">Explore Aegrix</button>
+      <button class="btn-p" onclick="go('ageinx')">Explore Ageinx</button>
       <button class="btn-s" onclick="go('contact')">Talk to us</button>
     </div>
   </div>
@@ -444,7 +498,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
   </div>
 
   <div class="feat-sec">
-    <div class="sec-label">Why Aegrix?</div>
+    <div class="sec-label">Why Ageinx?</div>
     <div class="sec-head">Stop rebuilding the same<br/>infrastructure every project.</div>
     <div class="f-grid">
       <div class="f-card"><div class="f-ico">🔐</div><div class="f-title">Security by default</div><div class="f-desc">Auth, rate limiting, and encryption are built in from day one — not bolted on as an afterthought.</div></div>
@@ -459,7 +513,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
     <div class="ft-logo">Code<span>Mango</span></div>
     <div class="ft-copy">© 2025 CodeMango. All rights reserved.</div>
     <div class="ft-links">
-      <a onclick="go('aegrix')">Aegrix</a>
+      <a onclick="go('ageinx')">Ageinx</a>
       <a onclick="go('about')">About</a>
       <a onclick="go('contact')">Contact</a>
     </div>
@@ -467,21 +521,21 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 </div>
 
 <!-- ══════════ AEGRIX ══════════ -->
-<div class="page" id="page-aegrix">
+<div class="page" id="page-ageinx">
 
   <div class="sx-hdr">
-    <div class="kicker">Aegrix</div>
+    <div class="kicker">Ageinx</div>
     <div class="pg-title">One Platform. Five Features.<br/>Zero infrastructure headaches.</div>
-    <p class="pg-sub">Aegrix bundles everything your web app's backend needs into a single, cohesive API — authenticate users, block threats, store secrets, scan content, and monitor your app with one integration.</p>
+    <p class="pg-sub">Ageinx bundles everything your web app's backend needs into a single, cohesive API — authenticate users, block threats, store secrets, scan content, and monitor your app with one integration.</p>
   </div>
 
   <!-- What it is -->
   <div class="sx-intro">
     <div class="sx-intro-grid">
       <div class="sx-intro-text">
-        <div class="sec-label" style="margin-bottom:14px;">What is Aegrix</div>
-        <p>Aegrix is a hosted authentication platform  with five built-in features. You have to redirect your traffic to us and We handle the rest. Every feature is designed to work effeciently alongside the others — after the users does the process you get a Token which you can use to call our api and get the User Data in JSON.</p>
-        <p>We built it because we were tired of wiring together five different third-party services on every new project. Aegrix is the tool we wished existed.</p>
+        <div class="sec-label" style="margin-bottom:14px;">What is Ageinx</div>
+        <p>Ageinx is a hosted authentication platform with five built-in features. You redirect your users to us and we handle the rest. Every feature is designed to work efficiently alongside the others — after the user completes the process, you get a token which you can use to call our API and get the user's data in JSON.</p>
+        <p>We built it because we were tired of wiring together five different third-party services on every new project. Ageinx is the tool we wished existed.</p>
         <p>It's production-ready from day one — built with security as a hard constraint, not a feature to add later.</p>
         <button class="btn-p" onclick="document.getElementById('sx-plans').scrollIntoView({behavior:'smooth'})">See pricing ↓</button>
       </div>
@@ -508,7 +562,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
         <div class="plan-name">Starter</div>
         <div class="plan-price">Free</div>
         <hr class="plan-hr"/>
-        <div class="plan-desc">For side projects and learning. Get familiar with Aegrix at no cost.</div>
+        <div class="plan-desc">For side projects and learning. Get familiar with Ageinx at no cost.</div>
         <ul class="plan-feats">
           <li>All 5 modules</li>
           <li>1,000 API calls / month</li>
@@ -516,7 +570,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
           <li>7-day log retention</li>
           <li>Community support</li>
         </ul>
-        <button class="plan-btn plan-btn-ghost" onclick="go('contact')">Get started free</button>
+        <button class="plan-btn plan-btn-ghost" onclick="go('auth')">Get started free</button>
       </div>
 
       <div class="plan pop">
@@ -534,7 +588,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
           <li>Email support</li>
           <li>99.9% uptime SLA</li>
         </ul>
-        <button class="plan-btn plan-btn-solid" onclick="go('contact')">Get Pro</button>
+        <button class="plan-btn plan-btn-solid" onclick="go('auth')">Get Pro</button>
       </div>
 
       <div class="plan">
@@ -551,7 +605,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
           <li>Priority direct support</li>
           <li>99.9% uptime SLA</li>
         </ul>
-        <button class="plan-btn plan-btn-ghost" onclick="go('contact')">Contact us</button>
+        <button class="plan-btn plan-btn-ghost" onclick="go('auth')">Get started</button>
       </div>
 
     </div>
@@ -562,11 +616,11 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
     <div class="sx-code-inner">
       <div class="sec-label">Quick start</div>
       <div class="sec-head">Up and running in minutes.</div>
-      <div class="code-blk"><pre><span class="cm">// npm install @codemango/aegrix</span>
+      <div class="code-blk"><pre><span class="cm">// npm install @codemango/ageinx</span>
 
-<span class="kw">import</span> { Aegrix } <span class="kw">from</span> <span class="str">'@codemango/aegrix'</span>;
+<span class="kw">import</span> { Ageinx } <span class="kw">from</span> <span class="str">'@codemango/ageinx'</span>;
 
-<span class="kw">const</span> <span class="vr">sx</span> = <span class="kw">new</span> <span class="fn">Aegrix</span>(process.env.<span class="vr">AEGRIX_KEY</span>);
+<span class="kw">const</span> <span class="vr">sx</span> = <span class="kw">new</span> <span class="fn">Ageinx</span>(process.env.<span class="vr">AGEINX_KEY</span>);
 
 <span class="cm">// ── Auth: verify a user token</span>
 <span class="kw">const</span> { <span class="vr">user</span> } = <span class="kw">await</span> sx.auth.<span class="fn">verify</span>(req.headers.authorization);
@@ -600,40 +654,34 @@ sx.insight.<span class="fn">log</span>({ event: <span class="str">'user.signup'<
 <div class="page" id="page-about">
 
   <div class="ab-hdr">
-    <div class="kicker">About Us</div>
-    <div class="pg-title">Two developers,<br/>one shared frustration.</div>
-    <p class="pg-sub">Aegrix was built because we kept solving the same problems on every project. So we built the solution once, properly, and made it available to everyone.</p>
+    <div class="kicker">About</div>
+    <div class="pg-title">One developer,<br/>one real frustration.</div>
+    <p class="pg-sub">Ageinx was built because I kept solving the same problems on every project. So I built the solution once, properly, and made it available to everyone.</p>
   </div>
 
   <div class="ab-body">
     <div class="ab-split">
       <div class="ab-text">
-        <h2>Why we started Aegrix</h2>
-        <p>Every new project started the same way — setting up authentication, writing rate limiters, configuring logging. Hours of work that added nothing to the product we were actually trying to build.</p>
-        <p>We decided to build those things once, with real attention to security and reliability, and ship them as Aegrix — one unified API that covers the entire security and observability layer of a web app.</p>
-        <p>We're a small team. That means we move fast, care deeply about what we ship, and actually respond when you reach out.</p>
+        <h2>Why I built Ageinx</h2>
+        <p>Every new project started the same way — setting up authentication, writing rate limiters, configuring logging. Hours of work that added nothing to the product I was actually trying to build.</p>
+        <p>I decided to build those things once, with real attention to security and reliability, and ship them as Ageinx — one unified API that covers the entire security and observability layer of a web app.</p>
+        <p>I built this alone. That means I move fast, care deeply about every line I ship, and actually respond when you reach out. There's no team to blame — just me.</p>
       </div>
       <div class="vals">
-        <div class="val"><div class="val-n">01</div><div><div class="val-title">Developer experience first</div><div class="val-desc">Consistent APIs, honest docs, responses that make sense. We hate bad DX as much as you do.</div></div></div>
+        <div class="val"><div class="val-n">01</div><div><div class="val-title">Developer experience first</div><div class="val-desc">Consistent APIs, honest docs, and responses that make sense. I hate bad DX as much as you do.</div></div></div>
         <div class="val"><div class="val-n">02</div><div><div class="val-title">Security without compromise</div><div class="val-desc">Every part is built with security as a hard constraint, not a feature to add later.</div></div></div>
         <div class="val"><div class="val-n">03</div><div><div class="val-title">Honest pricing</div><div class="val-desc">No enterprise gatekeeping, no usage traps. Pay for what you use, cancel whenever.</div></div></div>
-        <div class="val"><div class="val-n">04</div><div><div class="val-title">Small team, real accountability</div><div class="val-desc">Being small means we move faster and care more. There's no support department to hide behind.</div></div></div>
+        <div class="val"><div class="val-n">04</div><div><div class="val-title">Solo, real accountability</div><div class="val-desc">Being solo means I move faster and care more. There's no support department to hide behind — it's just me.</div></div></div>
       </div>
     </div>
 
-    <div class="team-hd">The team</div>
-    <div class="team-grid">
+    <div class="team-hd">The founder</div>
+    <div class="team-grid" style="grid-template-columns:1fr;max-width:400px;">
       <div class="team-card">
-        <div class="team-av">Y</div>
+        <div class="team-av">A</div>
         <div class="team-name">Ankur</div>
-        <div class="team-role">Co-Founder & Lead Engineer</div>
-        <div class="team-bio">Responsible for backend infrastructure and API architecture. Has an opinion about every part of the stack, and usually a good reason for it.</div>
-      </div>
-      <div class="team-card">
-        <div class="team-av">F</div>
-        <div class="team-name">Aryan</div>
-        <div class="team-role">Co-Founder & Product Engineer</div>
-        <div class="team-bio">Focused on developer experience and Website design. Making sure using Aegrix is the best part of your sprint.</div>
+        <div class="team-role">Founder & Engineer</div>
+        <div class="team-bio">Responsible for everything — backend infrastructure, API architecture, and product decisions. Builds fast, ships with care, and has a strong opinion about every part of the stack.</div>
       </div>
     </div>
   </div>
@@ -643,7 +691,7 @@ sx.insight.<span class="fn">log</span>({ event: <span class="str">'user.signup'<
     <div class="ft-copy">© 2025 CodeMango. All rights reserved.</div>
     <div class="ft-links">
       <a onclick="go('home')">Home</a>
-      <a onclick="go('aegrix')">Aegrix</a>
+      <a onclick="go('ageinx')">Ageinx</a>
       <a onclick="go('contact')">Contact</a>
     </div>
   </div></footer>
@@ -656,7 +704,7 @@ sx.insight.<span class="fn">log</span>({ event: <span class="str">'user.signup'<
       <div class="c-side-inner">
         <div class="kicker">Contact</div>
         <h2>Let's talk.</h2>
-        <p>Have a question about Aegrix? Want to discuss a custom plan? Or just want to connect — we always respond.</p>
+        <p>Have a question about Ageinx? Want to discuss a custom plan? Or just want to connect — we always respond.</p>
         <div class="c-links">
           <a class="c-link" href="/cdn-cgi/l/email-protection#79111c151516391a0b1c18121d1c0f0a571016"><div class="c-ico">📧</div><span class="__cf_email__" data-cfemail="6d1a021f061a0419051e050c09021a5f5f5d592d0a000c0401430e0200">[email&#160;protected]</span></a>
           <a class="c-link" href="#"><div class="c-ico">💬</div>Discord - @realmofshadow_</a>
@@ -695,7 +743,7 @@ sx.insight.<span class="fn">log</span>({ event: <span class="str">'user.signup'<
     <div class="ft-copy">© 2025 CodeMango. All rights reserved.</div>
     <div class="ft-links">
       <a onclick="go('home')">Home</a>
-      <a onclick="go('aegrix')">Aegrix</a>
+      <a onclick="go('ageinx')">Ageinx</a>
       <a onclick="go('about')">About</a>
     </div>
   </div></footer>
@@ -737,7 +785,7 @@ sx.insight.<span class="fn">log</span>({ event: <span class="str">'user.signup'<
 </div>
 
 <script>
-const PAGES = ['home','aegrix','about','contact','auth'];
+const PAGES = ['home','ageinx','about','contact','auth'];
 const API = 'https://shieldx-api-hwp9.onrender.com';
 
 function go(id) {
