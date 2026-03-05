@@ -6,3 +6,4 @@ asyncpg
 PyJWT
 python-multipart
 pydantic[email]
+httpx
