@@ -4,6 +4,7 @@ import jwt
 import time
 import uuid
 import re
+import httpx
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +18,8 @@ from passlib.context import CryptContext
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 JWT_SECRET = os.getenv("JWT_SECRET")
+UPSTASH_URL = os.getenv("UPSTASH_REDIS_REST_URL")
+UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE = 60 * 15            # 15 minutes
 REFRESH_TOKEN_EXPIRE = 60 * 60 * 24 * 7  # 7 days
@@ -38,7 +41,11 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://ageinx.vercel.app"],
+    allow_origins=[
+        "https://ageinx.vercel.app",
+        "http://localhost:3000",
+        "http://localhost:8000",
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -59,6 +66,73 @@ async def get_pool():
             statement_cache_size=0  # required for pgBouncer / Supabase transaction mode
         )
     return pool
+
+# -----------------------------------
+# HTTP Client — Global (connection pooling)
+# -----------------------------------
+
+http_client: httpx.AsyncClient | None = None
+
+def get_http_client() -> httpx.AsyncClient:
+    global http_client
+    if http_client is None or http_client.is_closed:
+        http_client = httpx.AsyncClient(timeout=3.0)
+    return http_client
+
+# -----------------------------------
+# Rate Limiter — Upstash Redis
+# -----------------------------------
+
+def get_client_ip(request: Request) -> str:
+    # Check x-forwarded-for first (Vercel proxy)
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    # Fall back to x-real-ip
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip.strip()
+    # Final fallback
+    return request.client.host if request.client else "127.0.0.1"
+
+async def rate_limit(key: str, limit: int, window: int):
+    """
+    key    — unique identifier e.g. "signup:1.2.3.4"
+    limit  — max requests allowed
+    window — time window in seconds
+    Fail-open: if Redis is down, allow the request through
+    """
+    if not UPSTASH_URL or not UPSTASH_TOKEN:
+        return  # skip if not configured
+
+    redis_key = f"rl:{key}"
+    headers = {"Authorization": f"Bearer {UPSTASH_TOKEN}"}
+
+    try:
+        client = get_http_client()
+        # Increment counter
+        r = await client.post(
+            f"{UPSTASH_URL}/incr/{redis_key}",
+            headers=headers
+        )
+        count = r.json().get("result", 1)
+
+        # Set expiry only on first request
+        if count == 1:
+            await client.post(
+                f"{UPSTASH_URL}/expire/{redis_key}/{window}",
+                headers=headers
+            )
+
+        if count > limit:
+            raise HTTPException(
+                status_code=429,
+                detail="Too many requests. Try again later."
+            )
+    except HTTPException:
+        raise  # re-raise 429s
+    except Exception:
+        pass  # fail-open: Redis down → let request through
 
 # -----------------------------------
 # Middleware
@@ -170,7 +244,11 @@ async def health():
 # -----------------------------------
 
 @app.post("/platform/dev/signup")
-async def dev_signup(data: DevSignup):
+async def dev_signup(request: Request, data: DevSignup):
+    # Rate limit: 5 signups per IP per hour
+    ip = get_client_ip(request)
+    await rate_limit(f"signup:{ip}", limit=5, window=3600)
+
     validate_slug(data.slug)
     validate_password(data.password)
 
@@ -212,7 +290,11 @@ async def dev_signup(data: DevSignup):
 
 
 @app.post("/platform/dev/login")
-async def dev_login(data: DevLogin):
+async def dev_login(request: Request, data: DevLogin):
+    # Rate limit: 10 login attempts per IP per 15 minutes
+    ip = get_client_ip(request)
+    await rate_limit(f"login:{ip}", limit=10, window=900)
+
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
         dev = await conn.fetchrow(
@@ -260,7 +342,7 @@ async def dev_login(data: DevLogin):
 
 @app.get("/platform/dev/me")
 async def dev_me(token: dict = Depends(verify_token)):
-    dev_id = token["sub"]
+    dev_id = str(token["sub"])
 
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
@@ -310,7 +392,7 @@ async def dev_me(token: dict = Depends(verify_token)):
 
 @app.post("/platform/dev/change-password")
 async def change_password(data: ChangePassword, token: dict = Depends(verify_token)):
-    dev_id = token["sub"]
+    dev_id = str(token["sub"])
 
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
@@ -334,7 +416,7 @@ async def change_password(data: ChangePassword, token: dict = Depends(verify_tok
 
 @app.post("/platform/dev/logout")
 async def logout(token: dict = Depends(verify_token)):
-    dev_id = token["sub"]
+    dev_id = str(token["sub"])
 
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
@@ -376,4 +458,3 @@ async def internal_check(request: Request):
 # @app.post("/auth/{slug}/signup")
 # @app.post("/auth/{slug}/login")
 # @app.get("/auth/userinfo")
-
