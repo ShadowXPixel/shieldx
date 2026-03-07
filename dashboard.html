@@ -443,7 +443,7 @@ function renderDashboard() {
   else if (pct > 70) bar.classList.add('warn');
 
   // API Key
-  document.getElementById('login-url-display').textContent = `https://login.ageinx.com/${slug}`;
+  document.getElementById('login-url-display').textContent = `https://ageinx.vercel.app/auth/${slug}`;
 
   // Billing
   const planBadge = document.getElementById('billing-plan-badge');
@@ -497,7 +497,7 @@ function copyKey() {
 
 // ─── Copy login URL ───
 function copyLoginUrl() {
-  const url = `https://login.ageinx.com/${devData.slug}`;
+  const url = `https://ageinx.vercel.app/auth/${devData.slug}`;
   navigator.clipboard.writeText(url);
   const btn = document.getElementById('copy-url-btn');
   btn.textContent = 'Copied!';
