@@ -487,8 +487,8 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 
   <div class="hero">
     <div class="hero-badge">Ageinx — Now available</div>
-    <h1>One Platform.<br/>Your entire backend<br/><em>security layer.</em></h1>
-    <p class="hero-sub">CodeMango built Ageinx so developers can add auth, protection, hashed storage, threat scanning, and logging to any web app — with a single key.</p>
+    <h1>One Platform<br/><em>Entire Auth Backend</em></h1>
+    <p class="hero-sub">Ageinx is a hosted Authentication-as-a-Service platform. Redirect your users to us, we handle login and signup, then send them back to your app with a token. No auth code to write. Ever.</p>
     <div class="hero-btns">
       <button class="btn-p" onclick="go('ageinx')">Explore Ageinx</button>
       <button class="btn-s" onclick="go('contact')">Talk to us</button>
@@ -497,8 +497,8 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 
   <div class="stats-strip">
     <div class="stats-inner">
-      <div class="stat"><div class="stat-v">1</div><div class="stat-l">Unified API</div></div>
-      <div class="stat"><div class="stat-v">5</div><div class="stat-l">Built-in modules</div></div>
+      <div class="stat"><div class="stat-v">1</div><div class="stat-l">Redirect to integrate</div></div>
+      <div class="stat"><div class="stat-v">JWT</div><div class="stat-l">Secure tokens</div></div>
       <div class="stat"><div class="stat-v">99.9%</div><div class="stat-l">Uptime SLA</div></div>
       <div class="stat"><div class="stat-v">&lt;50ms</div><div class="stat-l">Avg response</div></div>
     </div>
@@ -509,7 +509,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
     <div class="sec-head">Stop rebuilding the same<br/>infrastructure every project.</div>
     <div class="f-grid">
       <div class="f-card"><div class="f-ico">🔐</div><div class="f-title">Security by default</div><div class="f-desc">Auth, rate limiting, and encryption are built in from day one — not bolted on as an afterthought.</div></div>
-      <div class="f-card"><div class="f-ico">⚡</div><div class="f-title">One key, everything</div><div class="f-desc">A single platform . No juggling multiple providers or credentials.</div></div>
+      <div class="f-card"><div class="f-ico">⚡</div><div class="f-title">One redirect, done</div><div class="f-desc">Send users to your Ageinx URL. They log in, you get a token. No SDKs, no config, no auth code.</div></div>
       <div class="f-card"><div class="f-ico">📡</div><div class="f-title">Built to scale</div><div class="f-desc">Infrastructure that grows with your app, from launch day to your first million requests.</div></div>
       <div class="f-card"><div class="f-ico">💬</div><div class="f-title">Real support</div><div class="f-desc">A developer who's been through production incidents. Reach me directly — no ticket queues.</div></div>
       <div class="f-card"><div class="f-ico">📋</div><div class="f-title">Transparent pricing</div><div class="f-desc">No hidden fees, no lock-in. Flat monthly plans you can cancel at any time.</div></div>
@@ -531,16 +531,16 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 
   <div class="sx-hdr">
     <div class="kicker">Ageinx</div>
-    <div class="pg-title">One Platform. Five Features.<br/>Zero infrastructure headaches.</div>
-    <p class="pg-sub">Ageinx bundles everything your web app's backend needs into a single, cohesive API — authenticate users, block threats, store secrets, scan content, and monitor your app with one integration.</p>
+    <div class="pg-title">Hosted auth, done right.<br/>You redirect. We handle the rest.</div>
+    <p class="pg-sub">Ageinx gives your app a fully hosted login and signup page — with rate limiting, secure tokens, and user management built in. One redirect. One token. Your users are authenticated.</p>
   </div>
 
   <div class="sx-intro">
     <div class="sx-intro-grid">
       <div class="sx-intro-text">
         <div class="sec-label" style="margin-bottom:14px;">What is Ageinx</div>
-        <p>Ageinx is a hosted authentication platform with five built-in features. You redirect your users to us and we handle the rest. Every feature is designed to work efficiently alongside the others — after the user completes the process, you get a token which you can use to call our API and get the user's data in JSON.</p>
-        <p>We built it because we were tired of wiring together five different third-party services on every new project. Ageinx is the tool we wished existed.</p>
+        <p>Ageinx is an Authentication-as-a-Service platform. Instead of building login flows yourself, you redirect your users to <code style="background:#f3f3f1;padding:1px 6px;border-radius:4px;font-size:0.8rem">ageinx.vercel.app/auth/{your-slug}</code> — we show them a clean login/signup page, authenticate them securely, then redirect back to your app with a signed JWT token.</p>
+        <p>Your backend then calls <code style="background:#f3f3f1;padding:1px 6px;border-radius:4px;font-size:0.8rem">GET /auth/userinfo</code> with that token to verify the user and get their data as JSON. That's the entire integration.</p>
         <p>It's production-ready from day one — built with security as a hard constraint, not a feature to add later.</p>
         <button class="btn-p" onclick="document.getElementById('sx-plans').scrollIntoView({behavior:'smooth'})">See pricing ↓</button>
       </div>
@@ -569,7 +569,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
         <div class="plan-desc">For side projects and learning. Get familiar with Ageinx at no cost.</div>
         <ul class="plan-feats">
           <li>All 5 modules</li>
-          <li>1,000 API calls / month</li>
+          <li>100 API calls / month</li>
           <li>1 project</li>
           <li>7-day log retention</li>
           <li>Community support</li>
@@ -585,7 +585,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
         <div class="plan-desc">For production apps that need reliability and room to grow.</div>
         <ul class="plan-feats">
           <li>All 5 modules</li>
-          <li>Up to 50,000 API calls / month</li>
+          <li>Up to 1000 API calls / month</li>
           <li>Unlimited projects</li>
           <li>30-day log retention</li>
           <li>Custom rate limit rules</li>
@@ -602,7 +602,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
         <div class="plan-desc">For teams and high-traffic apps that need priority support.</div>
         <ul class="plan-feats">
           <li>All 5 modules</li>
-          <li>500k API calls / month</li>
+          <li>10,000 API calls / month</li>
           <li>Unlimited projects</li>
           <li>90-day log retention</li>
           <li>Advanced alerting</li>
@@ -618,27 +618,26 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
   <div class="sx-code">
     <div class="sx-code-inner">
       <div class="sec-label">Quick start</div>
-      <div class="sec-head">Up and running in minutes.</div>
-      <div class="code-blk"><pre><span class="cm">// npm install @codemango/ageinx</span>
+      <div class="sec-head">Integrate in 4 steps.</div>
+      <div class="code-blk"><pre><span class="cm">// Step 1 — Redirect your user to Ageinx</span>
+<span class="cm">// Link or redirect button in your frontend:</span>
+<span class="fn">window</span>.location.href = <span class="str">'https://ageinx.vercel.app/auth/your-slug'</span>;
 
-<span class="kw">import</span> { Ageinx } <span class="kw">from</span> <span class="str">'@codemango/ageinx'</span>;
+<span class="cm">// Step 2 — User logs in on Ageinx hosted page</span>
+<span class="cm">// They get redirected back to your callback URL:</span>
+<span class="cm">// https://yourapp.com/callback#token=eyJhbGci...</span>
 
-<span class="kw">const</span> <span class="vr">sx</span> = <span class="kw">new</span> <span class="fn">Ageinx</span>(process.env.<span class="vr">AGEINX_KEY</span>);
+<span class="cm">// Step 3 — Parse the token in your callback page</span>
+<span class="kw">const</span> <span class="vr">token</span> = <span class="kw">new</span> <span class="fn">URLSearchParams</span>(
+  window.location.hash.<span class="fn">substring</span>(<span class="num">1</span>)
+).<span class="fn">get</span>(<span class="str">'token'</span>);
 
-<span class="cm">// ── Auth: verify a user token</span>
-<span class="kw">const</span> { <span class="vr">user</span> } = <span class="kw">await</span> sx.auth.<span class="fn">verify</span>(req.headers.authorization);
-
-<span class="cm">// ── Guard: enforce a rate limit</span>
-<span class="kw">await</span> sx.guard.<span class="fn">check</span>({ ip: req.ip, limit: <span class="num">100</span>, window: <span class="str">'1m'</span> });
-
-<span class="cm">// ── Vault: store an encrypted secret</span>
-<span class="kw">await</span> sx.vault.<span class="fn">set</span>(<span class="str">'stripe_key'</span>, process.env.<span class="vr">STRIPE_SECRET</span>);
-
-<span class="cm">// ── Scan: check a user-submitted URL</span>
-<span class="kw">const</span> { <span class="vr">safe</span> } = <span class="kw">await</span> sx.scan.<span class="fn">url</span>(userLink);
-
-<span class="cm">// ── Insight: log a custom event</span>
-sx.insight.<span class="fn">log</span>({ event: <span class="str">'user.signup'</span>, userId: user.id });</pre></div>
+<span class="cm">// Step 4 — Verify token on your backend</span>
+<span class="kw">const</span> <span class="vr">res</span> = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://ageinx.vercel.app/auth/userinfo'</span>, {
+  headers: { <span class="str">'Authorization'</span>: <span class="str">`Bearer <span class="vr">${token}</span>`</span> }
+});
+<span class="kw">const</span> { <span class="vr">user_id</span>, <span class="vr">email</span> } = <span class="kw">await</span> <span class="vr">res</span>.<span class="fn">json</span>();
+<span class="cm">// → { user_id: "uuid", email: "user@example.com" }</span></pre></div>
     </div>
   </div>
 
@@ -666,7 +665,7 @@ sx.insight.<span class="fn">log</span>({ event: <span class="str">'user.signup'<
       <div class="ab-text">
         <h2>Why I built Ageinx</h2>
         <p>Every new project started the same way — setting up authentication, writing rate limiters, configuring logging. Hours of work that added nothing to the product I was actually trying to build.</p>
-        <p>I decided to build those things once, with real attention to security and reliability, and ship them as Ageinx — one unified API that covers the entire security and observability layer of a web app.</p>
+        <p>I decided to build those things once, with real attention to security and reliability, and ship them as Ageinx — a hosted auth platform so developers never have to build login flows again.</p>
         <p>I built this alone. That means I move fast, care deeply about every line I ship, and actually respond when you reach out. There's no team to blame — just me.</p>
       </div>
       <div class="vals">
