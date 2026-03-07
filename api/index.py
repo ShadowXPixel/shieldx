@@ -21,6 +21,7 @@ JWT_SECRET = os.getenv("JWT_SECRET")
 UPSTASH_URL = os.getenv("UPSTASH_REDIS_REST_URL")
 UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN")
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY")
 CONTACT_EMAIL = "kjuhi1496@gmail.com"  # where contact emails are sent
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE = 60 * 15            # 15 minutes
@@ -28,6 +29,12 @@ REFRESH_TOKEN_EXPIRE = 60 * 60 * 24 * 7  # 7 days
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 bearer_scheme = HTTPBearer()
+
+def safe_uuid(val: str) -> uuid.UUID:
+    try:
+        return uuid.UUID(val)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="invalid token format")
 
 # -----------------------------------
 # App
@@ -64,7 +71,7 @@ async def get_pool():
         pool = await asyncpg.create_pool(
             DATABASE_URL,
             min_size=1,
-            max_size=1,
+            max_size=3,
             statement_cache_size=0  # required for pgBouncer / Supabase transaction mode
         )
     return pool
@@ -150,8 +157,11 @@ async def rate_limit(key: str, limit: int, window: int):
 @app.middleware("http")
 async def limit_body_size(request: Request, call_next):
     content_length = request.headers.get("content-length")
-    if content_length and content_length.isdigit() and int(content_length) > 10000:
-        return JSONResponse(status_code=413, content={"detail": "Payload too large"})
+    if request.method in ("POST", "PUT", "PATCH"):
+        if content_length is None:
+            return JSONResponse(status_code=411, content={"detail": "Content-Length required"})
+        if not content_length.isdigit() or int(content_length) > 10000:
+            return JSONResponse(status_code=413, content={"detail": "Payload too large"})
     return await call_next(request)
 
 # -----------------------------------
@@ -269,32 +279,25 @@ async def dev_signup(request: Request, data: DevSignup):
 
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
-        existing_email = await conn.fetchrow(
-            "SELECT id FROM developers WHERE email = $1", data.email
-        )
-        if existing_email:
-            raise HTTPException(status_code=400, detail="email already registered")
-
-        existing_slug = await conn.fetchrow(
-            "SELECT id FROM developers WHERE slug = $1", data.slug
-        )
-        if existing_slug:
-            raise HTTPException(status_code=400, detail="slug already taken")
-
         password_hash = pwd_context.hash(data.password)
         api_key = f"ax_live_{uuid.uuid4().hex}"
 
-        await conn.execute(
-            """
-            INSERT INTO developers (email, password_hash, api_key, slug, callback_url, is_active)
-            VALUES ($1, $2, $3, $4, $5, true)
-            """,
-            data.email,
-            password_hash,
-            api_key,
-            data.slug,
-            data.callback_url
-        )
+        try:
+            await conn.execute(
+                """
+                INSERT INTO developers (email, password_hash, api_key, slug, callback_url, is_active)
+                VALUES ($1, $2, $3, $4, $5, true)
+                """,
+                data.email,
+                password_hash,
+                api_key,
+                data.slug,
+                data.callback_url
+            )
+        except asyncpg.exceptions.UniqueViolationError as e:
+            if "email" in str(e):
+                raise HTTPException(status_code=400, detail="email already registered")
+            raise HTTPException(status_code=400, detail="slug already taken")
 
     return {
         "message": "account created. save your api key — it won't be shown again.",
@@ -366,7 +369,7 @@ async def dev_me(token: dict = Depends(verify_token)):
             SELECT email, api_key, slug, callback_url, plan, is_active, created_at
             FROM developers WHERE id = $1
             """,
-            uuid.UUID(dev_id)
+            safe_uuid(dev_id)
         )
 
         if not dev:
@@ -374,7 +377,7 @@ async def dev_me(token: dict = Depends(verify_token)):
 
         user_count = await conn.fetchval(
             "SELECT COUNT(*) FROM users WHERE developer_id = $1",
-            uuid.UUID(dev_id)
+            safe_uuid(dev_id)
         )
 
         sessions_this_month = await conn.fetchval(
@@ -383,7 +386,7 @@ async def dev_me(token: dict = Depends(verify_token)):
             WHERE developer_id = $1
             AND created_at >= date_trunc('month', now())
             """,
-            uuid.UUID(dev_id)
+            safe_uuid(dev_id)
         )
 
     plan = dev["plan"] or "starter"
@@ -413,7 +416,7 @@ async def change_password(data: ChangePassword, token: dict = Depends(verify_tok
     async with db_pool.acquire() as conn:
         dev = await conn.fetchrow(
             "SELECT password_hash FROM developers WHERE id = $1",
-            uuid.UUID(dev_id)
+            safe_uuid(dev_id)
         )
 
         if not dev or not pwd_context.verify(data.current_password, dev["password_hash"]):
@@ -424,7 +427,7 @@ async def change_password(data: ChangePassword, token: dict = Depends(verify_tok
 
         await conn.execute(
             "UPDATE developers SET password_hash = $1 WHERE id = $2",
-            new_hash, uuid.UUID(dev_id)
+            new_hash, safe_uuid(dev_id)
         )
 
     return {"message": "password updated successfully"}
@@ -437,7 +440,7 @@ async def logout(token: dict = Depends(verify_token)):
     async with db_pool.acquire() as conn:
         await conn.execute(
             "DELETE FROM dev_sessions WHERE developer_id = $1",
-            uuid.UUID(dev_id)
+            safe_uuid(dev_id)
         )
 
     return {"message": "logged out successfully"}
@@ -501,6 +504,9 @@ async def contact(request: Request, data: ContactForm):
 
 @app.post("/internal/check", include_in_schema=False)
 async def internal_check(request: Request):
+    key = request.headers.get("x-internal-key")
+    if not INTERNAL_API_KEY or key != INTERNAL_API_KEY:
+        raise HTTPException(status_code=403, detail="forbidden")
     start_time = time.time()
     request_id = f"ax_{uuid.uuid4().hex[:8]}"
 
@@ -519,15 +525,6 @@ async def internal_check(request: Request):
     }
 
 # -----------------------------------
-# /auth — AuthaaS (coming soon)
-# -----------------------------------
-
-# @app.get("/auth/{slug}")
-# @app.post("/auth/{slug}/signup")
-# @app.post("/auth/{slug}/login")
-# @app.get("/auth/userinfo")
-
-# -----------------------------------
 # /auth — AuthaaS Core Flow
 # -----------------------------------
 
@@ -542,13 +539,31 @@ class UserLogin(BaseModel):
     password: str
 
 
+@app.get("/auth/userinfo")
+async def auth_userinfo(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+    try:
+        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[ALGORITHM])
+        if payload.get("type") != "user_access":
+            raise HTTPException(status_code=401, detail="invalid token type")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="invalid token")
+    return {
+        "user_id": payload["sub"],
+        "email": payload["email"],
+        "developer_id": payload["dev"],
+        "token_type": "user_access"
+    }
+
+
 @app.get("/auth/{slug}")
 async def auth_page(slug: str):
+    from fastapi.responses import HTMLResponse
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
         dev = await conn.fetchrow(
-            "SELECT slug, callback_url FROM developers WHERE slug = $1 AND is_active = true",
-            slug
+            "SELECT slug, callback_url FROM developers WHERE slug = $1 AND is_active = true", slug
         )
     if not dev:
         raise HTTPException(status_code=404, detail="app not found")
@@ -628,12 +643,12 @@ async function handleLogin() {{
   const email = document.getElementById('li-email').value.trim();
   const password = document.getElementById('li-password').value;
   if (!email || !password) {{ showMsg('li-msg','All fields required.','error'); return; }}
-  btn.disabled = true; btn.textContent = 'Signing in\u2026';
+  btn.disabled = true; btn.textContent = 'Signing in…';
   try {{
     const res = await fetch(`${{API}}/auth/${{SLUG}}/login`, {{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{email,password}})}});
     const data = await res.json();
     if (!res.ok) {{ showMsg('li-msg', data.detail||'Login failed.','error'); return; }}
-    showMsg('li-msg','\u2705 Signed in! Redirecting\u2026','success');
+    showMsg('li-msg','✅ Signed in! Redirecting…','success');
     setTimeout(()=>{{ window.location.href = data.redirect_url; }}, 800);
   }} catch(e) {{ showMsg('li-msg','Network error. Try again.','error'); }}
   finally {{ btn.disabled=false; btn.textContent='Sign in'; }}
@@ -643,12 +658,12 @@ async function handleSignup() {{
   const email = document.getElementById('su-email').value.trim();
   const password = document.getElementById('su-password').value;
   if (!email || !password) {{ showMsg('su-msg','All fields required.','error'); return; }}
-  btn.disabled = true; btn.textContent = 'Creating account\u2026';
+  btn.disabled = true; btn.textContent = 'Creating account…';
   try {{
     const res = await fetch(`${{API}}/auth/${{SLUG}}/signup`, {{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{email,password}})}});
     const data = await res.json();
     if (!res.ok) {{ showMsg('su-msg', data.detail||'Signup failed.','error'); return; }}
-    showMsg('su-msg','\u2705 Account created! Redirecting\u2026','success');
+    showMsg('su-msg','✅ Account created! Redirecting…','success');
     setTimeout(()=>{{ window.location.href = data.redirect_url; }}, 800);
   }} catch(e) {{ showMsg('su-msg','Network error. Try again.','error'); }}
   finally {{ btn.disabled=false; btn.textContent='Create account'; }}
@@ -656,7 +671,6 @@ async function handleSignup() {{
 </script>
 </body>
 </html>"""
-    from fastapi.responses import HTMLResponse
     return HTMLResponse(content=html)
 
 
@@ -672,16 +686,14 @@ async def auth_user_signup(slug: str, request: Request, data: UserSignup):
         )
         if not dev:
             raise HTTPException(status_code=404, detail="app not found")
-        existing = await conn.fetchrow(
-            "SELECT id FROM users WHERE developer_id = $1 AND email = $2", dev["id"], data.email
-        )
-        if existing:
-            raise HTTPException(status_code=400, detail="email already registered")
         password_hash = pwd_context.hash(data.password)
-        user_id = await conn.fetchval(
-            "INSERT INTO users (developer_id, email, password_hash) VALUES ($1, $2, $3) RETURNING id",
-            dev["id"], data.email, password_hash
-        )
+        try:
+            user_id = await conn.fetchval(
+                "INSERT INTO users (developer_id, email, password_hash) VALUES ($1, $2, $3) RETURNING id",
+                dev["id"], data.email, password_hash
+            )
+        except asyncpg.exceptions.UniqueViolationError:
+            raise HTTPException(status_code=400, detail="email already registered")
     token = create_token(
         {"sub": str(user_id), "dev": str(dev["id"]), "email": data.email, "type": "user_access"},
         60 * 60 * 24
@@ -711,25 +723,3 @@ async def auth_user_login(slug: str, request: Request, data: UserLogin):
         60 * 60 * 24
     )
     return {"message": "login successful", "redirect_url": f"{dev['callback_url']}#token={token}", "token": token}
-
-
-@app.get("/auth/userinfo")
-async def auth_userinfo(request: Request):
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="missing token")
-    token = auth_header.split(" ")[1]
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[ALGORITHM])
-        if payload.get("type") != "user_access":
-            raise HTTPException(status_code=401, detail="invalid token type")
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="invalid token")
-    return {
-        "user_id": payload["sub"],
-        "email": payload["email"],
-        "developer_id": payload["dev"],
-        "token_type": "user_access"
-    }
