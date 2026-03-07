@@ -20,6 +20,8 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 JWT_SECRET = os.getenv("JWT_SECRET")
 UPSTASH_URL = os.getenv("UPSTASH_REDIS_REST_URL")
 UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+CONTACT_EMAIL = "hello@codemango.dev"  # where contact emails are sent
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE = 60 * 15            # 15 minutes
 REFRESH_TOKEN_EXPIRE = 60 * 60 * 24 * 7  # 7 days
@@ -165,6 +167,12 @@ class DevSignup(BaseModel):
 class DevLogin(BaseModel):
     email: EmailStr
     password: str
+
+class ContactForm(BaseModel):
+    name: str
+    email: EmailStr
+    plan: str = ""
+    message: str
 
 class ChangePassword(BaseModel):
     current_password: str
@@ -433,6 +441,59 @@ async def logout(token: dict = Depends(verify_token)):
         )
 
     return {"message": "logged out successfully"}
+
+# -----------------------------------
+# /contact — Contact Form
+# -----------------------------------
+
+@app.post("/contact")
+async def contact(request: Request, data: ContactForm):
+    ip = get_client_ip(request)
+    await rate_limit(f"contact:{ip}", limit=3, window=3600)  # 3 per hour
+
+    if not data.name.strip() or not data.message.strip():
+        raise HTTPException(status_code=400, detail="name and message are required")
+
+    if len(data.message) > 2000:
+        raise HTTPException(status_code=400, detail="message too long")
+
+    if not RESEND_API_KEY:
+        raise HTTPException(status_code=500, detail="email service not configured")
+
+    plan_line = f"<p><strong>Plan interest:</strong> {data.plan}</p>" if data.plan else ""
+    html_body = f"""
+    <h2>New contact from Ageinx</h2>
+    <p><strong>Name:</strong> {data.name}</p>
+    <p><strong>Email:</strong> {data.email}</p>
+    {plan_line}
+    <p><strong>Message:</strong></p>
+    <p style="white-space:pre-wrap">{data.message}</p>
+    """
+
+    client = get_http_client()
+    try:
+        r = await client.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "from": "Ageinx Contact <onboarding@resend.dev>",
+                "to": [CONTACT_EMAIL],
+                "reply_to": data.email,
+                "subject": f"[Ageinx] Message from {data.name}",
+                "html": html_body
+            }
+        )
+        if r.status_code not in (200, 201):
+            raise HTTPException(status_code=500, detail="failed to send email")
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="email service error")
+
+    return {"message": "Message sent! We'll get back to you within one business day."}
 
 # -----------------------------------
 # /internal — Fraud Filter
