@@ -784,31 +784,43 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
         <div class="auth-divider">No account yet? <a href="#" onclick="authTab('signup')" style="color:var(--accent);text-decoration:none;font-weight:500;">Create one</a></div>
       </div>
     </div>
-  </div>
-</div>
-
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+<script>
 const PAGES = ['home','ageinx','about','contact','auth'];
-const API = '';
+// IMPORTANT: If your API is on a different domain, put the full URL here
+const API = ''; 
 
-function go(id) {
-  // If logged in and trying to go to auth, redirect to dashboard instead
+function go(id, tab = 'signup') {
+  // 1. Check Auth state
   if (id === 'auth' && localStorage.getItem('ax_access')) {
     window.location.href = '/dashboard.html';
     return;
   }
+
+  // 2. Switch Pages
   PAGES.forEach(p => {
-  document.getElementById('page-'+p).classList.remove('active');
+    const pageEl = document.getElementById('page-'+p);
+    if(pageEl) pageEl.classList.remove('active');
+    
     ['nl','ml'].forEach(pfx => {
-      const el = document.getElementById(pfx+'-'+p);
-      if (el) el.classList.remove('active');
+      const navEl = document.getElementById(pfx+'-'+p);
+      if (navEl) navEl.classList.remove('active');
     });
   });
-document.getElementById('page-'+id).classList.add('active');
+
+  const targetPage = document.getElementById('page-'+id);
+  if(targetPage) targetPage.classList.add('active');
+
   ['nl','ml'].forEach(pfx => {
-    const el = document.getElementById(pfx+'-'+id);
-    if (el) el.classList.add('active');
+    const navEl = document.getElementById(pfx+'-'+id);
+    if (navEl) navEl.classList.add('active');
   });
+
+  // 3. Handle Auth Tab specifically
+  if (id === 'auth') {
+    authTab(tab);
+  }
+
   window.scrollTo({ top: 0, behavior: 'instant' });
   window.location.hash = id;
   closeMenu();
@@ -823,50 +835,26 @@ function toggleMenu() {
 }
 
 function closeMenu() {
-document.getElementById('ham').classList.remove('open');
-document.getElementById('mobMenu').classList.remove('open');
+  const ham = document.getElementById('ham');
+  const menu = document.getElementById('mobMenu');
+  if(ham) ham.classList.remove('open');
+  if(menu) menu.classList.remove('open');
 }
-
-// Hash routing — load correct page on refresh/direct URL
-window.addEventListener('DOMContentLoaded', () => {
-  const hash = window.location.hash.replace('#','') || 'home';
-  const valid = PAGES.includes(hash) ? hash : 'home';
-  // If already logged in and trying to visit auth, go to dashboard
-  if (valid === 'auth' && localStorage.getItem('ax_access')) {
-    window.location.href = '/dashboard.html';
-    return;
-  }
-  go(valid);
-});
-
-window.addEventListener('hashchange', () => {
-  const hash = window.location.hash.replace('#','') || 'home';
-  const valid = PAGES.includes(hash) ? hash : 'home';
-  // avoid re-triggering go() loop
-  PAGES.forEach(p => {
-  document.getElementById('page-'+p).classList.remove('active');
-    ['nl','ml'].forEach(pfx => {
-      const el = document.getElementById(pfx+'-'+p);
-      if (el) el.classList.remove('active');
-    });
-  });
-document.getElementById('page-'+valid).classList.add('active');
-  ['nl','ml'].forEach(pfx => {
-    const el = document.getElementById(pfx+'-'+valid);
-    if (el) el.classList.add('active');
-  });
-  window.scrollTo({ top: 0, behavior: 'instant' });
-});
 
 // Auth tab toggle
 function authTab(tab) {
-document.getElementById('tab-signup').classList.toggle('auth-tab-active', tab==='signup');
-document.getElementById('tab-login').classList.toggle('auth-tab-active', tab==='login');
-document.getElementById('form-signup').style.display = tab==='signup' ? 'block' : 'none';
-document.getElementById('form-login').style.display = tab==='login' ? 'block' : 'none';
+  const signupTab = document.getElementById('tab-signup');
+  const loginTab = document.getElementById('tab-login');
+  const signupForm = document.getElementById('form-signup');
+  const loginForm = document.getElementById('form-login');
+
+  if(signupTab) signupTab.classList.toggle('auth-tab-active', tab==='signup');
+  if(loginTab) loginTab.classList.toggle('auth-tab-active', tab==='login');
+  if(signupForm) signupForm.style.display = tab==='signup' ? 'block' : 'none';
+  if(loginForm) loginForm.style.display = tab==='login' ? 'block' : 'none';
 }
 
-// Signup
+// Signup Logic
 async function handleSignup() {
   const btn = document.getElementById('signup-btn');
   const msg = document.getElementById('signup-msg');
@@ -879,7 +867,7 @@ async function handleSignup() {
     showMsg(msg, 'All fields are required.', 'error'); return;
   }
 
-  btn.disabled = true; btn.textContent = 'Creating account…';
+  btn.disabled = true; btn.textContent = 'Creating account...';
   try {
     const res = await fetch(`${API}/platform/dev/signup`, {
       method: 'POST',
@@ -889,10 +877,6 @@ async function handleSignup() {
     const data = await res.json();
     if (!res.ok) { showMsg(msg, data.detail || 'Signup failed.', 'error'); return; }
     showMsg(msg, `✅ Account created! Your API key: <code>${data.api_key}</code><br/>Save it — it won't be shown again.`, 'success');
-  document.getElementById('su-email').value = '';
-  document.getElementById('su-password').value = '';
-  document.getElementById('su-slug').value = '';
-  document.getElementById('su-callback').value = '';
   } catch(e) {
     showMsg(msg, 'Network error. Try again.', 'error');
   } finally {
@@ -900,7 +884,7 @@ async function handleSignup() {
   }
 }
 
-// Login
+// Login Logic
 async function handleLogin() {
   const btn = document.getElementById('login-btn');
   const msg = document.getElementById('login-msg');
@@ -911,7 +895,7 @@ async function handleLogin() {
     showMsg(msg, 'All fields are required.', 'error'); return;
   }
 
-  btn.disabled = true; btn.textContent = 'Signing in…';
+  btn.disabled = true; btn.textContent = 'Signing in...';
   try {
     const res = await fetch(`${API}/platform/dev/login`, {
       method: 'POST',
@@ -920,10 +904,8 @@ async function handleLogin() {
     });
     const data = await res.json();
     if (!res.ok) { showMsg(msg, data.detail || 'Login failed.', 'error'); return; }
-    showMsg(msg, '✅ Logged in! Redirecting to dashboard…', 'success');
-    // Store tokens
+    showMsg(msg, '✅ Logged in! Redirecting...', 'success');
     localStorage.setItem('ax_access', data.access_token);
-    localStorage.setItem('ax_refresh', data.refresh_token);
     setTimeout(() => { window.location.href = '/dashboard.html'; }, 1000);
   } catch(e) {
     showMsg(msg, 'Network error. Try again.', 'error');
@@ -933,6 +915,19 @@ async function handleLogin() {
 }
 
 function showMsg(el, html, type) {
+  if(!el) return;
   el.innerHTML = html;
   el.style.display = 'block';
+  el.className = 'auth-msg auth-msg-' + type;
+}
+
+// Routing - load correct page on refresh
+window.addEventListener('DOMContentLoaded', () => {
+  const hash = window.location.hash.replace('#','') || 'home';
+  go(PAGES.includes(hash) ? hash : 'home');
+});
+</script>
+</body>
+</html>
+
   
