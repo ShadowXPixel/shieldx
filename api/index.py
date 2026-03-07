@@ -84,10 +84,14 @@ def get_http_client() -> httpx.AsyncClient:
 # -----------------------------------
 
 def get_client_ip(request: Request) -> str:
-    # Check x-forwarded-for first (Vercel proxy)
+    # Vercel trusted header — most reliable on Vercel
+    vercel_ip = request.headers.get("x-vercel-forwarded-for")
+    if vercel_ip:
+        return vercel_ip.split(",")[-1].strip()
+    # Take LAST IP in x-forwarded-for to prevent spoofing
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
-        return forwarded.split(",")[0].strip()
+        return forwarded.split(",")[-1].strip()
     # Fall back to x-real-ip
     real_ip = request.headers.get("x-real-ip")
     if real_ip:
@@ -115,7 +119,10 @@ async def rate_limit(key: str, limit: int, window: int):
             f"{UPSTASH_URL}/incr/{redis_key}",
             headers=headers
         )
-        count = r.json().get("result", 1)
+        try:
+            count = r.json().get("result", 1)
+        except ValueError:
+            count = 1  # Upstash returned non-JSON (502/504), fail-open
 
         # Set expiry only on first request
         if count == 1:
@@ -458,3 +465,210 @@ async def internal_check(request: Request):
 # @app.post("/auth/{slug}/signup")
 # @app.post("/auth/{slug}/login")
 # @app.get("/auth/userinfo")
+
+# -----------------------------------
+# /auth — AuthaaS Core Flow
+# -----------------------------------
+
+USER_ACCESS_EXPIRE = 60 * 60 * 24  # 24 hours for end users
+
+class UserSignup(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
+@app.get("/auth/{slug}")
+async def auth_page(slug: str):
+    db_pool = await get_pool()
+    async with db_pool.acquire() as conn:
+        dev = await conn.fetchrow(
+            "SELECT slug, callback_url FROM developers WHERE slug = $1 AND is_active = true",
+            slug
+        )
+    if not dev:
+        raise HTTPException(status_code=404, detail="app not found")
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sign in</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}
+body{{font-family:'Geist',sans-serif;background:#f8f7f5;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}}
+.card{{background:#fff;border:1px solid #e2e1de;border-radius:14px;padding:40px;width:100%;max-width:420px;box-shadow:0 16px 48px rgba(0,0,0,0.1)}}
+.brand{{font-size:0.78rem;color:#9a9895;margin-bottom:20px;font-weight:500}}
+.brand span{{color:#1b6ef2;font-weight:600}}
+h1{{font-size:1.4rem;font-weight:600;color:#18170f;letter-spacing:-0.02em;margin-bottom:6px}}
+.sub{{font-size:0.84rem;color:#6a6965;margin-bottom:28px}}
+.tabs{{display:flex;gap:2px;background:#f3f3f1;border-radius:8px;padding:3px;margin-bottom:24px}}
+.tab{{flex:1;padding:7px;border:none;background:none;font-family:'Geist',sans-serif;font-size:0.875rem;font-weight:500;color:#9a9895;border-radius:6px;cursor:pointer;transition:all 0.15s}}
+.tab.active{{background:#fff;color:#18170f;box-shadow:0 1px 4px rgba(0,0,0,0.08)}}
+.fg{{margin-bottom:14px}}
+.fg label{{display:block;font-size:0.73rem;font-weight:600;color:#2b2a27;margin-bottom:5px}}
+.fg input{{width:100%;background:#fff;border:1px solid #c6c5c1;color:#18170f;padding:9px 12px;border-radius:6px;font-family:'Geist',sans-serif;font-size:0.875rem;outline:none;transition:border-color 0.15s,box-shadow 0.15s}}
+.fg input:focus{{border-color:#1b6ef2;box-shadow:0 0 0 3px rgba(27,110,242,0.1)}}
+.fg input::placeholder{{color:#9a9895}}
+.btn{{width:100%;background:#18170f;color:#fff;border:none;padding:10px;border-radius:7px;font-family:'Geist',sans-serif;font-size:0.9rem;font-weight:500;cursor:pointer;transition:background 0.15s;margin-top:4px}}
+.btn:hover{{background:#2b2a27}}
+.btn:disabled{{opacity:0.55;cursor:default}}
+.msg{{display:none;padding:10px 13px;border-radius:7px;font-size:0.82rem;line-height:1.55;margin-top:14px}}
+.msg-success{{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}}
+.msg-error{{background:#fff1f2;color:#be123c;border:1px solid #fecdd3}}
+.powered{{text-align:center;font-size:0.72rem;color:#9a9895;margin-top:22px}}
+.powered a{{color:#1b6ef2;text-decoration:none;font-weight:500}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="brand">Secured by <span>Ageinx</span></div>
+  <h1>Welcome back</h1>
+  <p class="sub">Sign in or create an account to continue</p>
+  <div class="tabs">
+    <button class="tab active" id="tab-login" onclick="switchTab('login')">Sign in</button>
+    <button class="tab" id="tab-signup" onclick="switchTab('signup')">Create account</button>
+  </div>
+  <div id="form-login">
+    <div class="fg"><label>Email</label><input type="email" id="li-email" placeholder="you@example.com"/></div>
+    <div class="fg"><label>Password</label><input type="password" id="li-password" placeholder="Your password"/></div>
+    <button class="btn" id="li-btn" onclick="handleLogin()">Sign in</button>
+    <div class="msg" id="li-msg"></div>
+  </div>
+  <div id="form-signup" style="display:none">
+    <div class="fg"><label>Email</label><input type="email" id="su-email" placeholder="you@example.com"/></div>
+    <div class="fg"><label>Password</label><input type="password" id="su-password" placeholder="Min. 8 characters"/></div>
+    <button class="btn" id="su-btn" onclick="handleSignup()">Create account</button>
+    <div class="msg" id="su-msg"></div>
+  </div>
+  <div class="powered">Protected by <a href="https://ageinx.vercel.app" target="_blank">Ageinx</a></div>
+</div>
+<script>
+const SLUG = "{slug}";
+const API = window.location.origin;
+function switchTab(tab) {{
+  document.getElementById('tab-login').classList.toggle('active', tab==='login');
+  document.getElementById('tab-signup').classList.toggle('active', tab==='signup');
+  document.getElementById('form-login').style.display = tab==='login'?'block':'none';
+  document.getElementById('form-signup').style.display = tab==='signup'?'block':'none';
+}}
+function showMsg(id, html, type) {{
+  const el = document.getElementById(id);
+  el.innerHTML = html; el.style.display = 'block';
+  el.className = 'msg msg-' + type;
+}}
+async function handleLogin() {{
+  const btn = document.getElementById('li-btn');
+  const email = document.getElementById('li-email').value.trim();
+  const password = document.getElementById('li-password').value;
+  if (!email || !password) {{ showMsg('li-msg','All fields required.','error'); return; }}
+  btn.disabled = true; btn.textContent = 'Signing in\u2026';
+  try {{
+    const res = await fetch(`${{API}}/auth/${{SLUG}}/login`, {{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{email,password}})}});
+    const data = await res.json();
+    if (!res.ok) {{ showMsg('li-msg', data.detail||'Login failed.','error'); return; }}
+    showMsg('li-msg','\u2705 Signed in! Redirecting\u2026','success');
+    setTimeout(()=>{{ window.location.href = data.redirect_url; }}, 800);
+  }} catch(e) {{ showMsg('li-msg','Network error. Try again.','error'); }}
+  finally {{ btn.disabled=false; btn.textContent='Sign in'; }}
+}}
+async function handleSignup() {{
+  const btn = document.getElementById('su-btn');
+  const email = document.getElementById('su-email').value.trim();
+  const password = document.getElementById('su-password').value;
+  if (!email || !password) {{ showMsg('su-msg','All fields required.','error'); return; }}
+  btn.disabled = true; btn.textContent = 'Creating account\u2026';
+  try {{
+    const res = await fetch(`${{API}}/auth/${{SLUG}}/signup`, {{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{email,password}})}});
+    const data = await res.json();
+    if (!res.ok) {{ showMsg('su-msg', data.detail||'Signup failed.','error'); return; }}
+    showMsg('su-msg','\u2705 Account created! Redirecting\u2026','success');
+    setTimeout(()=>{{ window.location.href = data.redirect_url; }}, 800);
+  }} catch(e) {{ showMsg('su-msg','Network error. Try again.','error'); }}
+  finally {{ btn.disabled=false; btn.textContent='Create account'; }}
+}}
+</script>
+</body>
+</html>"""
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(content=html)
+
+
+@app.post("/auth/{slug}/signup")
+async def auth_user_signup(slug: str, request: Request, data: UserSignup):
+    ip = get_client_ip(request)
+    await rate_limit(f"auth_signup:{ip}", limit=10, window=3600)
+    validate_password(data.password)
+    db_pool = await get_pool()
+    async with db_pool.acquire() as conn:
+        dev = await conn.fetchrow(
+            "SELECT id, callback_url FROM developers WHERE slug = $1 AND is_active = true", slug
+        )
+        if not dev:
+            raise HTTPException(status_code=404, detail="app not found")
+        existing = await conn.fetchrow(
+            "SELECT id FROM users WHERE developer_id = $1 AND email = $2", dev["id"], data.email
+        )
+        if existing:
+            raise HTTPException(status_code=400, detail="email already registered")
+        password_hash = pwd_context.hash(data.password)
+        user_id = await conn.fetchval(
+            "INSERT INTO users (developer_id, email, password_hash) VALUES ($1, $2, $3) RETURNING id",
+            dev["id"], data.email, password_hash
+        )
+    token = create_token(
+        {"sub": str(user_id), "dev": str(dev["id"]), "email": data.email, "type": "user_access"},
+        60 * 60 * 24
+    )
+    return {"message": "account created", "redirect_url": f"{dev['callback_url']}#token={token}", "token": token}
+
+
+@app.post("/auth/{slug}/login")
+async def auth_user_login(slug: str, request: Request, data: UserLogin):
+    ip = get_client_ip(request)
+    await rate_limit(f"auth_login:{ip}", limit=10, window=900)
+    db_pool = await get_pool()
+    async with db_pool.acquire() as conn:
+        dev = await conn.fetchrow(
+            "SELECT id, callback_url FROM developers WHERE slug = $1 AND is_active = true", slug
+        )
+        if not dev:
+            raise HTTPException(status_code=404, detail="app not found")
+        user = await conn.fetchrow(
+            "SELECT id, email, password_hash FROM users WHERE developer_id = $1 AND email = $2",
+            dev["id"], data.email
+        )
+    if not user or not pwd_context.verify(data.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="invalid credentials")
+    token = create_token(
+        {"sub": str(user["id"]), "dev": str(dev["id"]), "email": user["email"], "type": "user_access"},
+        60 * 60 * 24
+    )
+    return {"message": "login successful", "redirect_url": f"{dev['callback_url']}#token={token}", "token": token}
+
+
+@app.get("/auth/userinfo")
+async def auth_userinfo(request: Request):
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="missing token")
+    token = auth_header.split(" ")[1]
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[ALGORITHM])
+        if payload.get("type") != "user_access":
+            raise HTTPException(status_code=401, detail="invalid token type")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="invalid token")
+    return {
+        "user_id": payload["sub"],
+        "email": payload["email"],
+        "developer_id": payload["dev"],
+        "token_type": "user_access"
+    }
