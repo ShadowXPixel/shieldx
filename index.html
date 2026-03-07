@@ -712,7 +712,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
         <h2>Let's talk.</h2>
         <p>Have a question about Ageinx? Want to discuss a custom plan? Or just want to connect — we always respond.</p>
         <div class="c-links">
-          <a class="c-link" href="/cdn-cgi/l/email-protection#79111c151516391a0b1c18121d1c0f0a571016"><div class="c-ico">📧</div><span class="__cf_email__" data-cfemail="6d1a021f061a0419051e050c09021a5f5f5d592d0a000c0401430e0200">[email&#160;protected]</span></a>
+          <a class="c-link" href="mailto:workwithshadow2204@gmail.com"><div class="c-ico">📧</div>workwithshadow2204@gmail.com</a>
           <a class="c-link" href="#"><div class="c-ico">💬</div>Discord - @realmofshadow_</a>
           <a class="c-link" href="#"><div class="c-ico">🐙</div>github.com/ShadowXPixel</a>
         </div>
@@ -784,11 +784,11 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
         <div class="auth-divider">No account yet? <a href="#" onclick="authTab('signup')" style="color:var(--accent);text-decoration:none;font-weight:500;">Create one</a></div>
       </div>
     </div>
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+  
 <script>
 const PAGES = ['home','ageinx','about','contact','auth'];
 // IMPORTANT: If your API is on a different domain, put the full URL here
-const API = ''; 
+const API = window.location.origin;
 
 function go(id, tab = 'signup') {
   // 1. Check Auth state
@@ -926,6 +926,47 @@ window.addEventListener('DOMContentLoaded', () => {
   const hash = window.location.hash.replace('#','') || 'home';
   go(PAGES.includes(hash) ? hash : 'home');
 });
+
+async function handleSubmit(btn) {
+  const fname   = document.getElementById('c-fname').value.trim();
+  const lname   = document.getElementById('c-lname').value.trim();
+  const email   = document.getElementById('c-email').value.trim();
+  const plan    = document.getElementById('c-plan').value;
+  const message = document.getElementById('c-message').value.trim();
+  const msgEl   = document.getElementById('contact-msg');
+
+  function setMsg(text, ok) {
+    msgEl.style.display = 'block';
+    msgEl.style.background = ok ? '#f0fdf4' : '#fff1f2';
+    msgEl.style.color      = ok ? '#15803d' : '#be123c';
+    msgEl.style.border     = ok ? '1px solid #bbf7d0' : '1px solid #fecdd3';
+    msgEl.textContent = text;
+  }
+
+  if (!email || !message) { setMsg('Please fill in your email and message.', false); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  try {
+    const res = await fetch(`${API}/contact`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: `${fname} ${lname}`.trim(), email, plan, message })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Failed');
+    setMsg("✅ Message sent! We'll get back to you within one business day.", true);
+    ['c-fname','c-lname','c-email','c-plan','c-message'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+    btn.textContent = 'Sent!';
+  } catch(e) {
+    setMsg('❌ Something went wrong. Try emailing us directly.', false);
+    btn.disabled = false;
+    btn.textContent = 'Send message';
+  }
+}
 </script>
 </body>
 </html>
