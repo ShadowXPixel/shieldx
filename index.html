@@ -643,7 +643,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
   headers: { <span class="str">'Authorization'</span>: <span class="str">`Bearer <span class="vr">${token}</span>`</span> }
 });
 <span class="kw">const</span> { <span class="vr">user_id</span>, <span class="vr">email</span> } = <span class="kw">await</span> <span class="vr">res</span>.<span class="fn">json</span>();
-<span class="cm">// → { user_id: "uuid", email: "user@example.com" }</span></pre></div>
+<span class="cm">// → { user_id: "uuid", email: "<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e396908691a3869b828e938f86cd808c8e">[email&#160;protected]</a>" }</span></pre></div>
     </div>
   </div>
 
@@ -723,22 +723,24 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
       <h3>Send a message</h3>
       <p class="c-intro">We read every message and typically respond within one business day.</p>
       <div class="fg-row">
-        <div class="fg"><label>First name</label><input type="text" placeholder="Jane"/></div>
-        <div class="fg"><label>Last name</label><input type="text" placeholder="Smith"/></div>
+        <div class="fg"><label>First name</label><input type="text" id="c-fname" placeholder="Jane"/></div>
+        <div class="fg"><label>Last name</label><input type="text" id="c-lname" placeholder="Smith"/></div>
       </div>
-      <div class="fg"><label>Email</label><input type="email" placeholder="jane@yourapp.com"/></div>
+      <div class="fg"><label>Email</label><input type="email" id="c-email" placeholder="jane@yourapp.com"/></div>
       <div class="fg">
         <label>Plan interest</label>
-        <select>
+        <select id="c-plan">
           <option value="">Select a plan</option>
           <option>Starter — Free</option>
-          <option>Pro — $29 / month</option>
-          <option>Business — $79 / month</option>
+          <option>Pro — $49 / month</option>
+          <option>Business — $199 / month</option>
+          <option>Enterprise — Custom</option>
           <option>Not sure yet</option>
         </select>
       </div>
-      <div class="fg"><label>Message</label><textarea placeholder="Tell us about your project..."></textarea></div>
-      <button class="sub-btn" onclick="handleSubmit(this)">Send message</button>
+      <div class="fg"><label>Message</label><textarea id="c-message" placeholder="Tell us about your project..."></textarea></div>
+      <button class="sub-btn" id="contact-btn" onclick="handleSubmit(this)">Send message</button>
+      <div id="contact-msg" style="display:none;margin-top:12px;padding:10px 14px;border-radius:7px;font-size:0.83rem;line-height:1.5;"></div>
     </div>
   </div>
 
@@ -785,7 +787,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
   </div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 const PAGES = ['home','ageinx','about','contact','auth'];
 const API = '';
 
@@ -933,13 +935,4 @@ async function handleLogin() {
 function showMsg(el, html, type) {
   el.innerHTML = html;
   el.style.display = 'block';
-  el.className = 'auth-msg auth-msg-' + type;
-}
-
-function handleSubmit(btn) {
-  btn.disabled = true; btn.textContent = 'Sending…';
-  setTimeout(() => { btn.textContent = 'Message sent ✓'; }, 1200);
-}
-</script>
-</body>
-</html>
+  
