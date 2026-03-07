@@ -457,23 +457,29 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 
 <nav>
   <div class="nav-inner">
-    <div class="logo" onclick="go('home')">Code<span>Mango</span></div>
-    <nav class="nav-center">
-      <a onclick="go('home')"    id="nl-home"    class="active">Home</a>
+
+    <div class="logo" onclick="go('home')">
+      Code<span>Mango</span>
+    </div>
+
+    <div class="nav-center">
+      <a onclick="go('home')" id="nl-home" class="active">Home</a>
       <a onclick="go('ageinx')" id="nl-ageinx">Ageinx</a>
-      <a onclick="go('about')"   id="nl-about">About</a>
+      <a onclick="go('about')" id="nl-about">About</a>
       <a onclick="go('contact')" id="nl-contact">Contact</a>
-    </nav>
+    </div>
+
     <div class="nav-right">
       <button class="btn-s nav-login" onclick="go('auth')">Log in</button>
       <button class="nav-cta" onclick="go('auth')">Get started</button>
+
       <button class="ham" id="ham" onclick="toggleMenu()" aria-label="Open menu">
         <span></span><span></span><span></span>
       </button>
     </div>
+
   </div>
 </nav>
-
 <div class="mob-menu" id="mobMenu">
   <a onclick="go('home')"    id="ml-home"    class="active">Home</a>
   <a onclick="go('ageinx')" id="ml-ageinx">Ageinx</a>
