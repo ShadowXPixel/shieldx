@@ -417,7 +417,7 @@ body {
 </div>
 
 <script>
-const API = '';
+const API = window.location.origin;
 let devData = null;
 let keyVisible = false;
 
@@ -451,7 +451,7 @@ async function loadDashboard() {
 function renderDashboard() {
   const { email, api_key, slug, callback_url, plan, usage } = devData;
   const limit = usage.api_calls_limit;
-  const used = usage.sessions_this_month;
+  const used = usage.api_calls_count;
   const pct = Math.min((used / limit) * 100, 100);
 
   // Sidebar
@@ -581,7 +581,7 @@ async function changePassword() {
 
 // ─── Upgrade plan (placeholder for Razorpay) ───
 function contactEnterprise() {
-  window.open('mailto:hello@codemango.dev?subject=Ageinx Enterprise Inquiry', '_blank');
+  window.open('mailto:kjuhi1496@gmail.com?subject=Ageinx Enterprise Inquiry', '_blank');
 }
 
 function upgradePlan(plan) {
