@@ -1,4 +1,5 @@
 import asyncpg
+import datetime
 import os
 import jwt
 import time
@@ -6,7 +7,7 @@ import uuid
 import re
 import httpx
 from fastapi import FastAPI, Request, HTTPException, Depends
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
@@ -16,25 +17,27 @@ from passlib.context import CryptContext
 # Config
 # -----------------------------------
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-JWT_SECRET = os.getenv("JWT_SECRET")
-UPSTASH_URL = os.getenv("UPSTASH_REDIS_REST_URL")
-UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN")
-RESEND_API_KEY = os.getenv("RESEND_API_KEY")
-INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY")
-CONTACT_EMAIL = "kjuhi1496@gmail.com"  # where contact emails are sent
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE = 60 * 15            # 15 minutes
+DATABASE_URL      = os.getenv("DATABASE_URL")
+JWT_SECRET        = os.getenv("JWT_SECRET")
+UPSTASH_URL       = os.getenv("UPSTASH_REDIS_REST_URL")
+UPSTASH_TOKEN     = os.getenv("UPSTASH_REDIS_REST_TOKEN")
+RESEND_API_KEY    = os.getenv("RESEND_API_KEY")
+INTERNAL_API_KEY  = os.getenv("INTERNAL_API_KEY")
+CONTACT_EMAIL     = "kjuhi1496@gmail.com"
+ALGORITHM         = "HS256"
+ACCESS_TOKEN_EXPIRE  = 60 * 15            # 15 minutes
 REFRESH_TOKEN_EXPIRE = 60 * 60 * 24 * 7  # 7 days
+USER_ACCESS_EXPIRE   = 60 * 60 * 24      # 24 hours
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+PLAN_LIMITS = {"starter": 1000, "pro": 50000, "business": 500000}
+UPGRADE_MESSAGES = {
+    "starter":  "API limit reached (1,000 calls/month). To upgrade to Pro and restore access, contact kjuhi1496@gmail.com",
+    "pro":      "API limit reached (50,000 calls/month). To upgrade to Business and restore access, contact kjuhi1496@gmail.com",
+    "business": "API limit reached (500,000 calls/month). To discuss Enterprise pricing, contact kjuhi1496@gmail.com",
+}
+
+pwd_context   = CryptContext(schemes=["bcrypt"], deprecated="auto")
 bearer_scheme = HTTPBearer()
-
-def safe_uuid(val: str) -> uuid.UUID:
-    try:
-        return uuid.UUID(val)
-    except ValueError:
-        raise HTTPException(status_code=401, detail="invalid token format")
 
 # -----------------------------------
 # App
@@ -42,7 +45,7 @@ def safe_uuid(val: str) -> uuid.UUID:
 
 app = FastAPI(
     title="Ageinx API",
-    version="1.0",
+    version="0.1",
     docs_url=None,
     redoc_url=None,
     openapi_url=None
@@ -89,66 +92,149 @@ def get_http_client() -> httpx.AsyncClient:
     return http_client
 
 # -----------------------------------
-# Rate Limiter — Upstash Redis
+# Helpers
+# -----------------------------------
+
+def safe_uuid(val: str) -> uuid.UUID:
+    try:
+        return uuid.UUID(val)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="invalid token format")
+
+def create_token(payload: dict, expires_in: int) -> str:
+    data = payload.copy()
+    data["exp"] = int(time.time()) + expires_in
+    return jwt.encode(data, JWT_SECRET, algorithm=ALGORITHM)
+
+def validate_slug(slug: str):
+    if not re.match(r'^[a-z0-9\-]{3,30}$', slug):
+        raise HTTPException(
+            status_code=400,
+            detail="slug must be 3-30 chars, lowercase letters, numbers, hyphens only"
+        )
+
+def validate_password(password: str):
+    if len(password) < 8:
+        raise HTTPException(status_code=400, detail="password must be at least 8 characters")
+
+def verify_token(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+    try:
+        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[ALGORITHM])
+        if payload.get("type") != "access":
+            raise HTTPException(status_code=401, detail="invalid token type")
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="invalid token")
+
+# -----------------------------------
+# IP Detection
 # -----------------------------------
 
 def get_client_ip(request: Request) -> str:
-    # Vercel trusted header — most reliable on Vercel
     vercel_ip = request.headers.get("x-vercel-forwarded-for")
     if vercel_ip:
         return vercel_ip.split(",")[-1].strip()
-    # Take LAST IP in x-forwarded-for to prevent spoofing
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
         return forwarded.split(",")[-1].strip()
-    # Fall back to x-real-ip
     real_ip = request.headers.get("x-real-ip")
     if real_ip:
         return real_ip.strip()
-    # Final fallback
     return request.client.host if request.client else "127.0.0.1"
 
+# -----------------------------------
+# Rate Limiter — Upstash Redis
+# -----------------------------------
+
 async def rate_limit(key: str, limit: int, window: int):
-    """
-    key    — unique identifier e.g. "signup:1.2.3.4"
-    limit  — max requests allowed
-    window — time window in seconds
-    Fail-open: if Redis is down, allow the request through
-    """
+    """Fail-open: if Redis is down, allow the request through."""
     if not UPSTASH_URL or not UPSTASH_TOKEN:
-        return  # skip if not configured
+        return
 
     redis_key = f"rl:{key}"
     headers = {"Authorization": f"Bearer {UPSTASH_TOKEN}"}
 
     try:
         client = get_http_client()
-        # Increment counter
-        r = await client.post(
-            f"{UPSTASH_URL}/incr/{redis_key}",
-            headers=headers
-        )
+        r = await client.post(f"{UPSTASH_URL}/incr/{redis_key}", headers=headers)
         try:
             count = r.json().get("result", 1)
         except ValueError:
             count = 1  # Upstash returned non-JSON (502/504), fail-open
 
-        # Set expiry only on first request
         if count == 1:
-            await client.post(
-                f"{UPSTASH_URL}/expire/{redis_key}/{window}",
-                headers=headers
-            )
+            await client.post(f"{UPSTASH_URL}/expire/{redis_key}/{window}", headers=headers)
 
         if count > limit:
-            raise HTTPException(
-                status_code=429,
-                detail="Too many requests. Try again later."
-            )
+            raise HTTPException(status_code=429, detail="Too many requests. Try again later.")
     except HTTPException:
-        raise  # re-raise 429s
+        raise
     except Exception:
-        pass  # fail-open: Redis down → let request through
+        pass  # fail-open
+
+# -----------------------------------
+# Plan Enforcement
+# -----------------------------------
+
+async def enforce_plan_limit(conn, dev_id):
+    """Increment api_calls_count, reset monthly, raise 429 with upgrade message if over limit."""
+    dev = await conn.fetchrow(
+        "SELECT plan, api_calls_count, api_calls_reset_at FROM developers WHERE id = $1", dev_id
+    )
+    plan  = dev["plan"] or "starter"
+    limit = PLAN_LIMITS.get(plan, 1000)
+
+    now      = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
+    reset_at = dev["api_calls_reset_at"]
+
+    # Reset counter if a new 30-day window has started
+    if reset_at and now >= reset_at + datetime.timedelta(days=30):
+        await conn.execute(
+            "UPDATE developers SET api_calls_count = 1, api_calls_reset_at = $1 WHERE id = $2",
+            now, dev_id
+        )
+        return  # fresh window — allow
+
+    new_count = (dev["api_calls_count"] or 0) + 1
+    await conn.execute(
+        "UPDATE developers SET api_calls_count = $1 WHERE id = $2",
+        new_count, dev_id
+    )
+
+    if new_count > limit:
+        msg = UPGRADE_MESSAGES.get(plan, "API limit reached. Contact kjuhi1496@gmail.com to upgrade.")
+        raise HTTPException(status_code=429, detail=msg)
+
+# -----------------------------------
+# Risk Engine
+# -----------------------------------
+
+def run_signals(ip_str: str, user_agent: str | None):
+    risk_score = 0
+    signals = {"header_anomaly": False, "ip_private": False, "ua_suspicious": False}
+
+    if not user_agent:
+        signals["header_anomaly"] = True
+        risk_score += 20
+
+    if ip_str.startswith("192.") or ip_str.startswith("127.") or ip_str.startswith("10."):
+        signals["ip_private"] = True
+        risk_score += 10
+
+    if user_agent:
+        ua = user_agent.lower()
+        if "curl" in ua or "python" in ua or "bot" in ua:
+            signals["ua_suspicious"] = True
+            risk_score += 15
+
+    return risk_score, signals
+
+def compute_decision(score: int):
+    if score < 20:   return "allow",     "low"
+    elif score < 50: return "challenge", "medium"
+    else:            return "block",     "high"
 
 # -----------------------------------
 # Middleware
@@ -156,8 +242,8 @@ async def rate_limit(key: str, limit: int, window: int):
 
 @app.middleware("http")
 async def limit_body_size(request: Request, call_next):
-    content_length = request.headers.get("content-length")
     if request.method in ("POST", "PUT", "PATCH"):
+        content_length = request.headers.get("content-length")
         if content_length is None:
             return JSONResponse(status_code=411, content={"detail": "Content-Length required"})
         if not content_length.isdigit() or int(content_length) > 10000:
@@ -178,83 +264,23 @@ class DevLogin(BaseModel):
     email: EmailStr
     password: str
 
+class ChangePassword(BaseModel):
+    current_password: str
+    new_password: str
+
 class ContactForm(BaseModel):
     name: str
     email: EmailStr
     plan: str = ""
     message: str
 
-class ChangePassword(BaseModel):
-    current_password: str
-    new_password: str
+class UserSignup(BaseModel):
+    email: EmailStr
+    password: str
 
-# -----------------------------------
-# Helpers
-# -----------------------------------
-
-def create_token(payload: dict, expires_in: int) -> str:
-    data = payload.copy()
-    data["exp"] = int(time.time()) + expires_in
-    return jwt.encode(data, JWT_SECRET, algorithm=ALGORITHM)
-
-def validate_slug(slug: str):
-    if not re.match(r'^[a-z0-9\-]{3,30}$', slug):
-        raise HTTPException(
-            status_code=400,
-            detail="slug must be 3-30 chars, lowercase letters, numbers, hyphens only"
-        )
-
-def validate_password(password: str):
-    if len(password) < 8:
-        raise HTTPException(status_code=400, detail="password must be at least 8 characters")
-
-def verify_token(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
-    token = credentials.credentials
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[ALGORITHM])
-        if payload.get("type") != "access":
-            raise HTTPException(status_code=401, detail="invalid token type")
-        return payload
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="invalid token")
-
-# -----------------------------------
-# Risk Engine
-# -----------------------------------
-
-def run_signals(ip_str: str, user_agent: str | None):
-    risk_score = 0
-    signals = {
-        "header_anomaly": False,
-        "ip_private": False,
-        "ua_suspicious": False
-    }
-
-    if not user_agent:
-        signals["header_anomaly"] = True
-        risk_score += 20
-
-    if ip_str.startswith("192.") or ip_str.startswith("127.") or ip_str.startswith("10."):
-        signals["ip_private"] = True
-        risk_score += 10
-
-    if user_agent:
-        ua = user_agent.lower()
-        if "curl" in ua or "python" in ua or "bot" in ua:
-            signals["ua_suspicious"] = True
-            risk_score += 15
-
-    return risk_score, signals
-
-def compute_decision(score: int):
-    if score < 20:
-        return "allow", "low"
-    elif score < 50:
-        return "challenge", "medium"
-    else:
-        return "block", "high"
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
 
 # -----------------------------------
 # Health
@@ -265,15 +291,13 @@ async def health():
     return {"status": "ok"}
 
 # -----------------------------------
-# /platform — Dev Signup & Login
+# /platform — Developer Auth
 # -----------------------------------
 
 @app.post("/platform/dev/signup")
 async def dev_signup(request: Request, data: DevSignup):
-    # Rate limit: 5 signups per IP per hour
     ip = get_client_ip(request)
     await rate_limit(f"signup:{ip}", limit=5, window=3600)
-
     validate_slug(data.slug)
     validate_password(data.password)
 
@@ -281,18 +305,13 @@ async def dev_signup(request: Request, data: DevSignup):
     async with db_pool.acquire() as conn:
         password_hash = pwd_context.hash(data.password)
         api_key = f"ax_live_{uuid.uuid4().hex}"
-
         try:
             await conn.execute(
                 """
                 INSERT INTO developers (email, password_hash, api_key, slug, callback_url, is_active)
                 VALUES ($1, $2, $3, $4, $5, true)
                 """,
-                data.email,
-                password_hash,
-                api_key,
-                data.slug,
-                data.callback_url
+                data.email, password_hash, api_key, data.slug, data.callback_url
             )
         except asyncpg.exceptions.UniqueViolationError as e:
             if "email" in str(e):
@@ -302,14 +321,13 @@ async def dev_signup(request: Request, data: DevSignup):
     return {
         "message": "account created. save your api key — it won't be shown again.",
         "api_key": api_key,
-        "login_url": f"https://ageinx.vercel.app/auth/{data.slug}",
+        "auth_url": f"https://ageinx.vercel.app/auth/{data.slug}",
         "active": True
     }
 
 
 @app.post("/platform/dev/login")
 async def dev_login(request: Request, data: DevLogin):
-    # Rate limit: 10 login attempts per IP per 15 minutes
     ip = get_client_ip(request)
     await rate_limit(f"login:{ip}", limit=10, window=900)
 
@@ -322,41 +340,21 @@ async def dev_login(request: Request, data: DevLogin):
 
     if not dev or not pwd_context.verify(data.password, dev["password_hash"]):
         raise HTTPException(status_code=401, detail="invalid credentials")
-
     if not dev["is_active"]:
         raise HTTPException(status_code=403, detail="account not yet activated")
 
-    access_token = create_token(
-        {"sub": str(dev["id"]), "type": "access"},
-        ACCESS_TOKEN_EXPIRE
-    )
-    refresh_token = create_token(
-        {"sub": str(dev["id"]), "type": "refresh"},
-        REFRESH_TOKEN_EXPIRE
-    )
+    access_token  = create_token({"sub": str(dev["id"]), "type": "access"},  ACCESS_TOKEN_EXPIRE)
+    refresh_token = create_token({"sub": str(dev["id"]), "type": "refresh"}, REFRESH_TOKEN_EXPIRE)
 
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
         await conn.execute(
-            """
-            INSERT INTO dev_sessions (developer_id, refresh_token, expires_at)
-            VALUES ($1, $2, to_timestamp($3))
-            """,
-            dev["id"],
-            refresh_token,
-            int(time.time()) + REFRESH_TOKEN_EXPIRE
+            "INSERT INTO dev_sessions (developer_id, refresh_token, expires_at) VALUES ($1, $2, to_timestamp($3))",
+            dev["id"], refresh_token, int(time.time()) + REFRESH_TOKEN_EXPIRE
         )
 
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-        "expires_in": ACCESS_TOKEN_EXPIRE
-    }
+    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer", "expires_in": ACCESS_TOKEN_EXPIRE}
 
-# -----------------------------------
-# /platform/dev/me — Dashboard Data
-# -----------------------------------
 
 @app.get("/platform/dev/me")
 async def dev_me(token: dict = Depends(verify_token)):
@@ -365,48 +363,39 @@ async def dev_me(token: dict = Depends(verify_token)):
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
         dev = await conn.fetchrow(
-            """
-            SELECT email, api_key, slug, callback_url, plan, is_active, created_at
-            FROM developers WHERE id = $1
-            """,
+            "SELECT email, api_key, slug, callback_url, plan, is_active, created_at, api_calls_count FROM developers WHERE id = $1",
             safe_uuid(dev_id)
         )
-
         if not dev:
             raise HTTPException(status_code=404, detail="developer not found")
 
         user_count = await conn.fetchval(
-            "SELECT COUNT(*) FROM users WHERE developer_id = $1",
-            safe_uuid(dev_id)
+            "SELECT COUNT(*) FROM users WHERE developer_id = $1", safe_uuid(dev_id)
         )
-
         sessions_this_month = await conn.fetchval(
-            """
-            SELECT COUNT(*) FROM dev_sessions
-            WHERE developer_id = $1
-            AND created_at >= date_trunc('month', now())
-            """,
+            "SELECT COUNT(*) FROM dev_sessions WHERE developer_id = $1 AND created_at >= date_trunc('month', now())",
             safe_uuid(dev_id)
         )
 
-    plan = dev["plan"] or "starter"
-    plan_limits = {"starter": 1000, "pro": 50000, "business": 500000}
-    limit = plan_limits.get(plan, 1000)
+    plan  = dev["plan"] or "starter"
+    limit = PLAN_LIMITS.get(plan, 1000)
 
     return {
-        "email": dev["email"],
-        "api_key": dev["api_key"],
-        "slug": dev["slug"],
+        "email":        dev["email"],
+        "api_key":      dev["api_key"],
+        "slug":         dev["slug"],
         "callback_url": dev["callback_url"],
-        "plan": plan,
-        "is_active": dev["is_active"],
-        "created_at": str(dev["created_at"]),
+        "plan":         plan,
+        "is_active":    dev["is_active"],
+        "created_at":   str(dev["created_at"]),
         "usage": {
-            "users_registered": user_count or 0,
+            "users_registered":   user_count or 0,
             "sessions_this_month": sessions_this_month or 0,
-            "api_calls_limit": limit,
+            "api_calls_count":    dev["api_calls_count"] or 0,
+            "api_calls_limit":    limit,
         }
     }
+
 
 @app.post("/platform/dev/change-password")
 async def change_password(data: ChangePassword, token: dict = Depends(verify_token)):
@@ -415,22 +404,18 @@ async def change_password(data: ChangePassword, token: dict = Depends(verify_tok
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
         dev = await conn.fetchrow(
-            "SELECT password_hash FROM developers WHERE id = $1",
-            safe_uuid(dev_id)
+            "SELECT password_hash FROM developers WHERE id = $1", safe_uuid(dev_id)
         )
-
         if not dev or not pwd_context.verify(data.current_password, dev["password_hash"]):
             raise HTTPException(status_code=401, detail="current password is incorrect")
-
         validate_password(data.new_password)
         new_hash = pwd_context.hash(data.new_password)
-
         await conn.execute(
-            "UPDATE developers SET password_hash = $1 WHERE id = $2",
-            new_hash, safe_uuid(dev_id)
+            "UPDATE developers SET password_hash = $1 WHERE id = $2", new_hash, safe_uuid(dev_id)
         )
 
     return {"message": "password updated successfully"}
+
 
 @app.post("/platform/dev/logout")
 async def logout(token: dict = Depends(verify_token)):
@@ -439,8 +424,7 @@ async def logout(token: dict = Depends(verify_token)):
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
         await conn.execute(
-            "DELETE FROM dev_sessions WHERE developer_id = $1",
-            safe_uuid(dev_id)
+            "DELETE FROM dev_sessions WHERE developer_id = $1", safe_uuid(dev_id)
         )
 
     return {"message": "logged out successfully"}
@@ -452,19 +436,17 @@ async def logout(token: dict = Depends(verify_token)):
 @app.post("/contact")
 async def contact(request: Request, data: ContactForm):
     ip = get_client_ip(request)
-    await rate_limit(f"contact:{ip}", limit=3, window=3600)  # 3 per hour
+    await rate_limit(f"contact:{ip}", limit=3, window=3600)
 
     if not data.name.strip() or not data.message.strip():
         raise HTTPException(status_code=400, detail="name and message are required")
-
     if len(data.message) > 2000:
         raise HTTPException(status_code=400, detail="message too long")
-
     if not RESEND_API_KEY:
         raise HTTPException(status_code=500, detail="email service not configured")
 
-    plan_line = f"<p><strong>Plan interest:</strong> {data.plan}</p>" if data.plan else ""
-    html_body = f"""
+    plan_line  = f"<p><strong>Plan interest:</strong> {data.plan}</p>" if data.plan else ""
+    html_body  = f"""
     <h2>New contact from Ageinx</h2>
     <p><strong>Name:</strong> {data.name}</p>
     <p><strong>Email:</strong> {data.email}</p>
@@ -477,16 +459,13 @@ async def contact(request: Request, data: ContactForm):
     try:
         r = await client.post(
             "https://api.resend.com/emails",
-            headers={
-                "Authorization": f"Bearer {RESEND_API_KEY}",
-                "Content-Type": "application/json"
-            },
+            headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
             json={
-                "from": "Ageinx Contact <onboarding@resend.dev>",
-                "to": [CONTACT_EMAIL],
+                "from":     "Ageinx Contact <onboarding@resend.dev>",
+                "to":       [CONTACT_EMAIL],
                 "reply_to": data.email,
-                "subject": f"[Ageinx] Message from {data.name}",
-                "html": html_body
+                "subject":  f"[Ageinx] Message from {data.name}",
+                "html":     html_body
             }
         )
         if r.status_code not in (200, 201):
@@ -499,7 +478,7 @@ async def contact(request: Request, data: ContactForm):
     return {"message": "Message sent! We'll get back to you within one business day."}
 
 # -----------------------------------
-# /internal — Fraud Filter
+# /internal — Fraud Filter (protected)
 # -----------------------------------
 
 @app.post("/internal/check", include_in_schema=False)
@@ -507,10 +486,10 @@ async def internal_check(request: Request):
     key = request.headers.get("x-internal-key")
     if not INTERNAL_API_KEY or key != INTERNAL_API_KEY:
         raise HTTPException(status_code=403, detail="forbidden")
+
     start_time = time.time()
     request_id = f"ax_{uuid.uuid4().hex[:8]}"
-
-    ip_str = request.client.host if request.client else "127.0.0.1"
+    ip_str     = get_client_ip(request)
     user_agent = request.headers.get("user-agent")
 
     score, signals = run_signals(ip_str, user_agent)
@@ -518,26 +497,15 @@ async def internal_check(request: Request):
 
     return {
         "request_id": request_id,
-        "decision": decision,
-        "risk": {"score": score, "level": level},
-        "signals": signals,
-        "meta": {"processing_ms": round((time.time() - start_time) * 1000, 2)}
+        "decision":   decision,
+        "risk":       {"score": score, "level": level},
+        "signals":    signals,
+        "meta":       {"processing_ms": round((time.time() - start_time) * 1000, 2)}
     }
 
 # -----------------------------------
 # /auth — AuthaaS Core Flow
 # -----------------------------------
-
-USER_ACCESS_EXPIRE = 60 * 60 * 24  # 24 hours for end users
-
-class UserSignup(BaseModel):
-    email: EmailStr
-    password: str
-
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-
 
 @app.get("/auth/userinfo")
 async def auth_userinfo(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
@@ -550,20 +518,19 @@ async def auth_userinfo(credentials: HTTPAuthorizationCredentials = Depends(bear
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="invalid token")
     return {
-        "user_id": payload["sub"],
-        "email": payload["email"],
+        "user_id":      payload["sub"],
+        "email":        payload["email"],
         "developer_id": payload["dev"],
-        "token_type": "user_access"
+        "token_type":   "user_access"
     }
 
 
 @app.get("/auth/{slug}")
 async def auth_page(slug: str):
-    from fastapi.responses import HTMLResponse
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
         dev = await conn.fetchrow(
-            "SELECT slug, callback_url FROM developers WHERE slug = $1 AND is_active = true", slug
+            "SELECT slug FROM developers WHERE slug = $1 AND is_active = true", slug
         )
     if not dev:
         raise HTTPException(status_code=404, detail="app not found")
@@ -626,12 +593,12 @@ h1{{font-size:1.4rem;font-weight:600;color:#18170f;letter-spacing:-0.02em;margin
 </div>
 <script>
 const SLUG = "{slug}";
-const API = window.location.origin;
+const API  = window.location.origin;
 function switchTab(tab) {{
   document.getElementById('tab-login').classList.toggle('active', tab==='login');
   document.getElementById('tab-signup').classList.toggle('active', tab==='signup');
-  document.getElementById('form-login').style.display = tab==='login'?'block':'none';
-  document.getElementById('form-signup').style.display = tab==='signup'?'block':'none';
+  document.getElementById('form-login').style.display  = tab==='login'  ? 'block' : 'none';
+  document.getElementById('form-signup').style.display = tab==='signup' ? 'block' : 'none';
 }}
 function showMsg(id, html, type) {{
   const el = document.getElementById(id);
@@ -640,33 +607,33 @@ function showMsg(id, html, type) {{
 }}
 async function handleLogin() {{
   const btn = document.getElementById('li-btn');
-  const email = document.getElementById('li-email').value.trim();
+  const email    = document.getElementById('li-email').value.trim();
   const password = document.getElementById('li-password').value;
   if (!email || !password) {{ showMsg('li-msg','All fields required.','error'); return; }}
-  btn.disabled = true; btn.textContent = 'Signing in…';
+  btn.disabled = true; btn.textContent = 'Signing in\u2026';
   try {{
-    const res = await fetch(`${{API}}/auth/${{SLUG}}/login`, {{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{email,password}})}});
+    const res  = await fetch(`${{API}}/auth/${{SLUG}}/login`, {{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{email,password}})}});
     const data = await res.json();
-    if (!res.ok) {{ showMsg('li-msg', data.detail||'Login failed.','error'); return; }}
-    showMsg('li-msg','✅ Signed in! Redirecting…','success');
-    setTimeout(()=>{{ window.location.href = data.redirect_url; }}, 800);
-  }} catch(e) {{ showMsg('li-msg','Network error. Try again.','error'); }}
-  finally {{ btn.disabled=false; btn.textContent='Sign in'; }}
+    if (!res.ok) {{ showMsg('li-msg', data.detail || 'Login failed.', 'error'); return; }}
+    showMsg('li-msg', '\u2705 Signed in! Redirecting\u2026', 'success');
+    setTimeout(() => {{ window.location.href = data.redirect_url; }}, 800);
+  }} catch(e) {{ showMsg('li-msg', 'Network error. Try again.', 'error'); }}
+  finally {{ btn.disabled = false; btn.textContent = 'Sign in'; }}
 }}
 async function handleSignup() {{
   const btn = document.getElementById('su-btn');
-  const email = document.getElementById('su-email').value.trim();
+  const email    = document.getElementById('su-email').value.trim();
   const password = document.getElementById('su-password').value;
   if (!email || !password) {{ showMsg('su-msg','All fields required.','error'); return; }}
-  btn.disabled = true; btn.textContent = 'Creating account…';
+  btn.disabled = true; btn.textContent = 'Creating account\u2026';
   try {{
-    const res = await fetch(`${{API}}/auth/${{SLUG}}/signup`, {{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{email,password}})}});
+    const res  = await fetch(`${{API}}/auth/${{SLUG}}/signup`, {{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{email,password}})}});
     const data = await res.json();
-    if (!res.ok) {{ showMsg('su-msg', data.detail||'Signup failed.','error'); return; }}
-    showMsg('su-msg','✅ Account created! Redirecting…','success');
-    setTimeout(()=>{{ window.location.href = data.redirect_url; }}, 800);
-  }} catch(e) {{ showMsg('su-msg','Network error. Try again.','error'); }}
-  finally {{ btn.disabled=false; btn.textContent='Create account'; }}
+    if (!res.ok) {{ showMsg('su-msg', data.detail || 'Signup failed.', 'error'); return; }}
+    showMsg('su-msg', '\u2705 Account created! Redirecting\u2026', 'success');
+    setTimeout(() => {{ window.location.href = data.redirect_url; }}, 800);
+  }} catch(e) {{ showMsg('su-msg', 'Network error. Try again.', 'error'); }}
+  finally {{ btn.disabled = false; btn.textContent = 'Create account'; }}
 }}
 </script>
 </body>
@@ -679,6 +646,7 @@ async def auth_user_signup(slug: str, request: Request, data: UserSignup):
     ip = get_client_ip(request)
     await rate_limit(f"auth_signup:{ip}", limit=10, window=3600)
     validate_password(data.password)
+
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
         dev = await conn.fetchrow(
@@ -686,6 +654,9 @@ async def auth_user_signup(slug: str, request: Request, data: UserSignup):
         )
         if not dev:
             raise HTTPException(status_code=404, detail="app not found")
+
+        await enforce_plan_limit(conn, dev["id"])
+
         password_hash = pwd_context.hash(data.password)
         try:
             user_id = await conn.fetchval(
@@ -694,9 +665,10 @@ async def auth_user_signup(slug: str, request: Request, data: UserSignup):
             )
         except asyncpg.exceptions.UniqueViolationError:
             raise HTTPException(status_code=400, detail="email already registered")
+
     token = create_token(
         {"sub": str(user_id), "dev": str(dev["id"]), "email": data.email, "type": "user_access"},
-        60 * 60 * 24
+        USER_ACCESS_EXPIRE
     )
     return {"message": "account created", "redirect_url": f"{dev['callback_url']}#token={token}", "token": token}
 
@@ -705,6 +677,7 @@ async def auth_user_signup(slug: str, request: Request, data: UserSignup):
 async def auth_user_login(slug: str, request: Request, data: UserLogin):
     ip = get_client_ip(request)
     await rate_limit(f"auth_login:{ip}", limit=10, window=900)
+
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
         dev = await conn.fetchrow(
@@ -712,14 +685,19 @@ async def auth_user_login(slug: str, request: Request, data: UserLogin):
         )
         if not dev:
             raise HTTPException(status_code=404, detail="app not found")
+
+        await enforce_plan_limit(conn, dev["id"])
+
         user = await conn.fetchrow(
             "SELECT id, email, password_hash FROM users WHERE developer_id = $1 AND email = $2",
             dev["id"], data.email
         )
+
     if not user or not pwd_context.verify(data.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="invalid credentials")
+
     token = create_token(
         {"sub": str(user["id"]), "dev": str(dev["id"]), "email": user["email"], "type": "user_access"},
-        60 * 60 * 24
+        USER_ACCESS_EXPIRE
     )
     return {"message": "login successful", "redirect_url": f"{dev['callback_url']}#token={token}", "token": token}
