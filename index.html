@@ -470,8 +470,9 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
     </div>
 
     <div class="nav-right">
-      <button class="btn-s nav-login" onclick="go('auth')">Log in</button>
-      <button class="nav-cta" onclick="go('auth')">Get started</button>
+      <button class="btn-s nav-login" id="nav-btn-login" onclick="go('auth')">Log in</button>
+      <button class="nav-cta" id="nav-btn-getstarted" onclick="go('auth')">Get started</button>
+      <a href="/dashboard.html" id="nav-btn-dashboard" style="display:none;background:#18170f;color:#fff;padding:8px 18px;border-radius:7px;font-size:0.875rem;font-weight:500;text-decoration:none;font-family:'Geist',sans-serif;">Dashboard →</a>
 
       <button class="ham" id="ham" onclick="toggleMenu()" aria-label="Open menu">
         <span></span><span></span><span></span>
@@ -485,8 +486,9 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
   <a onclick="go('ageinx')" id="ml-ageinx">Ageinx</a>
   <a onclick="go('about')"   id="ml-about">About Us</a>
   <a onclick="go('contact')" id="ml-contact">Contact</a>
-  <a onclick="go('auth')" id="ml-auth">Log in</a>
-  <a onclick="go('auth')" class="mob-cta">Get started</a>
+  <a onclick="go('auth')" id="ml-auth-login">Log in</a>
+  <a onclick="go('auth')" id="ml-auth-getstarted" class="mob-cta">Get started</a>
+  <a href="/dashboard.html" id="ml-auth-dashboard" style="display:none;" class="mob-cta">Dashboard →</a>
 </div>
 
 <div class="page active" id="page-home">
@@ -923,6 +925,15 @@ function showMsg(el, html, type) {
 
 // Routing - load correct page on refresh
 window.addEventListener('DOMContentLoaded', () => {
+  // Navbar auth state
+  const loggedIn = !!localStorage.getItem('ax_access');
+  document.getElementById('nav-btn-login').style.display       = loggedIn ? 'none'  : '';
+  document.getElementById('nav-btn-getstarted').style.display  = loggedIn ? 'none'  : '';
+  document.getElementById('nav-btn-dashboard').style.display   = loggedIn ? ''      : 'none';
+  document.getElementById('ml-auth-login').style.display       = loggedIn ? 'none'  : '';
+  document.getElementById('ml-auth-getstarted').style.display  = loggedIn ? 'none'  : '';
+  document.getElementById('ml-auth-dashboard').style.display   = loggedIn ? ''      : 'none';
+
   const hash = window.location.hash.replace('#','') || 'home';
   go(PAGES.includes(hash) ? hash : 'home');
 });
