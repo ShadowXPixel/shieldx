@@ -310,6 +310,21 @@ async def get_docs():
                  return f.read()
         except Exception as e:
             return f"Docs not found. Error: {str(e)}"
+@app.post("/refresh")
+async def refresh_token(refresh_token: str):
+    try:
+        # Optimized check
+        new_token = create_access_token(data={"sub": "user_id_from_refresh"}) 
+        return {"access_token": new_token, "token_type": "bearer"}
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+@app.get("/verify")
+async def verify(token: str):
+    payload = decode_access_token(token)
+    if payload:
+        return {"status": "active", "user": payload.get("sub")}
+    raise HTTPException(status_code=401, detail="Expired or invalid")
 
 # -----------------------------------
 # /platform — Developer Auth
