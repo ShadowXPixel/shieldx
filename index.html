@@ -54,8 +54,8 @@ nav {
   display: flex; align-items: center; justify-content: space-between;
 }
 .logo {
-  font-weight: 600; font-size: 1rem; color: var(--ink);
-  letter-spacing: -0.02em; cursor: pointer; user-select: none; flex-shrink: 0;
+  font-weight: 700; font-size: 1rem; color: var(--ink);
+  letter-spacing: 0.25em; text-transform: uppercase; cursor: pointer; user-select: none; flex-shrink: 0;
 }
 .logo span { color: var(--accent); }
 
@@ -161,7 +161,7 @@ nav {
 /* ─── FOOTER ─── */
 footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 .ft { max-width: 1120px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
-.ft-logo { font-size: 0.9rem; font-weight: 600; color: var(--ink); letter-spacing: -0.02em; }
+.ft-logo { font-size: 0.8rem; font-weight: 700; color: var(--ink); letter-spacing: 0.25em; text-transform: uppercase; }
 .ft-logo span { color: var(--accent); }
 .ft-copy { font-size: 0.74rem; color: var(--g400); }
 .ft-links { display: flex; gap: 18px; }
@@ -169,7 +169,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 .ft-links a:hover { color: var(--ink); }
 
 /* ════════════ HOME ════════════ */
-.hero { padding: 96px 28px 72px; max-width: 1120px; margin: 0 auto; }
+.hero { padding: 96px 28px 72px; max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
 .hero-badge {
   display: inline-flex; align-items: center; gap: 8px;
   font-size: 0.78rem; color: var(--green); font-weight: 500;
@@ -179,13 +179,59 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 .hero-badge::before { content: ''; width: 6px; height: 6px; background: var(--green); border-radius: 50%; }
 .hero h1 {
   font-family: 'Instrument Serif', serif;
-  font-size: clamp(2.8rem, 5.5vw, 5rem);
+  font-size: clamp(2.2rem, 4vw, 4rem);
   line-height: 1.06; letter-spacing: -0.03em; color: var(--ink);
-  max-width: 760px; margin-bottom: 20px; font-weight: 400;
+  margin-bottom: 20px; font-weight: 400;
 }
 .hero h1 em { font-style: italic; color: var(--g400); }
-.hero-sub { font-size: 1.05rem; color: var(--g600); max-width: 460px; line-height: 1.72; margin-bottom: 34px; }
+.hero-sub { font-size: 1.0rem; color: var(--g600); max-width: 440px; line-height: 1.72; margin-bottom: 34px; }
 .hero-btns { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+/* ─── Browser Mockup ─── */
+.browser-wrap {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+.browser-bar {
+  background: var(--g50); border-bottom: 1px solid var(--border);
+  padding: 10px 14px; display: flex; align-items: center; gap: 10px;
+}
+.browser-dots { display: flex; gap: 5px; }
+.browser-dots span { width: 11px; height: 11px; border-radius: 50%; display: block; }
+.bd-red    { background: #ff5f57; }
+.bd-yellow { background: #febc2e; }
+.bd-green  { background: #28c840; }
+.browser-url {
+  flex: 1; background: #fff; border: 1px solid var(--border);
+  border-radius: 6px; padding: 4px 11px;
+  font-size: 0.73rem; color: var(--g600); font-family: 'Geist', sans-serif;
+}
+.browser-body { padding: 24px; }
+.mock-live {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.72rem; color: var(--green); font-weight: 500;
+  padding: 3px 10px; background: #f0fdf4; border-radius: 100px;
+  border: 1px solid #bbf7d0; margin-bottom: 14px;
+}
+.mock-live::before { content: ''; width: 5px; height: 5px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.mock-h { font-family: 'Instrument Serif', serif; font-size: 1.5rem; color: var(--ink); line-height: 1.15; margin-bottom: 10px; font-weight: 400; }
+.mock-h em { font-style: italic; color: var(--g400); display: block; }
+.mock-sub { font-size: 0.78rem; color: var(--g600); line-height: 1.65; margin-bottom: 18px; }
+.mock-btns { display: flex; gap: 8px; margin-bottom: 22px; }
+.mock-btn-p { background: var(--accent); color: #fff; border: none; padding: 7px 16px; border-radius: 7px; font-family: 'Geist', sans-serif; font-size: 0.78rem; font-weight: 500; cursor: default; }
+.mock-btn-s { background: #fff; color: var(--ink); border: 1px solid var(--border-s); padding: 7px 14px; border-radius: 7px; font-family: 'Geist', sans-serif; font-size: 0.78rem; cursor: default; }
+.mock-stats { display: grid; grid-template-columns: repeat(3,1fr); border-top: 1px solid var(--border); padding-top: 16px; }
+.mock-stat { text-align: center; padding: 4px 0; }
+.mock-stat + .mock-stat { border-left: 1px solid var(--border); }
+.mock-stat-v { font-family: 'Instrument Serif', serif; font-size: 1.3rem; color: var(--ink); line-height: 1; letter-spacing: -0.03em; }
+.mock-stat-l { font-size: 0.62rem; color: var(--g400); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 3px; }
+@media (max-width: 820px) {
+  .hero { grid-template-columns: 1fr; gap: 48px; padding-top: 80px; }
+}
 
 /* Stats */
 .stats-strip { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 0 28px; }
@@ -326,7 +372,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
   border-radius: 14px; padding: 40px; width: 100%; max-width: 440px;
   box-shadow: var(--sh-lg);
 }
-.auth-logo { font-size: 1rem; font-weight: 600; color: var(--ink); letter-spacing: -0.02em; margin-bottom: 6px; }
+.auth-logo { font-size: 0.9rem; font-weight: 700; color: var(--ink); letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 6px; }
 .auth-logo span { color: var(--accent); }
 .auth-tagline { font-size: 0.8rem; color: var(--g400); margin-bottom: 28px; }
 .auth-tabs { display: flex; gap: 2px; background: var(--g50); border-radius: 8px; padding: 3px; margin-bottom: 28px; }
@@ -495,12 +541,50 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 <div class="page active" id="page-home">
 
   <div class="hero">
-    <div class="hero-badge">Ageinx — Now available</div>
-    <h1>One Platform<br/><em>Entire Auth Backend</em></h1>
-    <p class="hero-sub">Ageinx is a hosted Authentication-as-a-Service platform. Redirect your users to us, we handle login and signup, then send them back to your app with a token. No auth code to write. Ever.</p>
-    <div class="hero-btns">
-      <button class="btn-p" onclick="go('ageinx')">Explore Ageinx</button>
-      <button class="btn-s" onclick="go('contact')">Talk to us</button>
+    <!-- Left: copy -->
+    <div class="hero-left">
+      <div class="hero-badge">Ageinx — Now available</div>
+      <h1>One Platform.<br/><em>Entire Auth Backend.</em></h1>
+      <p class="hero-sub">Ageinx is a hosted Authentication-as-a-Service platform. Redirect your users to us, we handle login and signup, then send them back to your app with a token. No auth code to write. Ever.</p>
+      <div class="hero-btns">
+        <button class="btn-p" onclick="go('ageinx')">Explore Ageinx</button>
+        <button class="btn-s" onclick="go('contact')">Talk to us</button>
+      </div>
+    </div>
+
+    <!-- Right: fake browser mockup -->
+    <div class="browser-wrap">
+      <div class="browser-bar">
+        <div class="browser-dots">
+          <span class="bd-red"></span>
+          <span class="bd-yellow"></span>
+          <span class="bd-green"></span>
+        </div>
+        <div class="browser-url">ageinx.vercel.app/auth/myapp</div>
+      </div>
+      <div class="browser-body">
+        <div class="mock-live">Ageinx Guard Active</div>
+        <div class="mock-h">Auth<em>just works.</em></div>
+        <p class="mock-sub">Redirect users to Ageinx. We handle authentication, hashing, tokens, and rate limiting. You receive a clean JWT identity response.</p>
+        <div class="mock-btns">
+          <div class="mock-btn-p">Get Started</div>
+          <div class="mock-btn-s">Read Docs</div>
+        </div>
+        <div class="mock-stats">
+          <div class="mock-stat">
+            <div class="mock-stat-v">1</div>
+            <div class="mock-stat-l">Redirect</div>
+          </div>
+          <div class="mock-stat">
+            <div class="mock-stat-v">0ms</div>
+            <div class="mock-stat-l">Config</div>
+          </div>
+          <div class="mock-stat">
+            <div class="mock-stat-v">∞</div>
+            <div class="mock-stat-l">Tenants</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -646,7 +730,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
   headers: { <span class="str">'Authorization'</span>: <span class="str">`Bearer <span class="vr">${token}</span>`</span> }
 });
 <span class="kw">const</span> { <span class="vr">user_id</span>, <span class="vr">email</span> } = <span class="kw">await</span> <span class="vr">res</span>.<span class="fn">json</span>();
-<span class="cm">// → { user_id: "uuid", email: "<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e396908691a3869b828e938f86cd808c8e">[email&#160;protected]</a>" }</span></pre></div>
+<span class="cm">// → { user_id: "uuid", email: "workwithshadow2204@gmail.com" }</span></pre></div>
     </div>
   </div>
 
@@ -970,11 +1054,12 @@ async function handleSubmit(btn) {
     if (!res.ok) throw new Error(data.detail || 'Failed');
     setMsg("✅ Message sent! We'll get back to you within one business day.", true);
     ['c-fname','c-lname','c-email','c-plan','c-message'].forEach(id => {
-      const el = document.getElementById(id); if (el) el.value = '';
+      const el = document.getElementById(id);
+      if (el) el.value = '';
     });
-    btn.textContent = 'Sent!';
   } catch(e) {
-    setMsg('❌ Something went wrong. Try emailing us directly.', false);
+    setMsg('Something went wrong. Please try again.', false);
+  } finally {
     btn.disabled = false;
     btn.textContent = 'Send message';
   }
@@ -982,4 +1067,3 @@ async function handleSubmit(btn) {
 </script>
 </body>
 </html>
-
