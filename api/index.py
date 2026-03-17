@@ -298,6 +298,18 @@ async def health_check():
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"DB unavailable: {str(e)}")
 
+# -----------------------------------
+# Docs
+# -------‐---------------------------
+
+@app.get("/docs", response_class=HTMLResponse)
+async def get_docs():
+        try:
+             # Vercel's root for files is /var/task/
+             with open("api/docs.html", "r") as f:
+                 return f.read()
+        except Exception as e:
+            return f"Docs not found. Error: {str(e)}"
 
 # -----------------------------------
 # /platform — Developer Auth

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docs — Ageinx</title>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root { --ink: #18170f; --accent: #1b6ef2; --border: #e2e1de; --g400: #9a9895; --g600: #6a6965; }
+        body { font-family: 'Geist', sans-serif; background: #fff; color: var(--ink); line-height: 1.6; padding: 60px 24px; }
+        .wrap { max-width: 800px; margin: 0 auto; }
+        .logo { font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 48px; font-size: 0.9rem; }
+        .logo span { color: var(--accent); }
+        h1 { font-size: 2.2rem; margin-bottom: 12px; letter-spacing: -0.03em; font-weight: 600; }
+        .lead { font-size: 1.1rem; color: var(--g600); margin-bottom: 48px; max-width: 600px; }
+        h2 { font-size: 1.2rem; margin-top: 48px; margin-bottom: 16px; letter-spacing: -0.01em; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        p { color: var(--g600); margin-bottom: 16px; font-size: 0.95rem; }
+        code { background: #f3f3f1; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; font-family: monospace; }
+        pre { background: var(--ink); color: #c2beb6; padding: 24px; border-radius: 10px; overflow-x: auto; margin: 20px 0; font-size: 0.82rem; line-height: 1.7; }
+        .method { color: #7dd3fc; font-weight: 600; }
+        .url { color: #ffe066; }
+        .status-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.7rem; font-weight: 600; color: #15a348; background: #f0fdf4; padding: 4px 10px; border-radius: 100px; border: 1px solid #bbf7d0; margin-bottom: 16px; text-transform: uppercase; }
+        .status-badge::before { content: ''; width: 6px; height: 6px; background: #15a348; border-radius: 50%; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="logo">Nimbo<span>ity</span></div>
+        <div class="status-badge">System Operational</div>
+        <h1>API Documentation</h1>
+        <p class="lead">Integrate hosted authentication into your application with three endpoints and zero boilerplate.</p>
+
+        <h2>1. The Redirect</h2>
+        <p>Direct your users to the Ageinx hosted auth page. We handle the entire login and signup flow.</p>
+        <pre># URL Format
+https://ageinx.vercel.app/auth/{your-slug}</pre>
+
+        <h2>2. Callback & Token</h2>
+        <p>Once authenticated, Ageinx redirects the user back to your <code>callback_url</code>. The JWT is appended as a URL fragment.</p>
+        <pre>// Example: https://yourapp.com/callback#token=eyJhbGci...
+const token = new URLSearchParams(window.location.hash.substring(1)).get('token');</pre>
+
+        <h2>3. Verify Identity</h2>
+        <p>Send the token from your backend to verify the user's data and ensure the session is valid.</p>
+        <pre><span class="method">GET</span> <span class="url">https://ageinx.vercel.app/auth/userinfo</span>
+Authorization: Bearer &lt;token&gt;</pre>
+
+        <h2>Response Format</h2>
+        <p>Successful verification returns a clean user identity object.</p>
+        <pre>{
+  "user_id": "uuid-string",
+  "email": "user@example.com",
+  "developer_id": "your-dev-id",
+  "token_type": "user_access"
+}</pre>
+
+        <footer style="margin-top: 80px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--g400);">
+            Nimboity Studio — Built for performance.
+        </footer>
+    </div>
+</body>
+</html>
+
