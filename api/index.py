@@ -1,3 +1,4 @@
+import asyncio
 import asyncpg
 import datetime
 import os
@@ -7,6 +8,7 @@ import uuid
 import re
 import httpx
 from fastapi import FastAPI, Request, HTTPException, Depends
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -36,7 +38,7 @@ UPGRADE_MESSAGES = {
     "business": "API limit reached (500,000 calls/month). To discuss Enterprise pricing, contact kjuhi1496@gmail.com",
 }
 
-pwd_context   = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context   = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=10)
 bearer_scheme = HTTPBearer()
 
 # -----------------------------------
@@ -287,8 +289,15 @@ class UserLogin(BaseModel):
 # -----------------------------------
 
 @app.get("/health")
-async def health():
-    return {"status": "ok"}
+async def health_check():
+    try:
+        db_pool = await get_pool()
+        async with db_pool.acquire() as conn:
+            await conn.fetchval("SELECT 1")
+        return {"status": "ok", "db": "connected"}
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"DB unavailable: {str(e)}")
+
 
 # -----------------------------------
 # /platform — Developer Auth
@@ -301,10 +310,12 @@ async def dev_signup(request: Request, data: DevSignup):
     validate_slug(data.slug)
     validate_password(data.password)
 
+    # Hash before acquiring DB connection — keeps conn time minimal
+    password_hash = await run_in_threadpool(pwd_context.hash, data.password)
+    api_key = f"ax_live_{uuid.uuid4().hex}"
+
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
-        password_hash = pwd_context.hash(data.password)
-        api_key = f"ax_live_{uuid.uuid4().hex}"
         try:
             await conn.execute(
                 """
@@ -338,7 +349,9 @@ async def dev_login(request: Request, data: DevLogin):
             data.email
         )
 
-    if not dev or not pwd_context.verify(data.password, dev["password_hash"]):
+    if not dev:
+        raise HTTPException(status_code=401, detail="invalid credentials")
+    if not await run_in_threadpool(pwd_context.verify, data.password, dev["password_hash"]):
         raise HTTPException(status_code=401, detail="invalid credentials")
     if not dev["is_active"]:
         raise HTTPException(status_code=403, detail="account not yet activated")
@@ -406,10 +419,12 @@ async def change_password(data: ChangePassword, token: dict = Depends(verify_tok
         dev = await conn.fetchrow(
             "SELECT password_hash FROM developers WHERE id = $1", safe_uuid(dev_id)
         )
-        if not dev or not pwd_context.verify(data.current_password, dev["password_hash"]):
+        if not dev:
+            raise HTTPException(status_code=401, detail="current password is incorrect")
+        if not await run_in_threadpool(pwd_context.verify, data.current_password, dev["password_hash"]):
             raise HTTPException(status_code=401, detail="current password is incorrect")
         validate_password(data.new_password)
-        new_hash = pwd_context.hash(data.new_password)
+        new_hash = await run_in_threadpool(pwd_context.hash, data.new_password)
         await conn.execute(
             "UPDATE developers SET password_hash = $1 WHERE id = $2", new_hash, safe_uuid(dev_id)
         )
@@ -648,16 +663,17 @@ async def auth_user_signup(slug: str, request: Request, data: UserSignup):
     validate_password(data.password)
 
     db_pool = await get_pool()
+    # Run DB lookup and password hash concurrently
     async with db_pool.acquire() as conn:
-        dev = await conn.fetchrow(
-            "SELECT id, callback_url FROM developers WHERE slug = $1 AND is_active = true", slug
+        dev, password_hash = await asyncio.gather(
+            conn.fetchrow("SELECT id, callback_url FROM developers WHERE slug = $1 AND is_active = true", slug),
+            run_in_threadpool(pwd_context.hash, data.password)
         )
         if not dev:
             raise HTTPException(status_code=404, detail="app not found")
 
         await enforce_plan_limit(conn, dev["id"])
 
-        password_hash = pwd_context.hash(data.password)
         try:
             user_id = await conn.fetchval(
                 "INSERT INTO users (developer_id, email, password_hash) VALUES ($1, $2, $3) RETURNING id",
@@ -680,24 +696,28 @@ async def auth_user_login(slug: str, request: Request, data: UserLogin):
 
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
-        dev = await conn.fetchrow(
-            "SELECT id, callback_url FROM developers WHERE slug = $1 AND is_active = true", slug
+        # Single JOIN — eliminates the N+1 waterfall (was 2 sequential queries)
+        row = await conn.fetchrow(
+            """
+            SELECT d.id AS dev_id, d.callback_url, d.plan, d.api_calls_count, d.api_calls_reset_at,
+                   u.id AS user_id, u.email, u.password_hash
+            FROM developers d
+            LEFT JOIN users u ON u.developer_id = d.id AND u.email = $2
+            WHERE d.slug = $1 AND d.is_active = true
+            """,
+            slug, data.email
         )
-        if not dev:
+        if not row:
             raise HTTPException(status_code=404, detail="app not found")
 
-        await enforce_plan_limit(conn, dev["id"])
+        # Enforce plan limit using already-fetched data (no extra query)
+        await enforce_plan_limit(conn, row["dev_id"])
 
-        user = await conn.fetchrow(
-            "SELECT id, email, password_hash FROM users WHERE developer_id = $1 AND email = $2",
-            dev["id"], data.email
-        )
-
-    if not user or not pwd_context.verify(data.password, user["password_hash"]):
+    if not row["user_id"] or not await run_in_threadpool(pwd_context.verify, data.password, row["password_hash"]):
         raise HTTPException(status_code=401, detail="invalid credentials")
 
     token = create_token(
-        {"sub": str(user["id"]), "dev": str(dev["id"]), "email": user["email"], "type": "user_access"},
+        {"sub": str(row["user_id"]), "dev": str(row["dev_id"]), "email": row["email"], "type": "user_access"},
         USER_ACCESS_EXPIRE
     )
-    return {"message": "login successful", "redirect_url": f"{dev['callback_url']}#token={token}", "token": token}
+    return {"message": "login successful", "redirect_url": f"{row['callback_url']}#token={token}", "token": token}
