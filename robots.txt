@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Allow: /docs
+
+# Point to the map
+Sitemap: https://ageinx.vercel.app/sitemap.xml
