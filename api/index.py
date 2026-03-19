@@ -53,13 +53,10 @@ app = FastAPI(
     openapi_url=None
 )
 
+# Open CORS to allow developers to hit the API from their own custom domains
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://ageinx.vercel.app",
-        "http://localhost:3000",
-        "http://localhost:8000",
-    ],
+    allow_origins=["*"], 
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -119,16 +116,19 @@ def validate_password(password: str):
     if len(password) < 8:
         raise HTTPException(status_code=400, detail="password must be at least 8 characters")
 
-def verify_token(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+def verify_token_payload(token_string: str, expected_type: str = None):
     try:
-        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[ALGORITHM])
-        if payload.get("type") != "access":
+        payload = jwt.decode(token_string, JWT_SECRET, algorithms=[ALGORITHM])
+        if expected_type and payload.get("type") != expected_type:
             raise HTTPException(status_code=401, detail="invalid token type")
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="invalid token")
+
+def verify_token(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+    return verify_token_payload(credentials.credentials, "access")
 
 # -----------------------------------
 # IP Detection
@@ -310,21 +310,25 @@ async def get_docs():
                  return f.read()
         except Exception as e:
             return f"Docs not found. Error: {str(e)}"
+
+# Fixed /refresh endpoint using proper JWT methods
 @app.post("/refresh")
 async def refresh_token(refresh_token: str):
     try:
-        # Optimized check
-        new_token = create_access_token(data={"sub": "user_id_from_refresh"}) 
-        return {"access_token": new_token, "token_type": "bearer"}
+        payload = verify_token_payload(refresh_token, expected_type="refresh")
+        new_token = create_token({"sub": payload.get("sub"), "type": "access"}, ACCESS_TOKEN_EXPIRE) 
+        return {"access_token": new_token, "token_type": "bearer", "expires_in": ACCESS_TOKEN_EXPIRE}
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
+# Fixed /verify endpoint using proper JWT methods
 @app.get("/verify")
 async def verify(token: str):
-    payload = decode_access_token(token)
-    if payload:
+    try:
+        payload = verify_token_payload(token)
         return {"status": "active", "user": payload.get("sub")}
-    raise HTTPException(status_code=401, detail="Expired or invalid")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Expired or invalid")
 
 # -----------------------------------
 # /platform — Developer Auth
@@ -728,7 +732,7 @@ async def auth_user_signup(slug: str, request: Request, data: UserSignup):
     )
     return {"message": "account created", "redirect_url": f"{dev['callback_url']}#token={token}", "token": token}
 
-
+# Fixed wallet drain logic by moving enforce_plan_limit down
 @app.post("/auth/{slug}/login")
 async def auth_user_login(slug: str, request: Request, data: UserLogin):
     ip = get_client_ip(request)
@@ -736,7 +740,7 @@ async def auth_user_login(slug: str, request: Request, data: UserLogin):
 
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
-        # Single JOIN — eliminates the N+1 waterfall (was 2 sequential queries)
+        # Single JOIN — eliminates the N+1 waterfall
         row = await conn.fetchrow(
             """
             SELECT d.id AS dev_id, d.callback_url, d.plan, d.api_calls_count, d.api_calls_reset_at,
@@ -750,11 +754,12 @@ async def auth_user_login(slug: str, request: Request, data: UserLogin):
         if not row:
             raise HTTPException(status_code=404, detail="app not found")
 
-        # Enforce plan limit using already-fetched data (no extra query)
-        await enforce_plan_limit(conn, row["dev_id"])
+        # Verify password FIRST to prevent limit drainage from bad actors
+        if not row["user_id"] or not await run_in_threadpool(pwd_context.verify, data.password, row["password_hash"]):
+            raise HTTPException(status_code=401, detail="invalid credentials")
 
-    if not row["user_id"] or not await run_in_threadpool(pwd_context.verify, data.password, row["password_hash"]):
-        raise HTTPException(status_code=401, detail="invalid credentials")
+        # Now enforce the limit since the auth is legitimate
+        await enforce_plan_limit(conn, row["dev_id"])
 
     token = create_token(
         {"sub": str(row["user_id"]), "dev": str(row["dev_id"]), "email": row["email"], "type": "user_access"},
