@@ -301,11 +301,18 @@ async def health_check():
 @app.get("/docs", response_class=HTMLResponse)
 async def get_docs():
     try:
-        # Vercel's root for files is /var/task/
-        with open("api/docs.html", "r") as f:
+        # Dynamically get the exact folder where index.py lives
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        # Point directly to docs.html in that exact same folder
+        file_path = os.path.join(current_dir, "docs.html") 
+        
+        with open(file_path, "r", encoding="utf-8") as f:
             return f.read()
     except Exception as e:
-        return f"Docs not found. Error: {str(e)}"
+        # If it fails, this will print the exact path Vercel was trying to check
+        return f"Docs not found. Vercel looked in: {file_path} | Error: {str(e)}"
+
 
 @app.post("/refresh")
 async def refresh_token(refresh_token: str):
