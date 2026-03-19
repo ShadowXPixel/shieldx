@@ -54,8 +54,8 @@ nav {
   display: flex; align-items: center; justify-content: space-between;
 }
 .logo {
-  font-weight: 700; font-size: 1rem; color: var(--ink);
-  letter-spacing: 0.25em; text-transform: uppercase; cursor: pointer; user-select: none; flex-shrink: 0;
+  font-weight: 500; font-size: 1.05rem; color: var(--ink);
+  letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; user-select: none; flex-shrink: 0;
 }
 .logo span { color: var(--accent); }
 
@@ -68,15 +68,8 @@ nav {
 .nav-center a:hover { color: var(--ink); background: var(--g50); }
 .nav-center a.active { color: var(--ink); }
 
-/* explicitly ensure the container doesn't shrink and hide buttons */
 .nav-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-
-/* Desktop explicitly defined display properties to prevent collapsing */
-.nav-login {
-  display: inline-flex; align-items: center; justify-content: center;
-  font-size: 0.875rem; padding: 7px 14px;
-}
-
+.nav-login { display: inline-flex; align-items: center; justify-content: center; font-size: 0.875rem; padding: 7px 14px; }
 .nav-cta {
   display: inline-flex; align-items: center; justify-content: center;
   background: var(--ink); color: var(--white); border: none;
@@ -161,7 +154,7 @@ nav {
 /* ─── FOOTER ─── */
 footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 .ft { max-width: 1120px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
-.ft-logo { font-size: 0.8rem; font-weight: 700; color: var(--ink); letter-spacing: 0.25em; text-transform: uppercase; }
+.ft-logo { font-size: 0.8rem; font-weight: 500; color: var(--ink); letter-spacing: 0.15em; text-transform: uppercase; }
 .ft-logo span { color: var(--accent); }
 .ft-copy { font-size: 0.74rem; color: var(--g400); }
 .ft-links { display: flex; gap: 18px; }
@@ -187,7 +180,6 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 .hero-sub { font-size: 1.0rem; color: var(--g600); max-width: 440px; line-height: 1.72; margin-bottom: 34px; }
 .hero-btns { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 
-/* ─── Browser Mockup ─── */
 .browser-wrap {
   background: #fff;
   border: 1px solid var(--border);
@@ -229,11 +221,8 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 .mock-stat + .mock-stat { border-left: 1px solid var(--border); }
 .mock-stat-v { font-family: 'Instrument Serif', serif; font-size: 1.3rem; color: var(--ink); line-height: 1; letter-spacing: -0.03em; }
 .mock-stat-l { font-size: 0.62rem; color: var(--g400); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 3px; }
-@media (max-width: 820px) {
-  .hero { grid-template-columns: 1fr; gap: 48px; padding-top: 80px; }
-}
+@media (max-width: 820px) { .hero { grid-template-columns: 1fr; gap: 48px; padding-top: 80px; } }
 
-/* Stats */
 .stats-strip { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 0 28px; }
 .stats-inner { max-width: 1120px; margin: 0 auto; display: flex; padding: 36px 0; }
 .stat { flex: 1; }
@@ -241,7 +230,6 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 .stat-v { font-family: 'Instrument Serif', serif; font-size: 2.1rem; color: var(--ink); line-height: 1; margin-bottom: 4px; letter-spacing: -0.03em; }
 .stat-l { font-size: 0.77rem; color: var(--g400); font-weight: 500; }
 
-/* Feature grid */
 .feat-sec { padding: 88px 28px; max-width: 1120px; margin: 0 auto; }
 .f-grid {
   display: grid; grid-template-columns: repeat(3, 1fr);
@@ -255,16 +243,12 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 .f-title { font-size: 0.865rem; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
 .f-desc { font-size: 0.81rem; color: var(--g600); line-height: 1.65; }
 
-/* ════════════ AEGRIX ════════════ */
+/* ════════════ AGEINX (PLATFORM) ════════════ */
 .sx-hdr { padding: 72px 28px 56px; max-width: 1120px; margin: 0 auto; border-bottom: 1px solid var(--border); }
-
-/* What is Ageinx */
 .sx-intro { padding: 64px 28px; max-width: 1120px; margin: 0 auto; border-bottom: 1px solid var(--border); }
 .sx-intro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
 .sx-intro-text p { font-size: 0.875rem; color: var(--g600); line-height: 1.75; margin-bottom: 14px; }
 .sx-intro-text p:last-of-type { margin-bottom: 24px; }
-
-/* Module list */
 .modules-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
 .mod-row { background: var(--white); padding: 15px 18px; display: flex; align-items: center; gap: 14px; transition: background 0.15s; }
 .mod-row:hover { background: var(--off); }
@@ -273,11 +257,21 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 .mod-sub { font-size: 0.77rem; color: var(--g600); margin-top: 1px; }
 .mod-tag { margin-left: auto; font-size: 0.67rem; font-weight: 600; color: var(--accent); background: #e8f0fe; padding: 3px 9px; border-radius: 100px; white-space: nowrap; flex-shrink: 0; }
 
-/* Pricing inside Ageinx */
-.sx-pricing { padding: 64px 28px; max-width: 1120px; margin: 0 auto; border-bottom: 1px solid var(--border); }
-.plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 40px; }
+.sx-code { background: var(--off); border-top: 1px solid var(--border); padding: 60px 28px; }
+.sx-code-inner { max-width: 1120px; margin: 0 auto; }
+.code-blk {
+  background: var(--ink); border-radius: 10px; padding: 26px 28px;
+  font-family: 'Geist', monospace; font-size: 0.8rem; line-height: 1.85;
+  overflow-x: auto; color: #c2beb6; margin-top: 22px;
+}
+.kw{color:#ff79c6} .str{color:#ffe066} .fn{color:#7dd3fc}
+.cm{color:#52504a} .num{color:#a5b4fc} .vr{color:#86efac}
+
+/* ════════════ PRICING ════════════ */
+.sx-pricing { padding: 64px 28px; max-width: 1120px; margin: 0 auto; }
+.plans { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 40px; }
 .plan {
-  border: 1px solid var(--border); border-radius: 12px; padding: 28px 24px;
+  border: 1px solid var(--border); border-radius: 12px; padding: 28px 24px; background: var(--white);
   display: flex; flex-direction: column; position: relative; transition: border-color 0.2s, box-shadow 0.2s;
 }
 .plan:hover { border-color: var(--border-s); box-shadow: var(--sh); }
@@ -289,10 +283,10 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
   padding: 3px 10px; border-radius: 100px;
 }
 .plan-name { font-size: 0.75rem; font-weight: 600; color: var(--g400); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
-.plan-price { font-family: 'Instrument Serif', serif; font-size: 2.8rem; color: var(--ink); letter-spacing: -0.04em; line-height: 1; }
+.plan-price { font-family: 'Instrument Serif', serif; font-size: 2.5rem; color: var(--ink); letter-spacing: -0.04em; line-height: 1; }
 .plan-price sub { font-family: 'Geist', sans-serif; font-size: 0.8rem; color: var(--g400); font-weight: 400; vertical-align: baseline; }
 .plan-hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
-.plan-desc { font-size: 0.81rem; color: var(--g600); line-height: 1.6; margin-bottom: 18px; }
+.plan-desc { font-size: 0.81rem; color: var(--g600); line-height: 1.6; margin-bottom: 18px; min-height: 40px; }
 .plan-feats { list-style: none; display: flex; flex-direction: column; gap: 9px; flex: 1; margin-bottom: 24px; }
 .plan-feats li { font-size: 0.83rem; color: var(--g600); display: flex; gap: 9px; align-items: flex-start; }
 .plan-feats li::before { content: '✓'; color: var(--green); font-weight: 700; font-size: 0.75rem; padding-top: 1px; flex-shrink: 0; }
@@ -302,16 +296,8 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 .plan-btn-solid { background: var(--accent); color: var(--white); border-color: var(--accent); }
 .plan-btn-solid:hover { background: var(--accent-d); }
 
-/* Code */
-.sx-code { background: var(--off); border-top: 1px solid var(--border); padding: 60px 28px; }
-.sx-code-inner { max-width: 1120px; margin: 0 auto; }
-.code-blk {
-  background: var(--ink); border-radius: 10px; padding: 26px 28px;
-  font-family: 'Geist', monospace; font-size: 0.8rem; line-height: 1.85;
-  overflow-x: auto; color: #c2beb6; margin-top: 22px;
-}
-.kw{color:#ff79c6} .str{color:#ffe066} .fn{color:#7dd3fc}
-.cm{color:#52504a} .num{color:#a5b4fc} .vr{color:#86efac}
+@media (max-width: 1024px) { .plans { grid-template-columns: repeat(2, 1fr); gap: 20px; } }
+@media (max-width: 820px) { .plans { grid-template-columns: 1fr; } }
 
 /* ════════════ ABOUT ════════════ */
 .ab-hdr { padding: 72px 28px 56px; max-width: 1120px; margin: 0 auto; border-bottom: 1px solid var(--border); }
@@ -372,7 +358,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
   border-radius: 14px; padding: 40px; width: 100%; max-width: 440px;
   box-shadow: var(--sh-lg);
 }
-.auth-logo { font-size: 0.9rem; font-weight: 700; color: var(--ink); letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 6px; }
+.auth-logo { font-size: 0.9rem; font-weight: 500; color: var(--ink); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 6px; }
 .auth-logo span { color: var(--accent); }
 .auth-tagline { font-size: 0.8rem; color: var(--g400); margin-bottom: 28px; }
 .auth-tabs { display: flex; gap: 2px; background: var(--g50); border-radius: 8px; padding: 3px; margin-bottom: 28px; }
@@ -408,92 +394,66 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 .auth-msg-error { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
 .auth-divider { text-align: center; font-size: 0.75rem; color: var(--g400); margin: 20px 0 16px; }
 
-/* ════════════ 3D ANIMATIONS ════════════ */
-@keyframes fadeSlideUp {
-  from { opacity: 0; transform: translateY(32px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeSlideIn {
-  from { opacity: 0; transform: translateX(-20px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.94); }
-  to { opacity: 1; transform: scale(1); }
-}
-
+/* ════════════ ANIMATIONS ════════════ */
+@keyframes fadeSlideUp { from { opacity: 0; transform: translateY(32px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeSlideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
 .hero h1 { animation: fadeSlideUp 0.7s ease both; }
 .hero-badge { animation: fadeSlideUp 0.5s ease both; }
 .hero-sub { animation: fadeSlideUp 0.7s 0.1s ease both; }
 .hero-btns { animation: fadeSlideUp 0.7s 0.2s ease both; }
-
 .f-card { animation: scaleIn 0.5s ease both; }
 .f-card:nth-child(1) { animation-delay: 0.05s; }
 .f-card:nth-child(2) { animation-delay: 0.1s; }
 .f-card:nth-child(3) { animation-delay: 0.15s; }
 .f-card:nth-child(4) { animation-delay: 0.2s; }
 .f-card:nth-child(5) { animation-delay: 0.25s; }
-
 .plan { animation: fadeSlideUp 0.6s ease both; }
 .plan:nth-child(1) { animation-delay: 0.05s; }
 .plan:nth-child(2) { animation-delay: 0.15s; }
 .plan:nth-child(3) { animation-delay: 0.25s; }
-
+.plan:nth-child(4) { animation-delay: 0.35s; }
 .auth-card { animation: scaleIn 0.4s ease both; }
-
 .stat { animation: fadeSlideIn 0.5s ease both; }
 .stat:nth-child(1) { animation-delay: 0s; }
 .stat:nth-child(2) { animation-delay: 0.08s; }
 .stat:nth-child(3) { animation-delay: 0.16s; }
 .stat:nth-child(4) { animation-delay: 0.24s; }
-
 .mod-row { transition: transform 0.2s ease, background 0.15s; }
 .mod-row:hover { transform: translateX(6px); }
-
 .val { transition: transform 0.2s ease; }
 .val:hover { transform: translateX(5px); }
-
 .team-card { transition: transform 0.25s ease, border-color 0.2s, box-shadow 0.2s; }
 .team-card:hover { transform: translateY(-5px) scale(1.01); border-color: var(--accent); }
-
 .plan { transition: transform 0.25s ease, border-color 0.2s, box-shadow 0.2s; }
 .plan:hover { transform: translateY(-5px); box-shadow: var(--sh-lg); }
-
 .f-card { transition: background 0.15s, transform 0.2s ease; }
 .f-card:hover { background: var(--off); transform: translateY(-3px); }
 
-/* explicitly force the !important flag so the mobile styles perfectly toggle */
 @media (max-width: 820px) {
   nav { padding: 0 18px; }
   .nav-center, .nav-cta, .nav-login { display: none !important; }
   .ham { display: flex; }
-
   .hero { padding: 52px 18px 44px; }
   .stats-strip { padding: 0 18px; }
   .stats-inner { flex-wrap: wrap; padding: 24px 0; }
   .stat { min-width: 50%; padding: 12px 0; }
   .stat + .stat { border-left: none; padding-left: 0; }
-
   .feat-sec { padding: 52px 18px; }
   .f-grid { grid-template-columns: 1fr; }
   .f-card { border-right: none !important; }
   .f-card:nth-child(5) { border-bottom: 1px solid var(--border) !important; }
-
   .sx-hdr, .ab-hdr { padding: 52px 18px 40px; }
   .sx-intro { padding: 48px 18px; }
   .sx-intro-grid { grid-template-columns: 1fr; gap: 36px; }
   .sx-pricing { padding: 48px 18px; }
-  .plans { grid-template-columns: 1fr; }
   .sx-code { padding: 48px 18px; }
-
   .ab-body { padding: 48px 18px; }
   .ab-split { grid-template-columns: 1fr; gap: 36px; }
   .team-grid { grid-template-columns: 1fr; }
-
   .contact-wrap { grid-template-columns: 1fr; }
   .c-side { padding: 40px 18px; }
   .c-main { padding: 40px 18px; }
-
   footer { padding: 22px 18px; }
   .ft { flex-direction: column; gap: 14px; text-align: center; }
   .ft-links { justify-content: center; flex-wrap: wrap; }
@@ -504,14 +464,12 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 
 <nav>
   <div class="nav-inner">
-
-    <div class="logo" onclick="go('home')">
-      Nimbo<span>ity</span>
-    </div>
+    <div class="logo" onclick="go('home')">NIMBO<span>ITY</span></div>
 
     <div class="nav-center">
       <a onclick="go('home')" id="nl-home" class="active">Home</a>
-      <a onclick="go('ageinx')" id="nl-ageinx">Ageinx</a>
+      <a onclick="go('ageinx')" id="nl-ageinx">Platform</a>
+      <a onclick="go('pricing')" id="nl-pricing">Pricing</a>
       <a onclick="go('about')" id="nl-about">About</a>
       <a onclick="go('contact')" id="nl-contact">Contact</a>
       <a href="/docs" style="color: var(--g600); text-decoration: none; font-size: 0.875rem; padding: 6px 12px; font-weight: 500;">Docs</a>
@@ -521,17 +479,17 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
       <button class="btn-s nav-login" id="nav-btn-login" onclick="go('auth')">Log in</button>
       <button class="nav-cta" id="nav-btn-getstarted" onclick="go('auth')">Get started</button>
       <a href="/dashboard.html" id="nav-btn-dashboard" style="display:none;background:#18170f;color:#fff;padding:8px 18px;border-radius:7px;font-size:0.875rem;font-weight:500;text-decoration:none;font-family:'Geist',sans-serif;">Dashboard →</a>
-
       <button class="ham" id="ham" onclick="toggleMenu()" aria-label="Open menu">
         <span></span><span></span><span></span>
       </button>
     </div>
-
   </div>
 </nav>
+
 <div class="mob-menu" id="mobMenu">
   <a onclick="go('home')"    id="ml-home"    class="active">Home</a>
-  <a onclick="go('ageinx')" id="ml-ageinx">Ageinx</a>
+  <a onclick="go('ageinx')"  id="ml-ageinx">Platform</a>
+  <a onclick="go('pricing')" id="ml-pricing">Pricing</a>
   <a onclick="go('about')"   id="ml-about">About Us</a>
   <a onclick="go('contact')" id="ml-contact">Contact</a>
   <a onclick="go('auth')" id="ml-auth-login">Log in</a>
@@ -540,9 +498,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 </div>
 
 <div class="page active" id="page-home">
-
   <div class="hero">
-    <!-- Left: copy -->
     <div class="hero-left">
       <div class="hero-badge">Ageinx — Now available</div>
       <h1>One Platform.<br/><em>Entire Auth Backend.</em></h1>
@@ -552,15 +508,9 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
         <button class="btn-s" onclick="go('contact')">Talk to us</button>
       </div>
     </div>
-
-    <!-- Right: fake browser mockup -->
     <div class="browser-wrap">
       <div class="browser-bar">
-        <div class="browser-dots">
-          <span class="bd-red"></span>
-          <span class="bd-yellow"></span>
-          <span class="bd-green"></span>
-        </div>
+        <div class="browser-dots"><span class="bd-red"></span><span class="bd-yellow"></span><span class="bd-green"></span></div>
         <div class="browser-url">ageinx.vercel.app/auth/myapp</div>
       </div>
       <div class="browser-body">
@@ -572,18 +522,9 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
           <div class="mock-btn-s">Read Docs</div>
         </div>
         <div class="mock-stats">
-          <div class="mock-stat">
-            <div class="mock-stat-v">1</div>
-            <div class="mock-stat-l">Redirect</div>
-          </div>
-          <div class="mock-stat">
-            <div class="mock-stat-v">0ms</div>
-            <div class="mock-stat-l">Config</div>
-          </div>
-          <div class="mock-stat">
-            <div class="mock-stat-v">∞</div>
-            <div class="mock-stat-l">Tenants</div>
-          </div>
+          <div class="mock-stat"><div class="mock-stat-v">1</div><div class="mock-stat-l">Redirect</div></div>
+          <div class="mock-stat"><div class="mock-stat-v">0ms</div><div class="mock-stat-l">Config</div></div>
+          <div class="mock-stat"><div class="mock-stat-v">∞</div><div class="mock-stat-l">Tenants</div></div>
         </div>
       </div>
     </div>
@@ -611,10 +552,11 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
   </div>
 
   <footer><div class="ft">
-    <div class="ft-logo">Nimbo<span>ity</span></div>
+    <div class="ft-logo">NIMBO<span>ITY</span></div>
     <div class="ft-copy">© 2026 Nimboity. All rights reserved.</div>
     <div class="ft-links">
-      <a onclick="go('ageinx')">Ageinx</a>
+      <a onclick="go('ageinx')">Platform</a>
+      <a onclick="go('pricing')">Pricing</a>
       <a onclick="go('about')">About</a>
       <a onclick="go('contact')">Contact</a>
     </div>
@@ -622,9 +564,8 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 </div>
 
 <div class="page" id="page-ageinx">
-
   <div class="sx-hdr">
-    <div class="kicker">Ageinx</div>
+    <div class="kicker">Platform</div>
     <div class="pg-title">Hosted auth, done right.<br/>You redirect. We handle the rest.</div>
     <p class="pg-sub">Ageinx gives your app a fully hosted login and signup page — with rate limiting, secure tokens, and user management built in. One redirect. One token. Your users are authenticated.</p>
   </div>
@@ -636,7 +577,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
         <p>Ageinx is an Authentication-as-a-Service platform. Instead of building login flows yourself, you redirect your users to <code style="background:#f3f3f1;padding:1px 6px;border-radius:4px;font-size:0.8rem">ageinx.vercel.app/auth/{your-slug}</code> — we show them a clean login/signup page, authenticate them securely, then redirect back to your app with a signed JWT token.</p>
         <p>Your backend then calls <code style="background:#f3f3f1;padding:1px 6px;border-radius:4px;font-size:0.8rem">GET /auth/userinfo</code> with that token to verify the user and get their data as JSON. That's the entire integration.</p>
         <p>It's production-ready from day one — built with security as a hard constraint, not a feature to add later.</p>
-        <button class="btn-p" onclick="document.getElementById('sx-plans').scrollIntoView({behavior:'smooth'})">See pricing ↓</button>
+        <button class="btn-p" onclick="go('pricing')">See pricing plans →</button>
       </div>
       <div>
         <div class="sec-label" style="margin-bottom:10px;">Included features</div>
@@ -648,64 +589,6 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
           <div class="mod-row"><div class="mod-ico">📊</div><div><div class="mod-name">Insight</div><div class="mod-sub">Structured logs, events, alerting</div></div><div class="mod-tag">Included</div></div>
         </div>
       </div>
-    </div>
-  </div>
-
-  <div class="sx-pricing" id="sx-plans">
-    <div class="sec-label">Pricing</div>
-    <div class="sec-head">Simple, honest plans.</div>
-    <div class="plans">
-
-      <div class="plan">
-        <div class="plan-name">Starter</div>
-        <div class="plan-price">Free</div>
-        <hr class="plan-hr"/>
-        <div class="plan-desc">For side projects and learning. Get familiar with Ageinx at no cost.</div>
-        <ul class="plan-feats">
-          <li>All 5 modules</li>
-          <li>100 API calls / month</li>
-          <li>1 project</li>
-          <li>7-day log retention</li>
-          <li>Community support</li>
-        </ul>
-        <button class="plan-btn plan-btn-ghost" onclick="go('auth')">Get started free</button>
-      </div>
-
-      <div class="plan pop">
-        <div class="pop-tag">Most popular</div>
-        <div class="plan-name">Pro</div>
-        <div class="plan-price">$29<sub> / mo</sub></div>
-        <hr class="plan-hr"/>
-        <div class="plan-desc">For production apps that need reliability and room to grow.</div>
-        <ul class="plan-feats">
-          <li>All 5 modules</li>
-          <li>Up to 1000 API calls / month</li>
-          <li>Unlimited projects</li>
-          <li>30-day log retention</li>
-          <li>Custom rate limit rules</li>
-          <li>Email support</li>
-          <li>99.9% uptime SLA</li>
-        </ul>
-        <button class="plan-btn plan-btn-solid" onclick="go('auth')">Get Pro</button>
-      </div>
-
-      <div class="plan">
-        <div class="plan-name">Business</div>
-        <div class="plan-price">$79<sub> / mo</sub></div>
-        <hr class="plan-hr"/>
-        <div class="plan-desc">For teams and high-traffic apps that need priority support.</div>
-        <ul class="plan-feats">
-          <li>All 5 modules</li>
-          <li>10,000 API calls / month</li>
-          <li>Unlimited projects</li>
-          <li>90-day log retention</li>
-          <li>Advanced alerting</li>
-          <li>Priority direct support</li>
-          <li>99.9% uptime SLA</li>
-        </ul>
-        <button class="plan-btn plan-btn-ghost" onclick="go('auth')">Get started</button>
-      </div>
-
     </div>
   </div>
 
@@ -736,10 +619,99 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
   </div>
 
   <footer><div class="ft">
-    <div class="ft-logo">Nimbo<span>ity</span></div>
+    <div class="ft-logo">NIMBO<span>ITY</span></div>
     <div class="ft-copy">© 2026 Nimboity. All rights reserved.</div>
     <div class="ft-links">
       <a onclick="go('home')">Home</a>
+      <a onclick="go('pricing')">Pricing</a>
+      <a onclick="go('about')">About</a>
+      <a onclick="go('contact')">Contact</a>
+    </div>
+  </div></footer>
+</div>
+
+<div class="page" id="page-pricing">
+  <div class="sx-hdr">
+    <div class="kicker">Pricing</div>
+    <div class="pg-title">Simple, honest plans.</div>
+    <p class="pg-sub">No enterprise gatekeeping, no usage traps. Stop paying a tax on every new user you acquire. Pay for what you use.</p>
+  </div>
+
+  <div class="sx-pricing">
+    <div class="plans">
+
+      <div class="plan">
+        <div class="plan-name">Free</div>
+        <div class="plan-price">$0</div>
+        <hr class="plan-hr"/>
+        <div class="plan-desc">For side projects and learning. Get familiar with Ageinx at no cost.</div>
+        <ul class="plan-feats">
+          <li>Unlimited Users</li>
+          <li>1,000 API calls / month</li>
+          <li>1 project</li>
+          <li>Basic rate limiting</li>
+          <li>Community support</li>
+        </ul>
+        <button class="plan-btn plan-btn-ghost" onclick="routeToContact('Free Plan')">Get Started</button>
+      </div>
+
+      <div class="plan pop">
+        <div class="pop-tag">Most popular</div>
+        <div class="plan-name">Standard</div>
+        <div class="plan-price">$29<sub> / mo</sub></div>
+        <hr class="plan-hr"/>
+        <div class="plan-desc">For production apps that need reliability and unlimited scaling.</div>
+        <ul class="plan-feats">
+          <li>Unlimited Users</li>
+          <li>50,000 API calls / month</li>
+          <li>Unlimited projects</li>
+          <li>Custom rate limit rules</li>
+          <li>Email support</li>
+          <li>99.9% uptime SLA</li>
+        </ul>
+        <button class="plan-btn plan-btn-solid" onclick="routeToContact('Standard — $29 / month')">Get Standard</button>
+      </div>
+
+      <div class="plan">
+        <div class="plan-name">Business</div>
+        <div class="plan-price">$79<sub> / mo</sub></div>
+        <hr class="plan-hr"/>
+        <div class="plan-desc">For teams and high-traffic apps that need advanced priority features.</div>
+        <ul class="plan-feats">
+          <li>Unlimited Users</li>
+          <li>500,000 API calls / month</li>
+          <li>Unlimited projects</li>
+          <li>Advanced alerting</li>
+          <li>Priority direct support</li>
+          <li>99.9% uptime SLA</li>
+        </ul>
+        <button class="plan-btn plan-btn-ghost" onclick="routeToContact('Business — $79 / month')">Get Business</button>
+      </div>
+
+      <div class="plan">
+        <div class="plan-name">Enterprise</div>
+        <div class="plan-price">Custom</div>
+        <hr class="plan-hr"/>
+        <div class="plan-desc">For massive scale. Custom throughput, custom deployment, custom limits.</div>
+        <ul class="plan-feats">
+          <li>Unlimited Everything</li>
+          <li>Custom limits</li>
+          <li>On-premise Deployment options</li>
+          <li>Dedicated Account Manager</li>
+          <li>Custom SLA</li>
+        </ul>
+        <button class="plan-btn plan-btn-ghost" onclick="routeToContact('Enterprise — Custom')">Contact Sales</button>
+      </div>
+
+    </div>
+  </div>
+
+  <footer><div class="ft">
+    <div class="ft-logo">NIMBO<span>ITY</span></div>
+    <div class="ft-copy">© 2026 Nimboity. All rights reserved.</div>
+    <div class="ft-links">
+      <a onclick="go('home')">Home</a>
+      <a onclick="go('ageinx')">Platform</a>
       <a onclick="go('about')">About</a>
       <a onclick="go('contact')">Contact</a>
     </div>
@@ -747,7 +719,6 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 </div>
 
 <div class="page" id="page-about">
-
   <div class="ab-hdr">
     <div class="kicker">About</div>
     <div class="pg-title">One developer,<br/>one real frustration.</div>
@@ -782,11 +753,12 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
   </div>
 
   <footer><div class="ft">
-    <div class="ft-logo">Nimbo<span>ity</span></div>
+    <div class="ft-logo">NIMBO<span>ITY</span></div>
     <div class="ft-copy">© 2026 Nimboity. All rights reserved.</div>
     <div class="ft-links">
       <a onclick="go('home')">Home</a>
-      <a onclick="go('ageinx')">Ageinx</a>
+      <a onclick="go('ageinx')">Platform</a>
+      <a onclick="go('pricing')">Pricing</a>
       <a onclick="go('contact')">Contact</a>
     </div>
   </div></footer>
@@ -819,9 +791,9 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
         <label>Plan interest</label>
         <select id="c-plan">
           <option value="">Select a plan</option>
-          <option>Starter — Free</option>
-          <option>Pro — $49 / month</option>
-          <option>Business — $199 / month</option>
+          <option>Free Plan</option>
+          <option>Standard — $29 / month</option>
+          <option>Business — $79 / month</option>
           <option>Enterprise — Custom</option>
           <option>Not sure yet</option>
         </select>
@@ -833,11 +805,12 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
   </div>
 
   <footer><div class="ft">
-    <div class="ft-logo">Nimbo<span>ity</span></div>
+    <div class="ft-logo">NIMBO<span>ITY</span></div>
     <div class="ft-copy">© 2026 Nimboity. All rights reserved.</div>
     <div class="ft-links">
       <a onclick="go('home')">Home</a>
-      <a onclick="go('ageinx')">Ageinx</a>
+      <a onclick="go('ageinx')">Platform</a>
+      <a onclick="go('pricing')">Pricing</a>
       <a onclick="go('about')">About</a>
     </div>
   </div></footer>
@@ -846,8 +819,8 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 <div class="page" id="page-auth">
   <div class="auth-wrap">
     <div class="auth-card">
-      <div class="auth-logo">Nimbo<span>ity</span></div>
-      <div class="auth-tagline">Developer portal — manage your Ageinx integration</div>
+      <div class="auth-logo" style="text-align: center;">NIMBO<span>ITY</span></div>
+      <div class="auth-tagline" style="text-align: center;">Developer portal — manage your Ageinx integration</div>
 
       <div class="auth-tabs">
         <button class="auth-tab auth-tab-active" id="tab-signup" onclick="authTab('signup')">Create account</button>
@@ -872,20 +845,19 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
         <div class="auth-divider">No account yet? <a href="#" onclick="authTab('signup')" style="color:var(--accent);text-decoration:none;font-weight:500;">Create one</a></div>
       </div>
     </div>
+  </div>
+</div>
   
 <script>
-const PAGES = ['home','ageinx','about','contact','auth'];
-// IMPORTANT: If your API is on a different domain, put the full URL here
+const PAGES = ['home','ageinx','pricing','about','contact','auth'];
 const API = window.location.origin;
 
 function go(id, tab = 'signup') {
-  // 1. Check Auth state
   if (id === 'auth' && localStorage.getItem('ax_access')) {
     window.location.href = '/dashboard.html';
     return;
   }
 
-  // 2. Switch Pages
   PAGES.forEach(p => {
     const pageEl = document.getElementById('page-'+p);
     if(pageEl) pageEl.classList.remove('active');
@@ -904,14 +876,18 @@ function go(id, tab = 'signup') {
     if (navEl) navEl.classList.add('active');
   });
 
-  // 3. Handle Auth Tab specifically
-  if (id === 'auth') {
-    authTab(tab);
-  }
+  if (id === 'auth') authTab(tab);
 
   window.scrollTo({ top: 0, behavior: 'instant' });
   window.location.hash = id;
   closeMenu();
+}
+
+function routeToContact(planName) {
+  go('contact');
+  // Auto-select the plan from the dropdown they clicked
+  const planSelect = document.getElementById('c-plan');
+  if(planSelect) planSelect.value = planName;
 }
 
 function toggleMenu() {
@@ -929,7 +905,6 @@ function closeMenu() {
   if(menu) menu.classList.remove('open');
 }
 
-// Auth tab toggle
 function authTab(tab) {
   const signupTab = document.getElementById('tab-signup');
   const loginTab = document.getElementById('tab-login');
@@ -942,7 +917,6 @@ function authTab(tab) {
   if(loginForm) loginForm.style.display = tab==='login' ? 'block' : 'none';
 }
 
-// Signup Logic
 async function handleSignup() {
   const btn = document.getElementById('signup-btn');
   const msg = document.getElementById('signup-msg');
@@ -972,7 +946,6 @@ async function handleSignup() {
   }
 }
 
-// Login Logic
 async function handleLogin() {
   const btn = document.getElementById('login-btn');
   const msg = document.getElementById('login-msg');
@@ -1009,9 +982,7 @@ function showMsg(el, html, type) {
   el.className = 'auth-msg auth-msg-' + type;
 }
 
-// Routing - load correct page on refresh
 window.addEventListener('DOMContentLoaded', () => {
-  // Navbar auth state
   const loggedIn = !!localStorage.getItem('ax_access');
   document.getElementById('nav-btn-login').style.display       = loggedIn ? 'none'  : '';
   document.getElementById('nav-btn-getstarted').style.display  = loggedIn ? 'none'  : '';
