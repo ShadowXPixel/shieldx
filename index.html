@@ -478,7 +478,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
     <div class="nav-right">
       <button class="btn-s nav-login" id="nav-btn-login" onclick="go('auth')">Log in</button>
       <button class="nav-cta" id="nav-btn-getstarted" onclick="go('auth')">Get started</button>
-      <a href="/dashboard.html" id="nav-btn-dashboard" style="display:none;background:#18170f;color:#fff;padding:8px 18px;border-radius:7px;font-size:0.875rem;font-weight:500;text-decoration:none;font-family:'Geist',sans-serif;">Dashboard →</a>
+      <a href="/dashboard" id="nav-btn-dashboard" style="display:none;background:#18170f;color:#fff;padding:8px 18px;border-radius:7px;font-size:0.875rem;font-weight:500;text-decoration:none;font-family:'Geist',sans-serif;">Dashboard →</a>
       <button class="ham" id="ham" onclick="toggleMenu()" aria-label="Open menu">
         <span></span><span></span><span></span>
       </button>
@@ -494,7 +494,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
   <a onclick="go('contact')" id="ml-contact">Contact</a>
   <a onclick="go('auth')" id="ml-auth-login">Log in</a>
   <a onclick="go('auth')" id="ml-auth-getstarted" class="mob-cta">Get started</a>
-  <a href="/dashboard.html" id="ml-auth-dashboard" style="display:none;" class="mob-cta">Dashboard →</a>
+  <a href="/dashboard" id="ml-auth-dashboard" style="display:none;" class="mob-cta">Dashboard →</a>
 </div>
 
 <div class="page active" id="page-home">
@@ -849,7 +849,7 @@ const API = window.location.origin;
 
 function go(id, tab = 'signup') {
   if (id === 'auth' && localStorage.getItem('ax_access')) {
-    window.location.href = '/dashboard.html';
+    window.location.href = '/dashboard';
     return;
   }
 
@@ -962,7 +962,7 @@ async function handleLogin() {
     if (!res.ok) { showMsg(msg, data.detail || 'Login failed.', 'error'); return; }
     showMsg(msg, '✅ Logged in! Redirecting...', 'success');
     localStorage.setItem('ax_access', data.access_token);
-    setTimeout(() => { window.location.href = '/dashboard.html'; }, 1000);
+    setTimeout(() => { window.location.href = '/dashboard'; }, 1000);
   } catch(e) {
     showMsg(msg, 'Network error. Try again.', 'error');
   } finally {
