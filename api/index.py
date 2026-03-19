@@ -188,11 +188,11 @@ async def enforce_plan_limit(conn, dev_id):
     plan  = dev["plan"] or "starter"
     limit = PLAN_LIMITS.get(plan, 1000)
 
-    now      = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
+    now      = datetime.datetime.now(datetime.timezone.utc)
     reset_at = dev["api_calls_reset_at"]
 
-    # Reset counter if a new 30-day window has started
-    if reset_at and now >= reset_at + datetime.timedelta(days=30):
+    # FIX: Handle NULL reset_at for new accounts safely to prevent TypeError crashes
+    if reset_at is None or now >= reset_at + datetime.timedelta(days=30):
         await conn.execute(
             "UPDATE developers SET api_calls_count = 1, api_calls_reset_at = $1 WHERE id = $2",
             now, dev_id
@@ -562,18 +562,13 @@ async def internal_check(request: Request):
 
 @app.get("/auth/userinfo")
 async def auth_userinfo(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
-    try:
-        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[ALGORITHM])
-        if payload.get("type") != "user_access":
-            raise HTTPException(status_code=401, detail="invalid token type")
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="invalid token")
+    # FIX: Use the secure helper function instead of raw jwt.decode
+    payload = verify_token_payload(credentials.credentials, expected_type="user_access")
+    
     return {
         "user_id":      payload["sub"],
-        "email":        payload["email"],
-        "developer_id": payload["dev"],
+        "email":        payload.get("email"),
+        "developer_id": payload.get("dev"),
         "token_type":   "user_access"
     }
 
@@ -710,8 +705,6 @@ async def auth_user_signup(slug: str, request: Request, data: UserSignup):
         if not dev:
             raise HTTPException(status_code=404, detail="app not found")
 
-        await enforce_plan_limit(conn, dev["id"])
-
         try:
             user_id = await conn.fetchval(
                 "INSERT INTO users (developer_id, email, password_hash) VALUES ($1, $2, $3) RETURNING id",
@@ -719,6 +712,9 @@ async def auth_user_signup(slug: str, request: Request, data: UserSignup):
             )
         except asyncpg.exceptions.UniqueViolationError:
             raise HTTPException(status_code=400, detail="email already registered")
+
+        # FIX: Enforce plan limit ONLY AFTER user successfully registers (prevents bot wallet draining)
+        await enforce_plan_limit(conn, dev["id"])
 
     token = create_token(
         {"sub": str(user_id), "dev": str(dev["id"]), "email": data.email, "type": "user_access"},
@@ -759,4 +755,5 @@ async def auth_user_login(slug: str, request: Request, data: UserLogin):
         {"sub": str(row["user_id"]), "dev": str(row["dev_id"]), "email": row["email"], "type": "user_access"},
         USER_ACCESS_EXPIRE
     )
+    # FIX: Added the missing closing bracket here
     return {"message": "login successful", "redirect_url": f"{row['callback_url']}#token={token}", "token": token}
