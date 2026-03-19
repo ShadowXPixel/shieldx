@@ -425,7 +425,28 @@ async function updatePassword(btn) {
   finally { btn.textContent = "Update Password"; }
 }
 
-function logout() { localStorage.clear(); window.location.href = 'https://ageinx.vercel.app/#auth'; }
+async function logout() {
+  const planText = document.getElementById('sb-plan');
+  if (planText) planText.textContent = "Signing out...";
+
+  try {
+    // 1. Tell the backend to destroy the session in the PostgreSQL database
+    await fetch(`${API}/platform/dev/logout`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+  } catch (e) {
+    console.error("Backend session kill failed, forcing local logout.");
+  } finally {
+    // 2. Nuke the local token and bounce them to the login screen
+    localStorage.removeItem('ax_access');
+    window.location.href = 'https://ageinx.vercel.app/#auth';
+  }
+}
+
 
 init();
 </script>
