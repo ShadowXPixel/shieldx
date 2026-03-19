@@ -436,6 +436,19 @@ async def dev_me(token: dict = Depends(verify_token)):
         }
     }
 
+@app.get("/platform/dev/users")
+async def dev_users(token: dict = Depends(verify_token)):
+    dev_id = str(token["sub"])
+    
+    db_pool = await get_pool()
+    async with db_pool.acquire() as conn:
+        records = await conn.fetch(
+            "SELECT id, email, created_at FROM users WHERE developer_id = $1 ORDER BY created_at DESC",
+            safe_uuid(dev_id)
+        )
+        
+    users = [{"id": str(r["id"]), "email": r["email"], "created_at": str(r["created_at"])} for r in records]
+    return {"users": users}
 
 @app.post("/platform/dev/change-password")
 async def change_password(data: ChangePassword, token: dict = Depends(verify_token)):
