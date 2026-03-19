@@ -38,6 +38,30 @@ body {
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
+/* ─── EXPORT MENU ─── */
+.export-container { position: relative; display: inline-block; }
+.export-btn {
+  background: var(--white); color: var(--ink); border: 1px solid var(--border-s);
+  padding: 8px 14px; font-size: 0.8rem; font-weight: 500; border-radius: 7px;
+  cursor: pointer; display: flex; align-items: center; gap: 8px;
+  transition: all 0.15s; font-family: 'Geist', sans-serif;
+}
+.export-btn:hover { background: var(--g50); }
+.export-dropdown {
+  display: none; position: absolute; top: 110%; right: 0;
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 8px; min-width: 150px; box-shadow: var(--sh);
+  z-index: 100; overflow: hidden;
+}
+.export-dropdown.show { display: block; animation: slideDown 0.2s ease; }
+.dropdown-item {
+  display: block; width: 100%; text-align: left; background: none;
+  border: none; color: var(--g800); padding: 10px 14px;
+  font-size: 0.8rem; font-family: 'Geist', sans-serif; cursor: pointer;
+  transition: background 0.15s;
+}
+.dropdown-item:hover { background: var(--g50); color: var(--ink); }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ─── LAYOUT ─── */
 .layout { display: flex; min-height: 100vh; }
@@ -250,9 +274,24 @@ body {
 
   <main class="main">
 
-    <div class="section active" id="section-overview">
-      <div class="pg-title">Overview</div>
-      <p class="pg-sub">Welcome back. Here's how your Ageinx integration is doing.</p>
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px;">
+  <div>
+    <div class="pg-title" style="margin-bottom: 6px;">Overview</div>
+    <p class="pg-sub" style="margin-bottom: 0;">Welcome back. Here's how your Ageinx integration is doing.</p>
+  </div>
+  
+  <div class="export-container">
+    <button class="export-btn" onclick="toggleExportMenu()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export Users
+    </button>
+    <div class="export-dropdown" id="exportDropdown">
+      <button class="dropdown-item" onclick="exportJSON()">Export as .json</button>
+      <button class="dropdown-item" onclick="exportCSV()">Export as .csv</button>
+    </div>
+  </div>
+</div>
+
 
       <div class="cards">
         <div class="card">
@@ -597,6 +636,66 @@ async function logout() {
 function showMsg(el, text, type) {
   el.textContent = text;
   el.className = 'msg msg-' + type;
+}
+// ─── Export Logic ───
+function toggleExportMenu() {
+  document.getElementById("exportDropdown").classList.toggle("show");
+}
+
+window.onclick = function(event) {
+  if (!event.target.matches('.export-btn') && !event.target.closest('.export-btn')) {
+    const d = document.getElementById("exportDropdown");
+    if (d && d.classList.contains('show')) d.classList.remove('show');
+  }
+}
+
+async function fetchLiveUsers() {
+  const btn = document.querySelector('.export-btn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = 'Fetching...';
+  
+  try {
+    const res = await fetch(`${API}/platform/dev/users`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error("Failed");
+    const data = await res.json();
+    btn.innerHTML = originalText;
+    return data.users;
+  } catch (e) {
+    btn.innerHTML = originalText;
+    alert("Failed to fetch users. Check connection.");
+    return [];
+  }
+}
+
+function triggerDownload(content, fileName, contentType) {
+  const a = document.createElement("a");
+  const file = new Blob([content], { type: contentType });
+  a.href = URL.createObjectURL(file);
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+async function exportJSON() {
+  const users = await fetchLiveUsers();
+  if (!users.length) { alert("No users to export yet."); toggleExportMenu(); return; }
+  
+  const jsonString = JSON.stringify(users, null, 2);
+  triggerDownload(jsonString, "ageinx_users.json", "application/json");
+  toggleExportMenu();
+}
+
+async function exportCSV() {
+  const users = await fetchLiveUsers();
+  if (!users.length) { alert("No users to export yet."); toggleExportMenu(); return; }
+  
+  const headers = Object.keys(users[0]).join(",");
+  const rows = users.map(user => Object.values(user).map(val => `"${val}"`).join(",")).join("\n");
+  
+  triggerDownload(`${headers}\n${rows}`, "ageinx_users.csv", "text/csv");
+  toggleExportMenu();
 }
 
 // ─── Init ───
