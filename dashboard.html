@@ -3,719 +3,421 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='black' stroke='%2322d3ee' stroke-width='8'/><circle cx='50' cy='50' r='15' fill='%2322d3ee'/></svg>">
-<title>Nimboity — Dashboard</title>
+<title>Ageinx — Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
   --white: #ffffff;
-  --off:   #f8f7f5;
+  --off:   #fcfcfc;
   --g50:   #f3f3f1;
   --g100:  #eaeae7;
   --g400:  #9a9895;
   --g600:  #6a6965;
   --g800:  #2b2a27;
-  --ink:   #18170f;
-  --accent:  #1b6ef2;
-  --accent-d:#1558ca;
-  --green:   #15a348;
-  --red:     #dc2626;
-  --border:  #e2e1de;
-  --border-s:#c6c5c1;
-  --r: 8px;
-  --sh: 0 4px 14px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.04);
-  --sidebar: 240px;
+  --ink:   #121212;
+  --accent:  #000000;
+  --border:  #e5e5e5;
+  --border-s:#d4d4d4;
+  --sh: 0 4px 12px rgba(0,0,0,0.03), 0 1px 3px rgba(0,0,0,0.02);
+  --sh-hover: 0 8px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04);
+  --sidebar: 260px;
 }
 
 body {
-  background: var(--off);
-  color: var(--ink);
-  font-family: 'Geist', sans-serif;
-  font-weight: 400;
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
+  background: var(--off); color: var(--ink);
+  font-family: 'Geist', sans-serif; font-weight: 400; line-height: 1.6;
+  -webkit-font-smoothing: antialiased; min-height: 100vh; overflow: hidden;
 }
-/* ─── EXPORT MENU ─── */
-.export-container { position: relative; display: inline-block; }
-.export-btn {
-  background: var(--white); color: var(--ink); border: 1px solid var(--border-s);
-  padding: 8px 14px; font-size: 0.8rem; font-weight: 500; border-radius: 7px;
-  cursor: pointer; display: flex; align-items: center; gap: 8px;
-  transition: all 0.15s; font-family: 'Geist', sans-serif;
-}
-.export-btn:hover { background: var(--g50); }
-.export-dropdown {
-  display: none; position: absolute; top: 110%; right: 0;
-  background: var(--white); border: 1px solid var(--border);
-  border-radius: 8px; min-width: 150px; box-shadow: var(--sh);
-  z-index: 100; overflow: hidden;
-}
-.export-dropdown.show { display: block; animation: slideDown 0.2s ease; }
-.dropdown-item {
-  display: block; width: 100%; text-align: left; background: none;
-  border: none; color: var(--g800); padding: 10px 14px;
-  font-size: 0.8rem; font-family: 'Geist', sans-serif; cursor: pointer;
-  transition: background 0.15s;
-}
-.dropdown-item:hover { background: var(--g50); color: var(--ink); }
-@keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
-/* ─── LAYOUT ─── */
-.layout { display: flex; min-height: 100vh; }
+/* ─── APP LAYOUT ─── */
+.app-layout { display: flex; height: 100vh; width: 100vw; }
 
 /* ─── SIDEBAR ─── */
 .sidebar {
-  width: var(--sidebar); flex-shrink: 0;
-  background: var(--white); border-right: 1px solid var(--border);
-  display: flex; flex-direction: column;
-  position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+  width: var(--sidebar); background: var(--off); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; z-index: 100; flex-shrink: 0;
 }
-.sb-logo {
-  padding: 20px 20px 16px;
-  font-weight: 600; font-size: 1rem; color: var(--ink);
-  letter-spacing: -0.02em; border-bottom: 1px solid var(--border);
-  cursor: pointer;
-}
-.sb-logo span { color: var(--accent); }
-.sb-logo small { display: block; font-size: 0.68rem; font-weight: 400; color: var(--g400); margin-top: 2px; letter-spacing: 0; }
-
-.sb-nav { padding: 10px 10px; flex: 1; }
+.sb-header { padding: 24px; border-bottom: 1px solid var(--border); }
+.sb-logo { font-weight: 600; font-size: 1.1rem; color: var(--ink); cursor: pointer; letter-spacing: -0.02em; }
+.sb-logo span { color: var(--g400); }
+.sb-nav { padding: 24px 12px; flex: 1; overflow-y: auto; }
+.nav-group { font-size: 0.65rem; font-weight: 600; color: var(--g400); text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 8px 12px; }
 .sb-link {
-  display: flex; align-items: center; gap: 10px;
-  padding: 9px 12px; border-radius: 7px;
-  font-size: 0.875rem; font-weight: 500; color: var(--g600);
-  cursor: pointer; transition: all 0.15s; margin-bottom: 2px;
-  border: none; background: none; width: 100%; text-align: left;
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px;
+  font-size: 0.85rem; font-weight: 500; color: var(--g600);
+  cursor: pointer; transition: all 0.2s; border: none; background: none; width: 100%; text-align: left; margin-bottom: 4px;
 }
-.sb-link:hover { background: var(--g50); color: var(--ink); }
-.sb-link.active { background: var(--g50); color: var(--ink); }
-.sb-link .ico { font-size: 1rem; width: 20px; text-align: center; }
+.sb-link:hover { background: var(--white); color: var(--ink); box-shadow: var(--sh); }
+.sb-link.active { background: var(--white); color: var(--ink); box-shadow: var(--sh); font-weight: 600; }
+.sb-link svg { width: 16px; height: 16px; opacity: 0.7; }
+.sb-link.active svg { opacity: 1; stroke: var(--ink); }
 
-.sb-bottom { padding: 12px 10px; border-top: 1px solid var(--border); }
-.sb-user { padding: 10px 12px; border-radius: 7px; background: var(--g50); }
-.sb-user-email { font-size: 0.75rem; color: var(--g600); font-weight: 500; word-break: break-all; }
-.sb-user-plan { font-size: 0.67rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
-.logout-btn {
-  width: 100%; margin-top: 8px; padding: 8px; border-radius: 6px;
-  border: 1px solid var(--border-s); background: none;
-  font-family: 'Geist', sans-serif; font-size: 0.8rem; color: var(--g600);
-  cursor: pointer; transition: all 0.15s;
-}
-.logout-btn:hover { background: #fff1f2; border-color: #fecdd3; color: var(--red); }
+.sb-footer { padding: 16px; border-top: 1px solid var(--border); background: var(--white); }
+.user-pill { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
+.user-pill:hover { background: var(--off); }
+.u-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--ink); color: var(--white); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.8rem; }
+.u-info { flex: 1; overflow: hidden; }
+.u-email { font-size: 0.75rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.u-plan { font-size: 0.65rem; color: var(--g400); text-transform: uppercase; letter-spacing: 0.05em; }
 
-/* ─── MAIN ─── */
-.main { margin-left: var(--sidebar); flex: 1; padding: 32px; }
+/* ─── MAIN CONTENT ─── */
+.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #ffffff; }
+.topbar { height: 60px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 32px; justify-content: space-between; background: var(--white); flex-shrink: 0; }
+.breadcrumb { font-size: 0.85rem; color: var(--g400); font-weight: 500; }
+.breadcrumb span { color: var(--ink); }
+.top-actions { display: flex; gap: 12px; }
+.btn-outline { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--white); font-size: 0.75rem; font-weight: 500; cursor: pointer; font-family: 'Geist', sans-serif; transition: all 0.2s; }
+.btn-outline:hover { background: var(--off); border-color: var(--border-s); }
 
-/* ─── SECTIONS ─── */
-.section { display: none; }
+.scroll-area { flex: 1; overflow-y: auto; padding: 40px 48px; }
+.section { display: none; animation: fadeIn 0.3s ease; }
 .section.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-.pg-title {
-  font-family: 'Instrument Serif', serif;
-  font-size: 1.8rem; letter-spacing: -0.03em;
-  color: var(--ink); font-weight: 400; margin-bottom: 6px;
-}
-.pg-sub { font-size: 0.875rem; color: var(--g600); margin-bottom: 28px; }
+.pg-header { margin-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-end; }
+.pg-title { font-family: 'Instrument Serif', serif; font-size: 2.2rem; letter-spacing: -0.03em; color: var(--ink); line-height: 1.1; margin-bottom: 8px; }
+.pg-sub { font-size: 0.9rem; color: var(--g600); }
 
-/* ─── CARDS ─── */
-.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
-.card {
-  background: var(--white); border: 1px solid var(--border);
-  border-radius: 12px; padding: 22px 20px;
-  transition: box-shadow 0.2s;
-}
-.card:hover { box-shadow: var(--sh); }
-.card-label { font-size: 0.7rem; font-weight: 600; color: var(--g400); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
-.card-value { font-family: 'Instrument Serif', serif; font-size: 2rem; color: var(--ink); letter-spacing: -0.03em; line-height: 1; }
-.card-sub { font-size: 0.75rem; color: var(--g400); margin-top: 4px; }
+/* ─── CARDS & GRIDS ─── */
+.bento-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 32px; }
+.card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: var(--sh); transition: all 0.3s; }
+.card:hover { box-shadow: var(--sh-hover); transform: translateY(-2px); border-color: var(--border-s); }
+.c-label { font-size: 0.75rem; font-weight: 600; color: var(--g400); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.c-val { font-family: 'Instrument Serif', serif; font-size: 2.5rem; color: var(--ink); line-height: 1; }
+.c-sub { font-size: 0.8rem; color: var(--g400); margin-top: 8px; }
 
-/* ─── API KEY BOX ─── */
-.api-box {
-  background: var(--white); border: 1px solid var(--border);
-  border-radius: 12px; padding: 24px; margin-bottom: 20px;
-}
-.api-box-label { font-size: 0.7rem; font-weight: 600; color: var(--g400); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
-.api-key-row { display: flex; align-items: center; gap: 10px; }
-.api-key-val {
-  flex: 1; font-family: 'Geist', monospace; font-size: 0.85rem;
-  background: var(--off); border: 1px solid var(--border);
-  border-radius: 7px; padding: 10px 14px; color: var(--ink);
-  letter-spacing: 0.02em; word-break: break-all;
-}
-.api-key-val.masked { color: var(--g400); letter-spacing: 0.1em; }
-.icon-btn {
-  padding: 9px 14px; border-radius: 7px; border: 1px solid var(--border-s);
-  background: var(--white); cursor: pointer; font-size: 0.8rem; font-weight: 500;
-  color: var(--g600); transition: all 0.15s; white-space: nowrap;
-  font-family: 'Geist', sans-serif;
-}
-.icon-btn:hover { background: var(--g50); color: var(--ink); }
-.copy-success { color: var(--green) !important; border-color: #bbf7d0 !important; background: #f0fdf4 !important; }
+/* ─── USERS TABLE ─── */
+.table-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: var(--sh); }
+table { width: 100%; border-collapse: collapse; text-align: left; }
+th { background: var(--off); padding: 12px 24px; font-size: 0.75rem; font-weight: 600; color: var(--g600); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+td { padding: 16px 24px; font-size: 0.85rem; border-bottom: 1px solid var(--border); color: var(--ink); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--off); }
+.empty-state { padding: 48px; text-align: center; color: var(--g400); font-size: 0.9rem; }
 
-/* ─── PROGRESS BAR ─── */
-.usage-bar-wrap { margin-top: 16px; }
-.usage-bar-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--g600); margin-bottom: 6px; }
-.usage-bar-track { height: 6px; background: var(--g100); border-radius: 100px; overflow: hidden; }
-.usage-bar-fill { height: 100%; background: var(--accent); border-radius: 100px; transition: width 0.6s ease; }
-.usage-bar-fill.warn { background: #f59e0b; }
-.usage-bar-fill.danger { background: var(--red); }
+/* ─── API UI ─── */
+.api-row { display: flex; align-items: center; gap: 12px; background: var(--off); border: 1px solid var(--border); padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; }
+.api-val { flex: 1; font-family: monospace; font-size: 0.9rem; color: var(--ink); letter-spacing: 0.02em; }
+.api-val.blur { filter: blur(4px); user-select: none; }
 
-/* ─── PLAN BADGE ─── */
-.plan-badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em;
-  text-transform: uppercase; padding: 4px 10px; border-radius: 100px;
-}
-.plan-starter { background: var(--g50); color: var(--g600); border: 1px solid var(--border); }
-.plan-pro { background: #eff6ff; color: var(--accent); border: 1px solid #bfdbfe; }
-.plan-business { background: #faf5ff; color: #7c3aed; border: 1px solid #ddd6fe; }
-
-/* ─── SETTINGS FORM ─── */
-.settings-card {
-  background: var(--white); border: 1px solid var(--border);
-  border-radius: 12px; padding: 24px; margin-bottom: 16px;
-}
-.settings-card h3 { font-size: 0.9rem; font-weight: 600; color: var(--ink); margin-bottom: 16px; }
-.fg { margin-bottom: 14px; }
-.fg label { display: block; font-size: 0.73rem; font-weight: 600; color: var(--g800); margin-bottom: 5px; }
-.fg input {
-  width: 100%; background: var(--white); border: 1px solid var(--border-s); color: var(--ink);
-  padding: 9px 12px; border-radius: 6px; font-family: 'Geist', sans-serif; font-size: 0.875rem;
-  outline: none; transition: border-color 0.15s, box-shadow 0.15s; max-width: 400px;
-}
-.fg input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(27,110,242,0.1); }
-.fg input:disabled { background: var(--off); color: var(--g400); cursor: not-allowed; }
-.save-btn {
-  background: var(--ink); color: var(--white); border: none;
-  padding: 9px 20px; border-radius: 7px; font-family: 'Geist', sans-serif;
-  font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background 0.15s;
-}
-.save-btn:hover { background: var(--g800); }
-.save-btn:disabled { opacity: 0.5; cursor: default; }
-
-/* ─── MSG ─── */
-.msg {
-  display: none; padding: 10px 13px; border-radius: 7px;
-  font-size: 0.82rem; margin-top: 12px; max-width: 400px;
-}
-.msg-success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; display: block; }
-.msg-error { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; display: block; }
+/* ─── FORMS ─── */
+.fg { margin-bottom: 20px; }
+.fg label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 8px; color: var(--ink); }
+.fg input { width: 100%; max-width: 400px; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--white); font-family: 'Geist', sans-serif; font-size: 0.9rem; transition: all 0.2s; }
+.fg input:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px rgba(0,0,0,0.05); }
+.btn-primary { background: var(--ink); color: var(--white); padding: 10px 20px; border-radius: 8px; border: none; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: background 0.2s; font-family: 'Geist', sans-serif;}
+.btn-primary:hover { background: #333; }
 
 /* ─── LOADING ─── */
-#loading {
-  position: fixed; inset: 0; background: var(--white);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 999; flex-direction: column; gap: 12px;
-}
-.spinner {
-  width: 28px; height: 28px; border: 2px solid var(--g100);
-  border-top-color: var(--ink); border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
+#loading { position: fixed; inset: 0; background: var(--white); z-index: 999; display: flex; align-items: center; justify-content: center; }
+.spinner { width: 30px; height: 30px; border: 2px solid var(--border); border-top-color: var(--ink); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-#loading p { font-size: 0.85rem; color: var(--g400); }
-
-/* ─── RESPONSIVE ─── */
-@media (max-width: 768px) {
-  .sidebar { width: 100%; height: 56px; flex-direction: row; bottom: auto; border-right: none; border-bottom: 1px solid var(--border); }
-  .sb-logo { padding: 0 16px; display: flex; align-items: center; border-bottom: none; flex: 1; }
-  .sb-logo small { display: none; }
-  .sb-nav { display: flex; padding: 0 8px; align-items: center; gap: 2px; }
-  .sb-link span:not(.ico) { display: none; }
-  .sb-link { padding: 8px; gap: 0; }
-  .sb-bottom { display: none; }
-  .main { margin-left: 0; margin-top: 56px; padding: 20px 16px; }
-  .cards { grid-template-columns: 1fr 1fr; }
-}
-@media (max-width: 480px) {
-  .cards { grid-template-columns: 1fr; }
-}
 </style>
 </head>
 <body>
 
-<div id="loading">
-  <div class="spinner"></div>
-  <p>Loading dashboard…</p>
-</div>
+<div id="loading"><div class="spinner"></div></div>
 
-<div class="layout" id="app" style="display:none">
-
+<div class="app-layout" id="app" style="display:none">
+  
   <aside class="sidebar">
-    <div class="sb-logo" onclick="window.location.href='https://ageinx.vercel.app'">
-      Nimbo<span>ity</span>
-      <small>Ageinx Dashboard</small>
+    <div class="sb-header">
+      <div class="sb-logo" onclick="window.location.href='https://ageinx.vercel.app'">Nimbo<span>ity</span></div>
     </div>
+    
     <nav class="sb-nav">
-      <button class="sb-link active" onclick="showSection('overview')" id="nav-overview">
-        <span class="ico">📊</span><span>Overview</span>
+      <div class="nav-group">Platform</div>
+      <button class="sb-link active" onclick="nav('overview')" id="nav-overview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+        Overview
       </button>
-      <button class="sb-link" onclick="showSection('api')" id="nav-api">
-        <span class="ico">🔑</span><span>API Key</span>
+      <button class="sb-link" onclick="nav('users')" id="nav-users">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        User Database
       </button>
-      <button class="sb-link" onclick="showSection('billing')" id="nav-billing">
-        <span class="ico">💳</span><span>Plan & Billing</span>
+      <button class="sb-link" onclick="nav('api')" id="nav-api">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+        Integration (API)
       </button>
-      <button class="sb-link" onclick="showSection('settings')" id="nav-settings">
-        <span class="ico">⚙️</span><span>Settings</span>
+
+      <div class="nav-group" style="margin-top:24px;">Account</div>
+      <button class="sb-link" onclick="nav('billing')" id="nav-billing">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+        Billing & Limits
+      </button>
+      <button class="sb-link" onclick="nav('settings')" id="nav-settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        Security
       </button>
     </nav>
-    <div class="sb-bottom">
-      <div class="sb-user">
-        <div class="sb-user-email" id="sb-email">—</div>
-        <div class="sb-user-plan" id="sb-plan">—</div>
+    
+    <div class="sb-footer">
+      <div class="user-pill" onclick="logout()">
+        <div class="u-avatar" id="u-initial">A</div>
+        <div class="u-info">
+          <div class="u-email" id="sb-email">loading...</div>
+          <div class="u-plan" id="sb-plan">Sign out</div>
+        </div>
       </div>
-      <button class="logout-btn" onclick="logout()">Sign out</button>
     </div>
   </aside>
 
-  <main class="main">
+  <main class="main-area">
+    <header class="topbar">
+      <div class="breadcrumb">Ageinx / <span id="bc-text">Overview</span></div>
+      <div class="top-actions">
+        <button class="btn-outline" onclick="window.open('https://ageinx.vercel.app/docs', '_blank')">Documentation</button>
+      </div>
+    </header>
 
-    <div class="section active" id="section-overview">
-
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px;">
-        <div>
-          <div class="pg-title" style="margin-bottom: 6px;">Overview</div>
-          <p class="pg-sub" style="margin-bottom: 0;">Welcome back. Here's how your Ageinx integration is doing.</p>
+    <div class="scroll-area">
+      
+      <div class="section active" id="sec-overview">
+        <div class="pg-header">
+          <div>
+            <h1 class="pg-title">Dashboard Overview</h1>
+            <p class="pg-sub">Your integration health and usage metrics.</p>
+          </div>
         </div>
-        
-        <div class="export-container">
-          <button class="export-btn" onclick="toggleExportMenu()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Export Users
-          </button>
-          <div class="export-dropdown" id="exportDropdown">
-            <button class="dropdown-item" onclick="exportJSON()">Export as .json</button>
-            <button class="dropdown-item" onclick="exportCSV()">Export as .csv</button>
+
+        <div class="bento-grid">
+          <div class="card">
+            <div class="c-label">Total Users</div>
+            <div class="c-val" id="stat-users">—</div>
+            <div class="c-sub">Managed by Ageinx Auth</div>
+          </div>
+          <div class="card">
+            <div class="c-label">API Calls</div>
+            <div class="c-val" id="stat-calls">—</div>
+            <div class="c-sub" id="stat-limit">Limit: —</div>
+          </div>
+          <div class="card">
+            <div class="c-label">Current Plan</div>
+            <div class="c-val" id="stat-plan">—</div>
+            <div class="c-sub">Unlimited users tier</div>
           </div>
         </div>
       </div>
 
-  
-  <div class="export-container">
-    <button class="export-btn" onclick="toggleExportMenu()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Export Users
-    </button>
-    <div class="export-dropdown" id="exportDropdown">
-      <button class="dropdown-item" onclick="exportJSON()">Export as .json</button>
-      <button class="dropdown-item" onclick="exportCSV()">Export as .csv</button>
-    </div>
-  </div>
-</div>
-
-
-      <div class="cards">
-        <div class="card">
-          <div class="card-label">Users registered</div>
-          <div class="card-value" id="stat-users">—</div>
-          <div class="card-sub">Via your Ageinx integration</div>
-        </div>
-        <div class="card">
-          <div class="card-label">Sessions this month</div>
-          <div class="card-value" id="stat-sessions">—</div>
-          <div class="card-sub">Active login sessions</div>
-        </div>
-        <div class="card">
-          <div class="card-label">Current plan</div>
-          <div class="card-value" style="font-size:1.3rem;padding-top:4px;" id="stat-plan">—</div>
-          <div class="card-sub" id="stat-limit">— API calls / month</div>
-        </div>
-      </div>
-
-      <div class="api-box">
-        <div class="api-box-label">API usage this month</div>
-        <div class="usage-bar-wrap">
-          <div class="usage-bar-label">
-            <span id="usage-used">0 calls used</span>
-            <span id="usage-limit">of 1,000</span>
+      <div class="section" id="sec-users">
+        <div class="pg-header">
+          <div>
+            <h1 class="pg-title">User Database</h1>
+            <p class="pg-sub">Manage your active users. Zero lock-in, export anytime.</p>
           </div>
-          <div class="usage-bar-track">
-            <div class="usage-bar-fill" id="usage-bar" style="width:0%"></div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-outline" onclick="exportData('csv')">Export CSV</button>
+            <button class="btn-outline" onclick="exportData('json')">Export JSON</button>
           </div>
         </div>
+
+        <div class="table-wrap">
+          <table id="users-table">
+            <thead><tr><th>User ID</th><th>Email Address</th><th>Registered Date</th></tr></thead>
+            <tbody id="users-tbody">
+              <tr><td colspan="3" class="empty-state">Loading users...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      <div class="section" id="sec-api">
+        <div class="pg-header">
+          <div>
+            <h1 class="pg-title">Integration & Keys</h1>
+            <p class="pg-sub">Credentials to connect your app to Ageinx.</p>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 24px;">
+          <h3 style="font-size:1rem;margin-bottom:16px;">Secret API Key</h3>
+          <p style="font-size:0.85rem;color:var(--g600);margin-bottom:16px;">Used to verify user tokens on your backend.</p>
+          <div class="api-row">
+            <div class="api-val blur" id="api-key-val">ax_live_xxxxxxxxxxxxxxxxxxxxxxxx</div>
+            <button class="btn-outline" onclick="toggleKey(this)">Reveal</button>
+            <button class="btn-outline" onclick="copyText('api-key-val', this)">Copy</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="font-size:1rem;margin-bottom:16px;">Hosted Login URL</h3>
+          <p style="font-size:0.85rem;color:var(--g600);margin-bottom:16px;">Direct your users here to sign in or sign up.</p>
+          <div class="api-row">
+            <div class="api-val" id="login-url-val">https://ageinx.vercel.app/auth/...</div>
+            <button class="btn-outline" onclick="copyText('login-url-val', this)">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="sec-billing">
+        <div class="pg-header">
+          <div>
+            <h1 class="pg-title">Billing & Limits</h1>
+            <p class="pg-sub">Manage your subscription.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="c-label">Current Plan</div>
+          <div class="c-val" style="font-size:1.8rem;" id="bill-plan-name">Loading...</div>
+          <p style="font-size:0.85rem;color:var(--g600);margin-top:12px;">Contact support to upgrade to Enterprise for custom limits.</p>
+          <button class="btn-primary" style="margin-top:24px;" onclick="window.open('mailto:kjuhi1496@gmail.com')">Contact Support</button>
+        </div>
+      </div>
+
+      <div class="section" id="sec-settings">
+        <div class="pg-header">
+          <div>
+            <h1 class="pg-title">Security Settings</h1>
+            <p class="pg-sub">Update your password and preferences.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="fg">
+            <label>Current Password</label>
+            <input type="password" id="curr-pass" placeholder="••••••••"/>
+          </div>
+          <div class="fg">
+            <label>New Password</label>
+            <input type="password" id="new-pass" placeholder="Min. 8 characters"/>
+          </div>
+          <button class="btn-primary" onclick="updatePassword(this)">Update Password</button>
+        </div>
+      </div>
+
     </div>
-
-    <div class="section" id="section-api">
-      <div class="pg-title">API Key</div>
-      <p class="pg-sub">Use this key to authenticate requests to the Ageinx API. Keep it secret.</p>
-
-      <div class="api-box">
-        <div class="api-box-label">Your API key</div>
-        <div class="api-key-row">
-          <div class="api-key-val masked" id="api-key-display">••••••••••••••••••••••••••••••••</div>
-          <button class="icon-btn" onclick="toggleKey()" id="toggle-btn">Show</button>
-          <button class="icon-btn" onclick="copyKey()" id="copy-btn">Copy</button>
-        </div>
-        <p style="font-size:0.78rem;color:var(--g400);margin-top:12px;">⚠️ Never expose this key in frontend code or public repositories.</p>
-      </div>
-
-      <div class="api-box">
-        <div class="api-box-label">Your login URL</div>
-        <div class="api-key-row">
-          <div class="api-key-val" id="login-url-display">—</div>
-          <button class="icon-btn" onclick="copyLoginUrl()" id="copy-url-btn">Copy</button>
-        </div>
-        <p style="font-size:0.78rem;color:var(--g400);margin-top:12px;">This is the URL your users will be redirected to for authentication.</p>
-      </div>
-    </div>
-
-    <div class="section" id="section-billing">
-      <div class="pg-title">Plan & Billing</div>
-      <p class="pg-sub">Manage your subscription and upgrade when you're ready to scale.</p>
-
-      <div class="api-box" style="margin-bottom:16px;">
-        <div class="api-box-label">Current plan</div>
-        <div style="display:flex;align-items:center;gap:12px;margin-top:8px;">
-          <span class="plan-badge plan-starter" id="billing-plan-badge">Starter</span>
-          <span style="font-size:0.82rem;color:var(--g600);" id="billing-plan-desc">Free — 1,000 API calls / month</span>
-        </div>
-      </div>
-
-      <div class="cards" style="grid-template-columns:repeat(4,1fr)">
-        <div class="card" id="card-starter">
-          <div class="card-label">Starter</div>
-          <div class="card-value" style="font-size:1.5rem;">Free</div>
-          <div class="card-sub" style="margin-bottom:14px;">1,000 calls / month</div>
-          <ul style="font-size:0.75rem;color:var(--g400);padding-left:14px;margin-bottom:14px;line-height:1.8;">
-            <li>Hosted login page</li>
-            <li>JWT user tokens</li>
-            <li>Basic rate limiting</li>
-          </ul>
-          <button class="icon-btn" style="width:100%;text-align:center;" disabled id="btn-starter">Current plan</button>
-        </div>
-        <div class="card" style="border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)" id="card-pro">
-          <div class="card-label" style="color:var(--accent)">Pro — Most popular</div>
-          <div class="card-value" style="font-size:1.5rem;">$49<span style="font-family:Geist,sans-serif;font-size:0.8rem;color:var(--g400);"> / mo</span></div>
-          <div class="card-sub" style="margin-bottom:14px;">50,000 calls / month</div>
-          <ul style="font-size:0.75rem;color:var(--g400);padding-left:14px;margin-bottom:14px;line-height:1.8;">
-            <li>Everything in Starter</li>
-            <li>Advanced Fraud Analytics</li>
-            <li>Analytics Dashboard</li>
-          </ul>
-          <button class="icon-btn" style="width:100%;text-align:center;background:var(--accent);color:white;border-color:var(--accent);" onclick="upgradePlan('pro')" id="btn-pro">Upgrade to Pro</button>
-        </div>
-        <div class="card" id="card-business">
-          <div class="card-label">Business</div>
-          <div class="card-value" style="font-size:1.5rem;">$199<span style="font-family:Geist,sans-serif;font-size:0.8rem;color:var(--g400);"> / mo</span></div>
-          <div class="card-sub" style="margin-bottom:14px;">500,000 calls / month</div>
-          <ul style="font-size:0.75rem;color:var(--g400);padding-left:14px;margin-bottom:14px;line-height:1.8;">
-            <li>Everything in Pro</li>
-            <li>Custom Fraud Rules</li>
-            <li>Priority Email Support</li>
-          </ul>
-          <button class="icon-btn" style="width:100%;text-align:center;" onclick="upgradePlan('business')" id="btn-business">Upgrade to Business</button>
-        </div>
-        <div class="card" id="card-enterprise">
-          <div class="card-label">Enterprise</div>
-          <div class="card-value" style="font-size:1.5rem;">Custom</div>
-          <div class="card-sub" style="margin-bottom:14px;">Unlimited / Pay-as-you-go</div>
-          <ul style="font-size:0.75rem;color:var(--g400);padding-left:14px;margin-bottom:14px;line-height:1.8;">
-            <li>Everything in Business</li>
-            <li>Custom Integration Help</li>
-            <li>On-premise Deployment</li>
-          </ul>
-          <button class="icon-btn" style="width:100%;text-align:center;" onclick="contactEnterprise()">Contact Sales</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="section" id="section-settings">
-      <div class="pg-title">Account Settings</div>
-      <p class="pg-sub">Update your account details and security settings.</p>
-
-      <div class="settings-card">
-        <h3>Account info</h3>
-        <div class="fg">
-          <label>Email</label>
-          <input type="email" id="settings-email" disabled/>
-        </div>
-        <div class="fg">
-          <label>App slug</label>
-          <input type="text" id="settings-slug" disabled/>
-        </div>
-        <div class="fg">
-          <label>Callback URL</label>
-          <input type="text" id="settings-callback" disabled/>
-        </div>
-        <p style="font-size:0.78rem;color:var(--g400);">To change email or slug, contact support.</p>
-      </div>
-
-      <div class="settings-card">
-        <h3>Change password</h3>
-        <div class="fg">
-          <label>Current password</label>
-          <input type="password" id="curr-pass" placeholder="Enter current password"/>
-        </div>
-        <div class="fg">
-          <label>New password</label>
-          <input type="password" id="new-pass" placeholder="Min. 8 characters"/>
-        </div>
-        <button class="save-btn" id="pass-btn" onclick="changePassword()">Update password</button>
-        <div class="msg" id="pass-msg"></div>
-      </div>
-    </div>
-
   </main>
 </div>
 
 <script>
 const API = window.location.origin;
-let devData = null;
-let keyVisible = false;
-
-// ─── Auth guard ───
 const token = localStorage.getItem('ax_access');
-if (!token) {
-  window.location.href = 'https://ageinx.vercel.app/#auth';
-}
+if (!token) window.location.href = 'https://ageinx.vercel.app/#auth';
 
-// ─── Load dashboard data ───
-async function loadDashboard() {
-  try {
-    const res = await fetch(`${API}/platform/dev/me`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+let devData = null;
+let usersData = [];
+let keyRevealed = false;
 
-    if (res.status === 401) {
-      localStorage.removeItem('ax_access');
-      localStorage.removeItem('ax_refresh');
-      window.location.href = 'https://ageinx.vercel.app/#auth';
-      return;
-    }
-
-    devData = await res.json();
-    renderDashboard();
-  } catch(e) {
-    document.getElementById('loading').innerHTML = '<p style="color:#dc2626">Failed to load. Check your connection and refresh.</p>';
-  }
-}
-
-function renderDashboard() {
-  const { email, api_key, slug, callback_url, plan, usage } = devData;
-  const limit = usage.api_calls_limit;
-  const used = usage.api_calls_count;
-  const pct = Math.min((used / limit) * 100, 100);
-
-  // Sidebar
-  document.getElementById('sb-email').textContent = email;
-  document.getElementById('sb-plan').textContent = plan.toUpperCase();
-
-  // Overview
-  document.getElementById('stat-users').textContent = usage.users_registered;
-  document.getElementById('stat-sessions').textContent = usage.sessions_this_month;
-  document.getElementById('stat-plan').textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
-  document.getElementById('stat-limit').textContent = limit.toLocaleString() + ' API calls / month';
-  document.getElementById('usage-used').textContent = used.toLocaleString() + ' calls used';
-  document.getElementById('usage-limit').textContent = 'of ' + limit.toLocaleString();
-  const bar = document.getElementById('usage-bar');
-  bar.style.width = pct + '%';
-  if (pct > 90) bar.classList.add('danger');
-  else if (pct > 70) bar.classList.add('warn');
-
-  // API Key
-  document.getElementById('login-url-display').textContent = `https://ageinx.vercel.app/auth/${slug}`;
-
-  // Billing
-  const planBadge = document.getElementById('billing-plan-badge');
-  planBadge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
-  planBadge.className = `plan-badge plan-${plan}`;
-  const planDescs = { starter: 'Free — 1,000 API calls / month', pro: '$49/mo — 50,000 API calls / month', business: '$199/mo — 500,000 API calls / month', enterprise: 'Custom — Unlimited / Pay-as-you-go' };
-  document.getElementById('billing-plan-desc').textContent = planDescs[plan] || '';
-  // Highlight active plan card, reset others
-  ['starter','pro','business','enterprise'].forEach(p => {
-    const btn = document.getElementById('btn-' + p);
-    const card = document.getElementById('card-' + p);
-    if (!btn || !card) return;
-    if (p === plan) {
-      btn.textContent = 'Current plan';
-      btn.disabled = true;
-      btn.style.background = '';
-      btn.style.color = '';
-      btn.style.borderColor = '';
-      card.style.borderColor = 'var(--accent)';
-      card.style.boxShadow = '0 0 0 1px var(--accent)';
-    } else {
-      card.style.borderColor = '';
-      card.style.boxShadow = '';
-    }
-  });
-
-  // Settings
-  document.getElementById('settings-email').value = email;
-  document.getElementById('settings-slug').value = slug;
-  document.getElementById('settings-callback').value = callback_url;
-
-  // Show app
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-}
-
-// ─── Section nav ───
-function showSection(id) {
+// ─── NAV LOGIC ───
+function nav(id) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.sb-link').forEach(l => l.classList.remove('active'));
-  document.getElementById('section-' + id).classList.add('active');
+  document.getElementById('sec-' + id).classList.add('active');
   document.getElementById('nav-' + id).classList.add('active');
+  document.getElementById('bc-text').textContent = document.getElementById('nav-' + id).textContent.trim();
+  
+  // Lazy load users if tab is clicked
+  if (id === 'users' && usersData.length === 0) fetchUsers();
 }
 
-// ─── API key toggle ───
-function toggleKey() {
-  const display = document.getElementById('api-key-display');
-  const btn = document.getElementById('toggle-btn');
-  keyVisible = !keyVisible;
-  if (keyVisible) {
-    display.textContent = devData.api_key;
-    display.classList.remove('masked');
-    btn.textContent = 'Hide';
-  } else {
-    display.textContent = '••••••••••••••••••••••••••••••••';
-    display.classList.add('masked');
-    btn.textContent = 'Show';
+// ─── INIT DATA ───
+async function init() {
+  try {
+    const res = await fetch(`${API}/platform/dev/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (res.status === 401) throw new Error("Unauth");
+    devData = await res.json();
+    
+    // Populate
+    document.getElementById('sb-email').textContent = devData.email;
+    document.getElementById('u-initial').textContent = devData.email.charAt(0).toUpperCase();
+    document.getElementById('stat-users').textContent = devData.usage.users_registered;
+    document.getElementById('stat-calls').textContent = devData.usage.api_calls_count;
+    document.getElementById('stat-limit').textContent = `Limit: ${devData.usage.api_calls_limit} / month`;
+    document.getElementById('stat-plan').textContent = devData.plan.toUpperCase();
+    document.getElementById('bill-plan-name').textContent = devData.plan.toUpperCase() + " TIER";
+    
+    document.getElementById('api-key-val').textContent = devData.api_key;
+    document.getElementById('login-url-val').textContent = `https://ageinx.vercel.app/auth/${devData.slug}`;
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+  } catch(e) {
+    localStorage.clear(); window.location.href = 'https://ageinx.vercel.app/#auth';
   }
 }
 
-// ─── Copy API key ───
-function copyKey() {
-  navigator.clipboard.writeText(devData.api_key);
-  const btn = document.getElementById('copy-btn');
-  btn.textContent = 'Copied!';
-  btn.classList.add('copy-success');
-  setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copy-success'); }, 2000);
+// ─── FETCH USERS TABLE ───
+async function fetchUsers() {
+  const tbody = document.getElementById('users-tbody');
+  try {
+    const res = await fetch(`${API}/platform/dev/users`, { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await res.json();
+    usersData = data.users || [];
+    
+    if (usersData.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3" class="empty-state">No users yet. Share your login URL to get started!</td></tr>`;
+      return;
+    }
+    
+    tbody.innerHTML = usersData.map(u => `
+      <tr>
+        <td style="font-family:monospace;color:var(--g400)">${u.id.split('-')[0]}...</td>
+        <td style="font-weight:500">${u.email}</td>
+        <td>${new Date(u.created_at).toLocaleDateString()}</td>
+      </tr>
+    `).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="3" class="empty-state">Failed to load users.</td></tr>`;
+  }
 }
 
-// ─── Copy login URL ───
-function copyLoginUrl() {
-  const url = `https://ageinx.vercel.app/auth/${devData.slug}`;
-  navigator.clipboard.writeText(url);
-  const btn = document.getElementById('copy-url-btn');
-  btn.textContent = 'Copied!';
-  btn.classList.add('copy-success');
-  setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copy-success'); }, 2000);
+// ─── UI ACTIONS ───
+function toggleKey(btn) {
+  const el = document.getElementById('api-key-val');
+  keyRevealed = !keyRevealed;
+  el.classList.toggle('blur', !keyRevealed);
+  btn.textContent = keyRevealed ? 'Hide' : 'Reveal';
 }
 
-// ─── Change password ───
-async function changePassword() {
-  const btn = document.getElementById('pass-btn');
-  const msg = document.getElementById('pass-msg');
+function copyText(id, btn) {
+  navigator.clipboard.writeText(document.getElementById(id).textContent);
+  btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 2000);
+}
+
+// ─── EXPORT LOGIC ───
+async function exportData(type) {
+  if(usersData.length === 0) await fetchUsers();
+  if(usersData.length === 0) return alert("No users to export.");
+  
+  let content, filename, mime;
+  if(type === 'json') {
+    content = JSON.stringify(usersData, null, 2);
+    filename = "ageinx_users.json"; mime = "application/json";
+  } else {
+    const headers = Object.keys(usersData[0]).join(",");
+    const rows = usersData.map(u => Object.values(u).map(v => `"${v}"`).join(",")).join("\n");
+    content = `${headers}\n${rows}`;
+    filename = "ageinx_users.csv"; mime = "text/csv";
+  }
+  
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([content], { type: mime }));
+  a.download = filename; a.click();
+}
+
+// ─── PASSWORD ───
+async function updatePassword(btn) {
   const curr = document.getElementById('curr-pass').value;
   const next = document.getElementById('new-pass').value;
-
-  if (!curr || !next) { showMsg(msg, 'Both fields are required.', 'error'); return; }
-
-  btn.disabled = true; btn.textContent = 'Updating…';
+  if(!curr || !next) return alert("Fill all fields.");
+  
+  btn.textContent = "Saving...";
   try {
     const res = await fetch(`${API}/platform/dev/change-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ current_password: curr, new_password: next })
     });
-    const data = await res.json();
-    if (!res.ok) { showMsg(msg, data.detail || 'Failed.', 'error'); return; }
-    showMsg(msg, '✅ Password updated successfully!', 'success');
-    document.getElementById('curr-pass').value = '';
-    document.getElementById('new-pass').value = '';
-  } catch(e) {
-    showMsg(msg, 'Network error. Try again.', 'error');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Update password';
-  }
+    if(!res.ok) throw new Error("Failed");
+    alert("Password updated.");
+    document.getElementById('curr-pass').value = ''; document.getElementById('new-pass').value = '';
+  } catch(e) { alert("Update failed. Check current password."); }
+  finally { btn.textContent = "Update Password"; }
 }
 
-// ─── Upgrade plan (placeholder for Razorpay) ───
-function contactEnterprise() {
-  window.open('mailto:kjuhi1496@gmail.com?subject=Ageinx Enterprise Inquiry', '_blank');
-}
+function logout() { localStorage.clear(); window.location.href = 'https://ageinx.vercel.app/#auth'; }
 
-function upgradePlan(plan) {
-  alert(`Contact kjuhi1496@gmail.com for the Plan. Plan: ${plan}`);
-}
-
-// ─── Logout ───
-async function logout() {
-  try {
-    await fetch(`${API}/platform/dev/logout`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-  } catch(e) {}
-  localStorage.removeItem('ax_access');
-  localStorage.removeItem('ax_refresh');
-  window.location.href = 'https://ageinx.vercel.app/#auth';
-}
-
-function showMsg(el, text, type) {
-  el.textContent = text;
-  el.className = 'msg msg-' + type;
-}
-// ─── Export Logic ───
-function toggleExportMenu() {
-  document.getElementById("exportDropdown").classList.toggle("show");
-}
-
-window.onclick = function(event) {
-  if (!event.target.matches('.export-btn') && !event.target.closest('.export-btn')) {
-    const d = document.getElementById("exportDropdown");
-    if (d && d.classList.contains('show')) d.classList.remove('show');
-  }
-}
-
-async function fetchLiveUsers() {
-  const btn = document.querySelector('.export-btn');
-  const originalText = btn.innerHTML;
-  btn.innerHTML = 'Fetching...';
-  
-  try {
-    const res = await fetch(`${API}/platform/dev/users`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (!res.ok) throw new Error("Failed");
-    const data = await res.json();
-    btn.innerHTML = originalText;
-    return data.users;
-  } catch (e) {
-    btn.innerHTML = originalText;
-    alert("Failed to fetch users. Check connection.");
-    return [];
-  }
-}
-
-function triggerDownload(content, fileName, contentType) {
-  const a = document.createElement("a");
-  const file = new Blob([content], { type: contentType });
-  a.href = URL.createObjectURL(file);
-  a.download = fileName;
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-async function exportJSON() {
-  const users = await fetchLiveUsers();
-  if (!users.length) { alert("No users to export yet."); toggleExportMenu(); return; }
-  
-  const jsonString = JSON.stringify(users, null, 2);
-  triggerDownload(jsonString, "ageinx_users.json", "application/json");
-  toggleExportMenu();
-}
-
-async function exportCSV() {
-  const users = await fetchLiveUsers();
-  if (!users.length) { alert("No users to export yet."); toggleExportMenu(); return; }
-  
-  const headers = Object.keys(users[0]).join(",");
-  const rows = users.map(user => Object.values(user).map(val => `"${val}"`).join(",")).join("\n");
-  
-  triggerDownload(`${headers}\n${rows}`, "ageinx_users.csv", "text/csv");
-  toggleExportMenu();
-}
-
-// ─── Init ───
-loadDashboard();
+init();
 </script>
 </body>
 </html>
-
