@@ -274,11 +274,26 @@ body {
 
   <main class="main">
 
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px;">
-  <div>
-    <div class="pg-title" style="margin-bottom: 6px;">Overview</div>
-    <p class="pg-sub" style="margin-bottom: 0;">Welcome back. Here's how your Ageinx integration is doing.</p>
-  </div>
+    <div class="section active" id="section-overview">
+
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px;">
+        <div>
+          <div class="pg-title" style="margin-bottom: 6px;">Overview</div>
+          <p class="pg-sub" style="margin-bottom: 0;">Welcome back. Here's how your Ageinx integration is doing.</p>
+        </div>
+        
+        <div class="export-container">
+          <button class="export-btn" onclick="toggleExportMenu()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export Users
+          </button>
+          <div class="export-dropdown" id="exportDropdown">
+            <button class="dropdown-item" onclick="exportJSON()">Export as .json</button>
+            <button class="dropdown-item" onclick="exportCSV()">Export as .csv</button>
+          </div>
+        </div>
+      </div>
+
   
   <div class="export-container">
     <button class="export-btn" onclick="toggleExportMenu()">
