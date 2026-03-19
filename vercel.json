@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/docs", "destination": "/docs.html" },
     { "source": "/platform/(.*)", "destination": "/api/index" },
     { "source": "/auth/(.*)", "destination": "/api/index" },
     { "source": "/contact", "destination": "/api/index" },
