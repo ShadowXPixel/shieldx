@@ -53,10 +53,9 @@ app = FastAPI(
     openapi_url=None
 )
 
-# Open CORS to allow developers to hit the API from their own custom domains
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["*"],  # Opened up for devs calling from their own domains
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -74,7 +73,8 @@ async def get_pool():
             DATABASE_URL,
             min_size=1,
             max_size=3,
-            statement_cache_size=0  # required for pgBouncer / Supabase transaction mode
+            command_timeout=60,
+            statement_cache_size=0  # required for pgBouncer / Supabase transaction mode on Vercel
         )
     return pool
 
@@ -285,7 +285,7 @@ class UserLogin(BaseModel):
     password: str
 
 # -----------------------------------
-# Health
+# Health & Docs
 # -----------------------------------
 
 @app.get("/health")
@@ -298,20 +298,15 @@ async def health_check():
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"DB unavailable: {str(e)}")
 
-# -----------------------------------
-# Docs
-# -------‐---------------------------
-
 @app.get("/docs", response_class=HTMLResponse)
 async def get_docs():
-        try:
-             # Vercel's root for files is /var/task/
-             with open("api/docs.html", "r") as f:
-                 return f.read()
-        except Exception as e:
-            return f"Docs not found. Error: {str(e)}"
+    try:
+        # Vercel's root for files is /var/task/
+        with open("api/docs.html", "r") as f:
+            return f.read()
+    except Exception as e:
+        return f"Docs not found. Error: {str(e)}"
 
-# Fixed /refresh endpoint using proper JWT methods
 @app.post("/refresh")
 async def refresh_token(refresh_token: str):
     try:
@@ -321,7 +316,6 @@ async def refresh_token(refresh_token: str):
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
-# Fixed /verify endpoint using proper JWT methods
 @app.get("/verify")
 async def verify(token: str):
     try:
@@ -732,7 +726,7 @@ async def auth_user_signup(slug: str, request: Request, data: UserSignup):
     )
     return {"message": "account created", "redirect_url": f"{dev['callback_url']}#token={token}", "token": token}
 
-# Fixed wallet drain logic by moving enforce_plan_limit down
+
 @app.post("/auth/{slug}/login")
 async def auth_user_login(slug: str, request: Request, data: UserLogin):
     ip = get_client_ip(request)
