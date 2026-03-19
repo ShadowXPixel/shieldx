@@ -1,5 +1,11 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/api/index" }
+    { "source": "/platform/(.*)", "destination": "/api/index" },
+    { "source": "/auth/(.*)", "destination": "/api/index" },
+    { "source": "/contact", "destination": "/api/index" },
+    { "source": "/verify", "destination": "/api/index" },
+    { "source": "/refresh", "destination": "/api/index" },
+    { "source": "/health", "destination": "/api/index" },
+    { "source": "/internal/(.*)", "destination": "/api/index" }
   ]
 }
