@@ -437,7 +437,7 @@ async def dev_me(token: dict = Depends(verify_token)):
     dev_id = str(token["sub"])
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
-        dev = await conn.fetchrow("SELECT email, api_key, slug, callback_url, plan, is_active, created_at, api_calls_count FROM developers WHERE id = $1", safe_uuid(dev_id))
+        dev = await conn.fetchrow("SELECT email, api_key, slug, callback_url, plan, is_active, created_at, api_calls_count, email_verified FROM developers WHERE id = $1", safe_uuid(dev_id))
         if not dev: raise HTTPException(status_code=404, detail="developer not found")
         user_count = await conn.fetchval("SELECT COUNT(*) FROM users WHERE developer_id = $1", safe_uuid(dev_id))
         sessions_this_month = await conn.fetchval("SELECT COUNT(*) FROM dev_sessions WHERE developer_id = $1 AND created_at >= date_trunc('month', now())", safe_uuid(dev_id))
@@ -445,7 +445,7 @@ async def dev_me(token: dict = Depends(verify_token)):
     plan = dev["plan"] or "starter"
     return {
         "email": dev["email"], "api_key": dev["api_key"], "slug": dev["slug"], "callback_url": dev["callback_url"],
-        "plan": plan, "is_active": dev["is_active"], "created_at": str(dev["created_at"]),
+        "plan": plan, "is_active": dev["is_active"], "email_verified": dev["email_verified"], "created_at": str(dev["created_at"]),
         "usage": { "users_registered": user_count or 0, "sessions_this_month": sessions_this_month or 0, "api_calls_count": dev["api_calls_count"] or 0, "api_calls_limit": PLAN_LIMITS.get(plan, 1000) }
     }
 
@@ -769,4 +769,3 @@ async def resend_verification(request: Request, email: EmailStr):
     asyncio.create_task(send_verification_email(email, raw_token))
 
     return {"message": "Verification email resent"}
-
