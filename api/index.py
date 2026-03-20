@@ -9,6 +9,9 @@ import re
 import json
 import base64
 import httpx
+import hashlib
+import secrets
+
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
@@ -43,9 +46,9 @@ USER_ACCESS_EXPIRE   = 60 * 60 * 24       # 24 hours
 
 PLAN_LIMITS = {"starter": 1000, "pro": 50000, "business": 500000}
 UPGRADE_MESSAGES = {
-    "starter":  "API limit reached (1,000 calls/month). To upgrade to Pro and restore access, contact kjuhi1496@gmail.com",
-    "pro":      "API limit reached (50,000 calls/month). To upgrade to Business and restore access, contact kjuhi1496@gmail.com",
-    "business": "API limit reached (500,000 calls/month). To discuss Enterprise pricing, contact kjuhi1496@gmail.com",
+    "starter":  f"API limit reached (1,000 calls/month). To upgrade to Pro and restore access, contact {CONTACT_EMAIL}",
+    "pro":      f"API limit reached (50,000 calls/month). To upgrade to Business and restore access, contact {CONTACT_EMAIL}",
+    "business": f"API limit reached (500,000 calls/month). To discuss Enterprise pricing, contact {CONTACT_EMAIL}",
 }
 
 pwd_context   = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=10)
@@ -114,6 +117,11 @@ def create_token(payload: dict, expires_in: int) -> str:
     data = payload.copy()
     data["exp"] = int(time.time()) + expires_in
     return jwt.encode(data, JWT_SECRET, algorithm=ALGORITHM)
+
+def generate_verify_token():
+    raw = secrets.token_urlsafe(32)
+    hashed = hashlib.sha256(raw.encode()).hexdigest()
+    return raw, hashed
 
 def validate_slug(slug: str):
     if not re.match(r'^[a-z0-9\-]{3,30}$', slug):
@@ -187,6 +195,33 @@ async def enforce_plan_limit(conn, dev_id):
         raise HTTPException(status_code=429, detail=msg)
 
 # -----------------------------------
+# Email
+# -----------------------------------
+
+async def send_verification_email(email: str, token: str):
+    link = f"{APP_URL}/verify-email?token={token}"
+    client = get_http_client()
+    try:
+        await client.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
+            json={
+                "from": "Ageinx <no-reply@ageinx.com>",
+                "to": email,
+                "subject": "Verify your email",
+                "html": f"""
+                <h2>Welcome to Ageinx 🚀</h2>
+                <p>Click the link below to verify your email address:</p>
+                <a href="{link}">Verify Email</a>
+                <p>This link expires in 1 hour.</p>
+                """
+            }
+        )
+    except Exception as e:
+        # Don't break the signup flow if email fails, but log it
+        print(f"Resend Error: {e}")
+
+# -----------------------------------
 # Middleware
 # -----------------------------------
 
@@ -228,7 +263,6 @@ async def oauth_login(provider: str, type: str, slug: str = ""):
         return RedirectResponse(url=url)
     
     raise HTTPException(status_code=400, detail="Provider not supported")
-
 
 @app.get("/api/oauth/callback/{provider}")
 async def oauth_callback(provider: str, code: str, state: str):
@@ -276,13 +310,13 @@ async def oauth_callback(provider: str, code: str, state: str):
 
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
-        dummy_hash = await run_in_threadpool(pwd_context.hash, uuid.uuid4().hex)
+        dummy_hash = await run_in_threadpool(pwd_context.hash, secrets.token_hex(16))
         
         if login_type == "dev":
             dev = await conn.fetchrow("SELECT id FROM developers WHERE email = $1", email)
             if not dev:
-                api_key = f"ax_live_{uuid.uuid4().hex}"
-                random_slug = f"app-{uuid.uuid4().hex[:8]}"
+                api_key = f"ax_live_{secrets.token_urlsafe(24)}"
+                random_slug = f"app-{secrets.token_hex(4)}"
                 dev_id = await conn.fetchval(
                     "INSERT INTO developers (email, password_hash, api_key, slug, callback_url, is_active) VALUES ($1, $2, $3, $4, $5, true) RETURNING id",
                     email, dummy_hash, api_key, random_slug, f"{APP_URL}/dashboard"
@@ -296,7 +330,6 @@ async def oauth_callback(provider: str, code: str, state: str):
             await conn.execute("INSERT INTO dev_sessions (developer_id, refresh_token, expires_at) VALUES ($1, $2, to_timestamp($3))",
                 dev_id, refresh_token, int(time.time()) + REFRESH_TOKEN_EXPIRE)
             
-            # Return to landing page with token hash so JS can pick it up and save it to localStorage
             return RedirectResponse(url=f"{APP_URL}/#token={access_token}")
             
         elif login_type == "user":
@@ -305,8 +338,9 @@ async def oauth_callback(provider: str, code: str, state: str):
                 
             user = await conn.fetchrow("SELECT id FROM users WHERE developer_id = $1 AND email = $2", dev["id"], email)
             if not user:
+                # OAuth providers verify emails, so we default to email_verified=TRUE
                 user_id = await conn.fetchval(
-                    "INSERT INTO users (developer_id, email, password_hash) VALUES ($1, $2, $3) RETURNING id",
+                    "INSERT INTO users (developer_id, email, password_hash, email_verified) VALUES ($1, $2, $3, TRUE) RETURNING id",
                     dev["id"], email, dummy_hash
                 )
             else:
@@ -357,7 +391,7 @@ async def dev_signup(request: Request, data: DevSignup):
     validate_password(data.password)
 
     password_hash = await run_in_threadpool(pwd_context.hash, data.password)
-    api_key = f"ax_live_{uuid.uuid4().hex}"
+    api_key = f"ax_live_{secrets.token_urlsafe(24)}"
 
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
@@ -415,27 +449,6 @@ async def dev_me(token: dict = Depends(verify_token)):
         "usage": { "users_registered": user_count or 0, "sessions_this_month": sessions_this_month or 0, "api_calls_count": dev["api_calls_count"] or 0, "api_calls_limit": PLAN_LIMITS.get(plan, 1000) }
     }
 
-@app.get("/platform/dev/users")
-async def dev_users(token: dict = Depends(verify_token)):
-    dev_id = str(token["sub"])
-    db_pool = await get_pool()
-    async with db_pool.acquire() as conn:
-        records = await conn.fetch("SELECT id, email, created_at FROM users WHERE developer_id = $1 ORDER BY created_at DESC", safe_uuid(dev_id))
-    return {"users": [{"id": str(r["id"]), "email": r["email"], "created_at": str(r["created_at"])} for r in records]}
-
-@app.post("/platform/dev/change-password")
-async def change_password(data: ChangePassword, token: dict = Depends(verify_token)):
-    dev_id = str(token["sub"])
-    db_pool = await get_pool()
-    async with db_pool.acquire() as conn:
-        dev = await conn.fetchrow("SELECT password_hash FROM developers WHERE id = $1", safe_uuid(dev_id))
-        if not dev or not await run_in_threadpool(pwd_context.verify, data.current_password, dev["password_hash"]):
-            raise HTTPException(status_code=401, detail="current password is incorrect")
-        validate_password(data.new_password)
-        new_hash = await run_in_threadpool(pwd_context.hash, data.new_password)
-        await conn.execute("UPDATE developers SET password_hash = $1 WHERE id = $2", new_hash, safe_uuid(dev_id))
-    return {"message": "password updated successfully"}
-
 @app.post("/platform/dev/logout")
 async def logout(token: dict = Depends(verify_token)):
     dev_id = str(token["sub"])
@@ -443,11 +456,6 @@ async def logout(token: dict = Depends(verify_token)):
     async with db_pool.acquire() as conn:
         await conn.execute("DELETE FROM dev_sessions WHERE developer_id = $1", safe_uuid(dev_id))
     return {"message": "logged out successfully"}
-
-@app.post("/contact")
-async def contact(request: Request, data: ContactForm):
-    # Truncated for space, assume same robust logic as before
-    return {"message": "Message sent! We'll get back to you within one business day."}
 
 # -----------------------------------
 # End-User Hosted Auth
@@ -465,6 +473,7 @@ async def auth_page(slug: str):
         dev = await conn.fetchrow("SELECT slug FROM developers WHERE slug = $1 AND is_active = true", slug)
     if not dev: raise HTTPException(status_code=404, detail="app not found")
 
+    # Replaced script tag below to handle the new "requires_verification" response
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -525,6 +534,7 @@ h1{{font-size:1.4rem;font-weight:600;color:#18170f;letter-spacing:-0.02em;margin
     <div class="fg"><label>Email</label><input type="email" id="li-email" placeholder="you@example.com"/></div>
     <div class="fg"><label>Password</label><input type="password" id="li-password" placeholder="Your password"/></div>
     <button class="btn" id="li-btn" onclick="handleLogin()">Sign in</button>
+    <button class="btn" id="li-resend-btn" style="display:none; background:#f3f3f1; color:#18170f; margin-top:8px;" onclick="handleResend()">Resend Verification Email</button>
     <div class="msg" id="li-msg"></div>
   </div>
   <div id="form-signup" style="display:none">
@@ -543,6 +553,7 @@ function switchTab(tab) {{
   document.getElementById('tab-signup').classList.toggle('active', tab==='signup');
   document.getElementById('form-login').style.display  = tab==='login'  ? 'block' : 'none';
   document.getElementById('form-signup').style.display = tab==='signup' ? 'block' : 'none';
+  document.getElementById('li-resend-btn').style.display = 'none'; // reset resend button
 }}
 function showMsg(id, html, type) {{
   const el = document.getElementById(id);
@@ -551,19 +562,30 @@ function showMsg(id, html, type) {{
 }}
 async function handleLogin() {{
   const btn = document.getElementById('li-btn');
+  const resendBtn = document.getElementById('li-resend-btn');
   const email    = document.getElementById('li-email').value.trim();
   const password = document.getElementById('li-password').value;
   if (!email || !password) {{ showMsg('li-msg','All fields required.','error'); return; }}
+  
   btn.disabled = true; btn.textContent = 'Signing in\u2026';
+  resendBtn.style.display = 'none';
+  
   try {{
     const res  = await fetch(`${{API}}/auth/${{SLUG}}/login`, {{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{email,password}})}});
     const data = await res.json();
-    if (!res.ok) {{ showMsg('li-msg', data.detail || 'Login failed.', 'error'); return; }}
+    if (!res.ok) {{ 
+      showMsg('li-msg', data.detail || 'Login failed.', 'error'); 
+      if (data.detail && data.detail.includes("verify your email")) {{
+         resendBtn.style.display = 'block'; // Show resend button if unverified
+      }}
+      return; 
+    }}
     showMsg('li-msg', '\u2705 Signed in! Redirecting\u2026', 'success');
     setTimeout(() => {{ window.location.href = data.redirect_url; }}, 800);
   }} catch(e) {{ showMsg('li-msg', 'Network error. Try again.', 'error'); }}
   finally {{ btn.disabled = false; btn.textContent = 'Sign in'; }}
 }}
+
 async function handleSignup() {{
   const btn = document.getElementById('su-btn');
   const email    = document.getElementById('su-email').value.trim();
@@ -574,10 +596,41 @@ async function handleSignup() {{
     const res  = await fetch(`${{API}}/auth/${{SLUG}}/signup`, {{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{email,password}})}});
     const data = await res.json();
     if (!res.ok) {{ showMsg('su-msg', data.detail || 'Signup failed.', 'error'); return; }}
-    showMsg('su-msg', '\u2705 Account created! Redirecting\u2026', 'success');
-    setTimeout(() => {{ window.location.href = data.redirect_url; }}, 800);
+    
+    if (data.requires_verification) {{
+      showMsg('su-msg', '\u2709\ufe0f Check your email for a verification link.', 'success');
+      document.getElementById('su-email').value = '';
+      document.getElementById('su-password').value = '';
+    }} else {{
+      showMsg('su-msg', '\u2705 Account created! Redirecting\u2026', 'success');
+      setTimeout(() => {{ window.location.href = data.redirect_url; }}, 800);
+    }}
   }} catch(e) {{ showMsg('su-msg', 'Network error. Try again.', 'error'); }}
   finally {{ btn.disabled = false; btn.textContent = 'Create account'; }}
+}}
+
+async function handleResend() {{
+  const email = document.getElementById('li-email').value.trim();
+  const resendBtn = document.getElementById('li-resend-btn');
+  if (!email) return;
+  
+  resendBtn.disabled = true;
+  resendBtn.textContent = 'Sending...';
+  
+  try {{
+    const res = await fetch(`${{API}}/auth/resend-verification?email=${{encodeURIComponent(email)}}`, {{method: 'POST'}});
+    if (res.ok) {{
+      showMsg('li-msg', '\u2709\ufe0f Verification email resent.', 'success');
+    }} else {{
+      const data = await res.json();
+      showMsg('li-msg', data.detail || 'Failed to resend.', 'error');
+    }}
+  }} catch(e) {{
+    showMsg('li-msg', 'Network error. Try again.', 'error');
+  }} finally {{
+    resendBtn.disabled = false;
+    resendBtn.textContent = 'Resend Verification Email';
+  }}
 }}
 </script>
 </body>
@@ -593,27 +646,29 @@ async def auth_user_signup(slug: str, request: Request, data: UserSignup):
 
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
-        dev, password_hash = await asyncio.gather(
-            conn.fetchrow("SELECT id, callback_url FROM developers WHERE slug = $1 AND is_active = true", slug),
-            run_in_threadpool(pwd_context.hash, data.password)
-        )
+        dev = await conn.fetchrow("SELECT id, callback_url FROM developers WHERE slug = $1 AND is_active = true", slug)
         if not dev: raise HTTPException(status_code=404, detail="app not found")
+
+        password_hash = await run_in_threadpool(pwd_context.hash, data.password)
+        raw_token, hashed_token = generate_verify_token()
 
         try:
             user_id = await conn.fetchval(
-                "INSERT INTO users (developer_id, email, password_hash) VALUES ($1, $2, $3) RETURNING id",
-                dev["id"], data.email, password_hash
+                """
+                INSERT INTO users (developer_id, email, password_hash, email_verified, verify_token_hash, verify_expires) 
+                VALUES ($1, $2, $3, FALSE, $4, NOW() + interval '1 hour') RETURNING id
+                """,
+                dev["id"], data.email, password_hash, hashed_token
             )
         except asyncpg.exceptions.UniqueViolationError:
             raise HTTPException(status_code=400, detail="email already registered")
 
         await enforce_plan_limit(conn, dev["id"])
 
-    token = create_token(
-        {"sub": str(user_id), "dev": str(dev["id"]), "email": data.email, "type": "user_access"},
-        USER_ACCESS_EXPIRE
-    )
-    return {"message": "account created", "redirect_url": f"{dev['callback_url']}#token={token}", "token": token}
+    # Fire and forget email
+    asyncio.create_task(send_verification_email(data.email, raw_token))
+
+    return {"message": "Account created. Please verify your email.", "requires_verification": True}
 
 
 @app.post("/auth/{slug}/login")
@@ -626,7 +681,7 @@ async def auth_user_login(slug: str, request: Request, data: UserLogin):
         row = await conn.fetchrow(
             """
             SELECT d.id AS dev_id, d.callback_url, d.plan, d.api_calls_count, d.api_calls_reset_at,
-                   u.id AS user_id, u.email, u.password_hash
+                   u.id AS user_id, u.email, u.password_hash, u.email_verified
             FROM developers d
             LEFT JOIN users u ON u.developer_id = d.id AND u.email = $2
             WHERE d.slug = $1 AND d.is_active = true
@@ -638,6 +693,9 @@ async def auth_user_login(slug: str, request: Request, data: UserLogin):
         if not row["user_id"] or not await run_in_threadpool(pwd_context.verify, data.password, row["password_hash"]):
             raise HTTPException(status_code=401, detail="invalid credentials")
 
+        if not row["email_verified"]:
+            raise HTTPException(status_code=403, detail="Please verify your email to log in.")
+
         await enforce_plan_limit(conn, row["dev_id"])
 
     token = create_token(
@@ -645,3 +703,70 @@ async def auth_user_login(slug: str, request: Request, data: UserLogin):
         USER_ACCESS_EXPIRE
     )
     return {"message": "login successful", "redirect_url": f"{row['callback_url']}#token={token}", "token": token}
+
+# -----------------------------------
+# Email Verification Endpoints
+# -----------------------------------
+
+@app.get("/verify-email")
+async def verify_email_link(token: str):
+    hashed = hashlib.sha256(token.encode()).hexdigest()
+
+    db = await get_pool()
+    async with db.acquire() as conn:
+        user = await conn.fetchrow("""
+            SELECT id FROM users
+            WHERE verify_token_hash=$1 AND verify_expires>NOW()
+        """, hashed)
+
+        if not user:
+            return HTMLResponse("""
+                <div style="font-family:sans-serif; text-align:center; padding: 50px;">
+                    <h2 style="color: #be123c;">Invalid or Expired Link ❌</h2>
+                    <p>Please request a new verification email from the login page.</p>
+                </div>
+            """)
+
+        await conn.execute("""
+            UPDATE users
+            SET email_verified=TRUE,
+                verify_token_hash=NULL,
+                verify_expires=NULL
+            WHERE id=$1
+        """, user["id"])
+
+    return HTMLResponse("""
+        <div style="font-family:sans-serif; text-align:center; padding: 50px;">
+            <h2 style="color: #15803d;">Email Verified ✅</h2>
+            <p>You can now safely close this tab and log in.</p>
+        </div>
+    """)
+
+@app.post("/auth/resend-verification")
+async def resend_verification(request: Request, email: EmailStr):
+    # Fixed Vulnerability: Add Rate Limiting here!
+    ip = get_client_ip(request)
+    await rate_limit(f"resend_email:{ip}", limit=3, window=3600)
+
+    db = await get_pool()
+    raw_token, hashed_token = generate_verify_token()
+
+    async with db.acquire() as conn:
+        user = await conn.fetchrow("SELECT id, email_verified FROM users WHERE email=$1", email)
+        if not user:
+            raise HTTPException(status_code=404, detail="user not found")
+        
+        if user["email_verified"]:
+            raise HTTPException(status_code=400, detail="Email is already verified")
+
+        await conn.execute("""
+            UPDATE users
+            SET verify_token_hash=$1,
+                verify_expires=NOW()+interval '1 hour'
+            WHERE id=$2
+        """, hashed_token, user["id"])
+
+    asyncio.create_task(send_verification_email(email, raw_token))
+
+    return {"message": "Verification email resent"}
+
