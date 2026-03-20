@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -529,19 +530,287 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
       </div>
     </div>
   </div>
+
+  <div class="stats-strip">
+    <div class="stats-inner">
+      <div class="stat"><div class="stat-v">1</div><div class="stat-l">Redirect to integrate</div></div>
+      <div class="stat"><div class="stat-v">JWT</div><div class="stat-l">Secure tokens</div></div>
+      <div class="stat"><div class="stat-v">99.9%</div><div class="stat-l">Uptime SLA</div></div>
+      <div class="stat"><div class="stat-v">&lt;50ms</div><div class="stat-l">Avg response</div></div>
+    </div>
+  </div>
+
+  <div class="feat-sec">
+    <div class="sec-label">Why Ageinx?</div>
+    <div class="sec-head">Stop rebuilding the same<br/>infrastructure every project.</div>
+    <div class="f-grid">
+      <div class="f-card"><div class="f-ico">🔐</div><div class="f-title">Security by default</div><div class="f-desc">Auth, rate limiting, and encryption are built in from day one — not bolted on as an afterthought.</div></div>
+      <div class="f-card"><div class="f-ico">⚡</div><div class="f-title">One redirect, done</div><div class="f-desc">Send users to your Ageinx URL. They log in, you get a token. No SDKs, no config, no auth code.</div></div>
+      <div class="f-card"><div class="f-ico">📡</div><div class="f-title">Built to scale</div><div class="f-desc">Infrastructure that grows with your app, from launch day to your first million requests.</div></div>
+      <div class="f-card"><div class="f-ico">💬</div><div class="f-title">Real support</div><div class="f-desc">A developer who's been through production incidents. Reach me directly — no ticket queues.</div></div>
+      <div class="f-card"><div class="f-ico">📋</div><div class="f-title">Transparent pricing</div><div class="f-desc">No hidden fees, no lock-in. Flat monthly plans you can cancel at any time.</div></div>
+    </div>
+  </div>
+
+  <footer><div class="ft">
+    <div class="ft-logo">NIMBO<span>ITY</span></div>
+    <div class="ft-copy">© 2026 Nimboity. All rights reserved.</div>
+    <div class="ft-links">
+      <a onclick="go('ageinx')">Platform</a>
+      <a onclick="go('pricing')">Pricing</a>
+      <a onclick="go('about')">About</a>
+      <a onclick="go('contact')">Contact</a>
+    </div>
+  </div></footer>
 </div>
 
 <div class="page" id="page-ageinx">
+  <div class="sx-hdr">
+    <div class="kicker">Platform</div>
+    <div class="pg-title">Hosted auth, done right.<br/>You redirect. We handle the rest.</div>
+    <p class="pg-sub">Ageinx gives your app a fully hosted login and signup page — with rate limiting, secure tokens, and user management built in. One redirect. One token. Your users are authenticated.</p>
   </div>
+
+  <div class="sx-intro">
+    <div class="sx-intro-grid">
+      <div class="sx-intro-text">
+        <div class="sec-label" style="margin-bottom:14px;">What is Ageinx</div>
+        <p>Ageinx is an Authentication-as-a-Service platform. Instead of building login flows yourself, you redirect your users to <code style="background:#f3f3f1;padding:1px 6px;border-radius:4px;font-size:0.8rem">ageinx.vercel.app/auth/{your-slug}</code> — we show them a clean login/signup page, authenticate them securely, then redirect back to your app with a signed JWT token.</p>
+        <p>Your backend then calls <code style="background:#f3f3f1;padding:1px 6px;border-radius:4px;font-size:0.8rem">GET /auth/userinfo</code> with that token to verify the user and get their data as JSON. That's the entire integration.</p>
+        <p>It's production-ready from day one — built with security as a hard constraint, not a feature to add later.</p>
+        <button class="btn-p" onclick="go('pricing')">See pricing plans →</button>
+      </div>
+      <div>
+        <div class="sec-label" style="margin-bottom:10px;">Included features</div>
+        <div class="modules-list">
+          <div class="mod-row"><div class="mod-ico">🔑</div><div><div class="mod-name">Auth</div><div class="mod-sub">JWT, OAuth 2.0, MFA, sessions</div></div><div class="mod-tag">Included</div></div>
+          <div class="mod-row"><div class="mod-ico">🛡️</div><div><div class="mod-name">Guard</div><div class="mod-sub">Rate limiting, DDoS, bot detection</div></div><div class="mod-tag">Included</div></div>
+          <div class="mod-row"><div class="mod-ico">🏦</div><div><div class="mod-name">Vault</div><div class="mod-sub">Hashed storage</div></div><div class="mod-tag">Included</div></div>
+          <div class="mod-row"><div class="mod-ico">🔍</div><div><div class="mod-name">Scan</div><div class="mod-sub">URL & file threat detection</div></div><div class="mod-tag">Included</div></div>
+          <div class="mod-row"><div class="mod-ico">📊</div><div><div class="mod-name">Insight</div><div class="mod-sub">Structured logs, events, alerting</div></div><div class="mod-tag">Included</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sx-code">
+    <div class="sx-code-inner">
+      <div class="sec-label">Quick start</div>
+      <div class="sec-head">Integrate in 4 steps.</div>
+      <div class="code-blk"><pre><span class="cm">// Step 1 — Redirect your user to Ageinx</span>
+<span class="cm">// Link or redirect button in your frontend:</span>
+<span class="fn">window</span>.location.href = <span class="str">'https://ageinx.vercel.app/auth/your-slug'</span>;
+
+<span class="cm">// Step 2 — User logs in on Ageinx hosted page</span>
+<span class="cm">// They get redirected back to your callback URL:</span>
+<span class="cm">// https://yourapp.com/callback#token=eyJhbGci...</span>
+
+<span class="cm">// Step 3 — Parse the token in your callback page</span>
+<span class="kw">const</span> <span class="vr">token</span> = <span class="kw">new</span> <span class="fn">URLSearchParams</span>(
+  window.location.hash.<span class="fn">substring</span>(<span class="num">1</span>)
+).<span class="fn">get</span>(<span class="str">'token'</span>);
+
+<span class="cm">// Step 4 — Verify token on your backend</span>
+<span class="kw">const</span> <span class="vr">res</span> = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://ageinx.vercel.app/auth/userinfo'</span>, {
+  headers: { <span class="str">'Authorization'</span>: <span class="str">`Bearer <span class="vr">${token}</span>`</span> }
+});
+<span class="kw">const</span> { <span class="vr">user_id</span>, <span class="vr">email</span> } = <span class="kw">await</span> <span class="vr">res</span>.<span class="fn">json</span>();
+<span class="cm">// → { user_id: "uuid", email: "workwithshadow2204@gmail.com" }</span></pre></div>
+    </div>
+  </div>
+
+  <footer><div class="ft">
+    <div class="ft-logo">NIMBO<span>ITY</span></div>
+    <div class="ft-copy">© 2026 Nimboity. All rights reserved.</div>
+    <div class="ft-links">
+      <a onclick="go('home')">Home</a>
+      <a onclick="go('pricing')">Pricing</a>
+      <a onclick="go('about')">About</a>
+      <a onclick="go('contact')">Contact</a>
+    </div>
+  </div></footer>
+</div>
 
 <div class="page" id="page-pricing">
+  <div class="sx-hdr">
+    <div class="kicker">Pricing</div>
+    <div class="pg-title">Simple, honest plans.</div>
+    <p class="pg-sub">No enterprise gatekeeping, no usage traps. Stop paying a tax on every new user you acquire. Pay for what you use.</p>
   </div>
+
+  <div class="sx-pricing">
+    <div class="plans">
+
+      <div class="plan">
+        <div class="plan-name">Free</div>
+        <div class="plan-price">$0</div>
+        <hr class="plan-hr"/>
+        <div class="plan-desc">For side projects and learning. Get familiar with Ageinx at no cost.</div>
+        <ul class="plan-feats">
+          <li>1,000 Users / month</li>
+          <li>1 project</li>
+          <li>Basic rate limiting</li>
+          <li>Community support</li>
+        </ul>
+        <button class="plan-btn plan-btn-ghost" onclick="routeToContact('Free Plan')">Get Started</button>
+      </div>
+
+      <div class="plan pop">
+        <div class="pop-tag">Most popular</div>
+        <div class="plan-name">Standard</div>
+        <div class="plan-price">$29<sub> / mo</sub></div>
+        <hr class="plan-hr"/>
+        <div class="plan-desc">For production apps that need reliability and unlimited scaling.</div>
+        <ul class="plan-feats">
+          <li>50,000 Users / month</li>
+          <li>Unlimited projects</li>
+          <li>Custom rate limit rules</li>
+          <li>Email support</li>
+          <li>99.9% uptime SLA</li>
+        </ul>
+        <button class="plan-btn plan-btn-solid" onclick="routeToContact('Standard — $29 / month')">Get Standard</button>
+      </div>
+
+      <div class="plan">
+        <div class="plan-name">Business</div>
+        <div class="plan-price">$79<sub> / mo</sub></div>
+        <hr class="plan-hr"/>
+        <div class="plan-desc">For teams and high-traffic apps that need advanced priority features.</div>
+        <ul class="plan-feats">
+          <li>500,000 Users / month</li>
+          <li>Unlimited projects</li>
+          <li>Advanced alerting</li>
+          <li>Priority direct support</li>
+        </ul>
+        <button class="plan-btn plan-btn-ghost" onclick="routeToContact('Business — $79 / month')">Get Business</button>
+      </div>
+
+      <div class="plan">
+        <div class="plan-name">Enterprise</div>
+        <div class="plan-price">Custom</div>
+        <hr class="plan-hr"/>
+        <div class="plan-desc">For massive scale. Custom throughput, custom deployment, custom limits.</div>
+        <ul class="plan-feats">
+          <li>Unlimited Users</li>
+          <li>Custom limits</li>
+          <li>On-premise Deployment options</li>
+          <li>Priority direct support</li>
+        </ul>
+        <button class="plan-btn plan-btn-ghost" onclick="routeToContact('Enterprise — Custom')">Contact Sales</button>
+      </div>
+
+    </div>
+  </div>
+
+  <footer><div class="ft">
+    <div class="ft-logo">NIMBO<span>ITY</span></div>
+    <div class="ft-copy">© 2026 Nimboity. All rights reserved.</div>
+    <div class="ft-links">
+      <a onclick="go('home')">Home</a>
+      <a onclick="go('ageinx')">Platform</a>
+      <a onclick="go('about')">About</a>
+      <a onclick="go('contact')">Contact</a>
+    </div>
+  </div></footer>
+</div>
 
 <div class="page" id="page-about">
+  <div class="ab-hdr">
+    <div class="kicker">About</div>
+    <div class="pg-title">One developer,<br/>one real frustration.</div>
+    <p class="pg-sub">Ageinx was built because I kept solving the same problems on every project. So I built the solution once, properly, and made it available to everyone.</p>
   </div>
 
-<div class="page" id="page-contact">
+  <div class="ab-body">
+    <div class="ab-split">
+      <div class="ab-text">
+        <h2>Why I built Ageinx</h2>
+        <p>Every new project started the same way — setting up authentication, writing rate limiters, configuring logging. Hours of work that added nothing to the product I was actually trying to build.</p>
+        <p>I decided to build those things once, with real attention to security and reliability, and ship them as Ageinx — a hosted auth platform so developers never have to build login flows again.</p>
+        <p>I built this alone. That means I move fast, care deeply about every line I ship, and actually respond when you reach out. There's no team to blame — just me.</p>
+      </div>
+      <div class="vals">
+        <div class="val"><div class="val-n">01</div><div><div class="val-title">Developer experience first</div><div class="val-desc">Consistent APIs, honest docs, and responses that make sense. I hate bad DX as much as you do.</div></div></div>
+        <div class="val"><div class="val-n">02</div><div><div class="val-title">Security without compromise</div><div class="val-desc">Every part is built with security as a hard constraint, not a feature to add later.</div></div></div>
+        <div class="val"><div class="val-n">03</div><div><div class="val-title">Honest pricing</div><div class="val-desc">No enterprise gatekeeping, no usage traps. Pay for what you use, cancel whenever.</div></div></div>
+        <div class="val"><div class="val-n">04</div><div><div class="val-title">Solo, real accountability</div><div class="val-desc">Being solo means I move faster and care more. There's no support department to hide behind — it's just me.</div></div></div>
+      </div>
+    </div>
+
+    <div class="team-hd">The founder</div>
+    <div class="team-grid" style="grid-template-columns:1fr;max-width:400px;">
+      <div class="team-card">
+        <div class="team-av">A</div>
+        <div class="team-name">Ankur</div>
+        <div class="team-role">Founder & Engineer</div>
+        <div class="team-bio">Responsible for everything — backend infrastructure, API architecture, and product decisions. Builds fast, ships with care, and has a strong opinion about every part of the stack.</div>
+      </div>
+    </div>
   </div>
+
+  <footer><div class="ft">
+    <div class="ft-logo">NIMBO<span>ITY</span></div>
+    <div class="ft-copy">© 2026 Nimboity. All rights reserved.</div>
+    <div class="ft-links">
+      <a onclick="go('home')">Home</a>
+      <a onclick="go('ageinx')">Platform</a>
+      <a onclick="go('pricing')">Pricing</a>
+      <a onclick="go('contact')">Contact</a>
+    </div>
+  </div></footer>
+</div>
+
+<div class="page" id="page-contact">
+  <div class="contact-wrap">
+    <div class="c-side">
+      <div class="c-side-inner">
+        <div class="kicker">Contact</div>
+        <h2>Let's talk.</h2>
+        <p>Have a question about Ageinx? Want to discuss a custom plan? Or just want to connect — we always respond.</p>
+        <div class="c-links">
+          <a class="c-link" href="mailto:workwithshadow2204@gmail.com"><div class="c-ico">📧</div>workwithshadow2204@gmail.com</a>
+          <a class="c-link" href="#"><div class="c-ico">💬</div>Discord - @realmofshadow_</a>
+          <a class="c-link" href="#"><div class="c-ico">🐙</div>github.com/ShadowXPixel</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="c-main">
+      <h3>Send a message</h3>
+      <p class="c-intro">We read every message and typically respond within one business day.</p>
+      <div class="fg-row">
+        <div class="fg"><label>First name</label><input type="text" id="c-fname" placeholder="Jane"/></div>
+        <div class="fg"><label>Last name</label><input type="text" id="c-lname" placeholder="Smith"/></div>
+      </div>
+      <div class="fg"><label>Email</label><input type="email" id="c-email" placeholder="jane@yourapp.com"/></div>
+      <div class="fg">
+        <label>Plan interest</label>
+        <select id="c-plan">
+          <option value="">Select a plan</option>
+          <option>Free Plan</option>
+          <option>Standard — $29 / month</option>
+          <option>Business — $79 / month</option>
+          <option>Enterprise — Custom</option>
+          <option>Not sure yet</option>
+        </select>
+      </div>
+      <div class="fg"><label>Message</label><textarea id="c-message" placeholder="Tell us about your project..."></textarea></div>
+      <button class="sub-btn" id="contact-btn" onclick="handleSubmit(this)">Send message</button>
+      <div id="contact-msg" style="display:none;margin-top:12px;padding:10px 14px;border-radius:7px;font-size:0.83rem;line-height:1.5;"></div>
+    </div>
+  </div>
+
+  <footer><div class="ft">
+    <div class="ft-logo">NIMBO<span>ITY</span></div>
+    <div class="ft-copy">© 2026 Nimboity. All rights reserved.</div>
+    <div class="ft-links">
+      <a onclick="go('home')">Home</a>
+      <a onclick="go('ageinx')">Platform</a>
+      <a onclick="go('pricing')">Pricing</a>
+      <a onclick="go('about')">About</a>
+    </div>
+  </div></footer>
+</div>
 
 <div class="page" id="page-auth">
   <div class="auth-wrap">
@@ -586,7 +855,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
     </div>
   </div>
 </div>
-  
+
 <script>
 const PAGES = ['home','ageinx','pricing','about','contact','auth'];
 const API = window.location.origin;
@@ -736,6 +1005,50 @@ window.addEventListener('DOMContentLoaded', () => {
   const hash = window.location.hash.replace('#','') || 'home';
   go(PAGES.includes(hash) ? hash : 'home');
 });
+
+async function handleSubmit(btn) {
+  const fname   = document.getElementById('c-fname').value.trim();
+  const lname   = document.getElementById('c-lname').value.trim();
+  const email   = document.getElementById('c-email').value.trim();
+  const plan    = document.getElementById('c-plan').value;
+  const message = document.getElementById('c-message').value.trim();
+  const msgEl   = document.getElementById('contact-msg');
+
+  function setMsg(text, ok) {
+    msgEl.style.display = 'block';
+    msgEl.style.background = ok ? '#f0fdf4' : '#fff1f2';
+    msgEl.style.color      = ok ? '#15803d' : '#be123c';
+    msgEl.style.border     = ok ? '1px solid #bbf7d0' : '1px solid #fecdd3';
+    msgEl.textContent = text;
+  }
+
+  if (!email || !message) { setMsg('Please fill in your email and message.', false); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  try {
+    const res = await fetch(`${API}/contact`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: `${fname} ${lname}`.trim(), email, plan, message })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Failed');
+    setMsg("✅ Message sent! We'll get back to you within one business day.", true);
+    ['c-fname','c-lname','c-email','c-plan','c-message'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+  } catch(e) {
+    setMsg('Something went wrong. Please try again.', false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send message';
+  }
+}
 </script>
 </body>
 </html>
+
+
