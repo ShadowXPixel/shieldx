@@ -16,7 +16,7 @@
   --g400:  #9a9895;
   --g600:  #6a6965;
   --g800:  #4a4946;
-  --ink:   #2b2a27; /* Softened from harsh black */
+  --ink:   #2b2a27;
   --accent:  #2b2a27;
   --border:  #e5e5e5;
   --border-s:#d4d4d4;
@@ -38,19 +38,20 @@ body {
 .sidebar {
   width: var(--sidebar); background: var(--off); border-right: 1px solid var(--border);
   display: flex; flex-direction: column; z-index: 100; flex-shrink: 0;
+  height: 100vh; overflow: hidden; /* FIX 1: constrain sidebar height */
 }
-.sb-header { padding: 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-start; }
-.sb-logo { 
-  font-weight: 600; 
-  font-size: 1.1rem; 
-  color: var(--ink); 
-  cursor: pointer; 
-  letter-spacing: 0.15em; 
-  text-transform: uppercase; 
+.sb-header { padding: 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-start; flex-shrink: 0; }
+.sb-logo {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--ink);
+  cursor: pointer;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
 }
-.sb-logo span { color: #1b6ef2; } /* The exact Ageinx/Nimboity Blue */
+.sb-logo span { color: #1b6ef2; }
 
-.sb-nav { padding: 24px 12px; flex: 1; overflow-y: auto; }
+.sb-nav { padding: 24px 12px; flex: 1; overflow-y: auto; min-height: 0; } /* FIX 2: min-height: 0 makes flex scroll work */
 .nav-group { font-size: 0.65rem; font-weight: 500; color: var(--g400); text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 8px 12px; }
 .sb-link {
   display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px;
@@ -62,10 +63,9 @@ body {
 .sb-link svg { width: 16px; height: 16px; opacity: 0.6; }
 .sb-link.active svg { opacity: 0.9; stroke: var(--ink); }
 
-.sb-footer { padding: 16px; border-top: 1px solid var(--border); background: var(--white); }
-.user-pill { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
-.user-pill:hover { background: var(--off); }
-.u-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--ink); color: var(--white); display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 0.8rem; }
+.sb-footer { padding: 16px; border-top: 1px solid var(--border); background: var(--white); flex-shrink: 0; }
+.user-pill { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; }
+.u-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--ink); color: var(--white); display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 0.8rem; flex-shrink: 0; }
 .u-info { flex: 1; overflow: hidden; }
 .u-email { font-size: 0.75rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .u-plan { font-size: 0.65rem; color: var(--g400); text-transform: uppercase; letter-spacing: 0.05em; }
@@ -129,14 +129,14 @@ tr:hover td { background: var(--off); }
 <div id="loading"><div class="spinner"></div></div>
 
 <div class="app-layout" id="app" style="display:none">
-  
-    <aside class="sidebar">
+
+  <aside class="sidebar">
     <div class="sb-header">
       <div class="sb-logo" onclick="window.location.href='https://ageinx.vercel.app'">
         NIMBO<span>ITY</span>
       </div>
     </div>
-    
+
     <nav class="sb-nav">
       <div class="nav-group">Platform</div>
       <button class="sb-link active" onclick="nav('overview')" id="nav-overview">
@@ -162,15 +162,20 @@ tr:hover td { background: var(--off); }
         Security
       </button>
     </nav>
-    
+
+    <!-- FIX 3: Separate user pill (display only) from logout button -->
     <div class="sb-footer">
-      <div class="user-pill" onclick="logout()">
+      <div class="user-pill">
         <div class="u-avatar" id="u-initial">A</div>
         <div class="u-info">
           <div class="u-email" id="sb-email">loading...</div>
-          <div class="u-plan" id="sb-plan">Sign out</div>
+          <div class="u-plan" id="sb-plan">FREE</div>
         </div>
       </div>
+      <button class="sb-link" onclick="logout()" style="margin-top: 4px; color: var(--g600);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        Log out
+      </button>
     </div>
   </aside>
 
@@ -183,7 +188,7 @@ tr:hover td { background: var(--off); }
     </header>
 
     <div class="scroll-area">
-      
+
       <div class="section active" id="sec-overview">
         <div class="pg-header">
           <div>
@@ -316,8 +321,7 @@ function nav(id) {
   document.getElementById('sec-' + id).classList.add('active');
   document.getElementById('nav-' + id).classList.add('active');
   document.getElementById('bc-text').textContent = document.getElementById('nav-' + id).textContent.trim();
-  
-  // Lazy load users if tab is clicked
+
   if (id === 'users' && usersData.length === 0) fetchUsers();
 }
 
@@ -327,16 +331,16 @@ async function init() {
     const res = await fetch(`${API}/platform/dev/me`, { headers: { 'Authorization': `Bearer ${token}` } });
     if (res.status === 401) throw new Error("Unauth");
     devData = await res.json();
-    
-    // Populate
+
     document.getElementById('sb-email').textContent = devData.email;
     document.getElementById('u-initial').textContent = devData.email.charAt(0).toUpperCase();
     document.getElementById('stat-users').textContent = devData.usage.users_registered;
     document.getElementById('stat-calls').textContent = devData.usage.api_calls_count;
     document.getElementById('stat-limit').textContent = `Limit: ${devData.usage.api_calls_limit} / month`;
     document.getElementById('stat-plan').textContent = devData.plan.toUpperCase();
+    document.getElementById('sb-plan').textContent = devData.plan.toUpperCase();
     document.getElementById('bill-plan-name').textContent = devData.plan.toUpperCase() + " TIER";
-    
+
     document.getElementById('api-key-val').textContent = devData.api_key;
     document.getElementById('login-url-val').textContent = `https://ageinx.vercel.app/auth/${devData.slug}`;
 
@@ -354,12 +358,12 @@ async function fetchUsers() {
     const res = await fetch(`${API}/platform/dev/users`, { headers: { 'Authorization': `Bearer ${token}` } });
     const data = await res.json();
     usersData = data.users || [];
-    
+
     if (usersData.length === 0) {
       tbody.innerHTML = `<tr><td colspan="3" class="empty-state">No users yet. Share your login URL to get started!</td></tr>`;
       return;
     }
-    
+
     tbody.innerHTML = usersData.map(u => `
       <tr>
         <td style="font-family:monospace;color:var(--g400)">${u.id.split('-')[0]}...</td>
@@ -389,7 +393,7 @@ function copyText(id, btn) {
 async function exportData(type) {
   if(usersData.length === 0) await fetchUsers();
   if(usersData.length === 0) return alert("No users to export.");
-  
+
   let content, filename, mime;
   if(type === 'json') {
     content = JSON.stringify(usersData, null, 2);
@@ -400,7 +404,7 @@ async function exportData(type) {
     content = `${headers}\n${rows}`;
     filename = "ageinx_users.csv"; mime = "text/csv";
   }
-  
+
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([content], { type: mime }));
   a.download = filename; a.click();
@@ -411,7 +415,7 @@ async function updatePassword(btn) {
   const curr = document.getElementById('curr-pass').value;
   const next = document.getElementById('new-pass').value;
   if(!curr || !next) return alert("Fill all fields.");
-  
+
   btn.textContent = "Saving...";
   try {
     const res = await fetch(`${API}/platform/dev/change-password`, {
@@ -425,30 +429,26 @@ async function updatePassword(btn) {
   finally { btn.textContent = "Update Password"; }
 }
 
+// ─── LOGOUT ───
 async function logout() {
   const planText = document.getElementById('sb-plan');
   if (planText) planText.textContent = "Signing out...";
 
   try {
-    // 1. Tell the backend to destroy the session in the PostgreSQL database
     await fetch(`${API}/platform/dev/logout`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
     });
   } catch (e) {
     console.error("Backend session kill failed, forcing local logout.");
   } finally {
-    // 2. Nuke the local token and bounce them to the login screen
     localStorage.removeItem('ax_access');
     window.location.href = 'https://ageinx.vercel.app/#auth';
   }
 }
 
-
 init();
 </script>
 </body>
 </html>
+
