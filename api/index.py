@@ -40,7 +40,7 @@ APP_URL              = "https://ageinx.vercel.app" # Your production URL
 
 CONTACT_EMAIL        = "kjuhi1496@gmail.com"
 ALGORITHM            = "HS256"
-ACCESS_TOKEN_EXPIRE  = 60 * 15            # 15 minutes
+ACCESS_TOKEN_EXPIRE  = 60 * 60 * 24  # 24 hours
 REFRESH_TOKEN_EXPIRE = 60 * 60 * 24 * 7   # 7 days
 USER_ACCESS_EXPIRE   = 60 * 60 * 24       # 24 hours
 
