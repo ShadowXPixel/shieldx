@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ageinx — Command Center</title>
+<title>Ageinx — Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -165,14 +165,6 @@ tr:hover td { background: var(--off); }
 .api-val { flex: 1; font-family: monospace; font-size: 0.85rem; color: var(--ink); letter-spacing: 0.02em; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .api-val.blur { filter: blur(4px); user-select: none; }
 
-  .sb-link.logout {
-  color: #dc2626;
-  font-weight: 500;
-}
-.sb-link.logout:hover {
-  background: #fee2e2;
-  color: #991b1b;
-}
 /* ─── FORMS ─── */
 .fg { margin-bottom: 20px; }
 .fg label { display: block; font-size: 0.8rem; font-weight: 500; margin-bottom: 8px; color: var(--ink); }
@@ -180,6 +172,8 @@ tr:hover td { background: var(--off); }
 .fg input:focus { outline: none; border-color: var(--border-s); box-shadow: 0 0 0 3px rgba(0,0,0,0.03); }
 .btn-primary { background: var(--ink); color: var(--white); padding: 10px 20px; border-radius: 8px; border: none; font-size: 0.85rem; font-weight: 400; cursor: pointer; transition: background 0.2s; font-family: 'Geist', sans-serif; }
 .btn-primary:hover { background: #3f3e3a; }
+.btn-danger { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; padding: 10px 20px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: 'Geist', sans-serif; }
+.btn-danger:hover { background: #ffe4e6; border-color: #fda4af; color: #9f1239; }
 
 /* ─── LOADING ─── */
 #loading { position: fixed; inset: 0; background: var(--white); z-index: 999; display: flex; align-items: center; justify-content: center; }
@@ -237,10 +231,6 @@ tr:hover td { background: var(--off); }
           </div>
         </div>
       </div>
-      <button class="sb-link logout" onclick="logout()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-        Log out
-      </button>
     </div>
   </aside>
 
@@ -377,6 +367,12 @@ tr:hover td { background: var(--off); }
             <input type="password" id="new-pass" placeholder="Min. 8 characters"/>
           </div>
           <button class="btn-primary" onclick="updatePassword(this)">Update Password</button>
+        </div>
+
+        <div class="card" style="margin-top:24px; border-color:#fecdd3; background:#fffcfc;">
+          <h3 style="font-size:1rem; font-weight:500; color:#be123c; margin-bottom:8px;">Session Management</h3>
+          <p style="font-size:0.85rem; color:var(--g600); margin-bottom:20px;">Sign out of your current developer session on this device.</p>
+          <button class="btn-danger" onclick="logout()">Log out</button>
         </div>
       </div>
 
