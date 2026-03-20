@@ -28,50 +28,85 @@
 body {
   background: var(--off); color: var(--ink);
   font-family: 'Geist', sans-serif; font-weight: 400; line-height: 1.6;
-  -webkit-font-smoothing: antialiased; min-height: 100vh; overflow: hidden;
+  -webkit-font-smoothing: antialiased; overflow: hidden;
 }
 
 /* ─── APP LAYOUT ─── */
-.app-layout { display: flex; height: 100vh; width: 100vw; }
+.app-layout { display: flex; height: 100vh; width: 100vw; overflow: hidden; }
 
 /* ─── SIDEBAR ─── */
 .sidebar {
-  width: var(--sidebar); background: var(--off); border-right: 1px solid var(--border);
-  display: flex; flex-direction: column; z-index: 100; flex-shrink: 0;
-  height: 100vh; overflow: hidden; /* FIX 1: constrain sidebar height */
+  width: var(--sidebar);
+  min-width: var(--sidebar);
+  background: var(--off);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;        /* hard lock to viewport height */
+  overflow: hidden;     /* clip anything that overflows */
+  flex-shrink: 0;
+  z-index: 100;
 }
-.sb-header { padding: 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-start; flex-shrink: 0; }
+.sb-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
 .sb-logo {
-  font-weight: 600;
-  font-size: 1.1rem;
-  color: var(--ink);
-  cursor: pointer;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  font-weight: 600; font-size: 1.1rem; color: var(--ink);
+  cursor: pointer; letter-spacing: 0.15em; text-transform: uppercase;
 }
 .sb-logo span { color: #1b6ef2; }
 
-.sb-nav { padding: 24px 12px; flex: 1; overflow-y: auto; min-height: 0; } /* FIX 2: min-height: 0 makes flex scroll work */
-.nav-group { font-size: 0.65rem; font-weight: 500; color: var(--g400); text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 8px 12px; }
+/* flex: 1 1 0 means: grow to fill space, shrink freely, start from 0 */
+/* min-height: 0 is the magic — allows flex child to shrink below its content */
+.sb-nav {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 12px;
+}
+.nav-group {
+  font-size: 0.65rem; font-weight: 500; color: var(--g400);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  margin: 0 0 6px 12px;
+}
 .sb-link {
-  display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px;
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 12px; border-radius: 8px;
   font-size: 0.85rem; font-weight: 400; color: var(--g600);
-  cursor: pointer; transition: all 0.2s; border: none; background: none; width: 100%; text-align: left; margin-bottom: 4px;
+  cursor: pointer; transition: all 0.2s;
+  border: none; background: none; width: 100%; text-align: left; margin-bottom: 2px;
 }
 .sb-link:hover { background: var(--white); color: var(--ink); box-shadow: var(--sh); }
 .sb-link.active { background: var(--white); color: var(--ink); box-shadow: var(--sh); font-weight: 500; }
-.sb-link svg { width: 16px; height: 16px; opacity: 0.6; }
-.sb-link.active svg { opacity: 0.9; stroke: var(--ink); }
+.sb-link svg { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.6; }
+.sb-link.active svg { opacity: 0.9; }
 
-.sb-footer { padding: 16px; border-top: 1px solid var(--border); background: var(--white); flex-shrink: 0; }
+/* Footer is pinned — never grows or compresses */
+.sb-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--white);
+  flex-shrink: 0;
+}
 .user-pill { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; }
-.u-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--ink); color: var(--white); display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 0.8rem; flex-shrink: 0; }
-.u-info { flex: 1; overflow: hidden; }
+.u-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--ink); color: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 500; font-size: 0.8rem; flex-shrink: 0;
+}
+.u-info { flex: 1; min-width: 0; }
 .u-email { font-size: 0.75rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.u-meta { display: flex; align-items: center; gap: 6px; }
 .u-plan { font-size: 0.65rem; color: var(--g400); text-transform: uppercase; letter-spacing: 0.05em; }
+.u-verified { font-size: 0.6rem; font-weight: 500; display: none; }
+.u-verified.yes { color: #15803d; display: inline; }
+.u-verified.no  { color: #b45309; display: inline; }
 
 /* ─── MAIN CONTENT ─── */
-.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #ffffff; }
+.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #ffffff; min-width: 0; }
 .topbar { height: 60px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 32px; justify-content: space-between; background: var(--white); flex-shrink: 0; }
 .breadcrumb { font-size: 0.85rem; color: var(--g400); font-weight: 400; }
 .breadcrumb span { color: var(--ink); font-weight: 500; }
@@ -96,18 +131,34 @@ body {
 .c-val { font-family: 'Instrument Serif', serif; font-size: 2.3rem; color: var(--ink); line-height: 1; font-weight: 400; }
 .c-sub { font-size: 0.8rem; color: var(--g400); margin-top: 8px; font-weight: 300; }
 
+/* ─── VERIFICATION BANNER ─── */
+.verify-banner {
+  display: none;
+  background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px;
+  padding: 14px 20px; margin-bottom: 28px;
+  font-size: 0.85rem; color: #92400e;
+  align-items: center; gap: 12px;
+}
+.verify-banner.show { display: flex; }
+.verify-banner svg { flex-shrink: 0; }
+
+/* ─── BADGES ─── */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px; font-size: 0.7rem; font-weight: 500; }
+.badge-green { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.badge-amber { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+
 /* ─── USERS TABLE ─── */
 .table-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: var(--sh); }
 table { width: 100%; border-collapse: collapse; text-align: left; }
 th { background: var(--off); padding: 12px 24px; font-size: 0.7rem; font-weight: 500; color: var(--g600); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
-td { padding: 16px 24px; font-size: 0.85rem; border-bottom: 1px solid var(--border); color: var(--ink); font-weight: 400; }
+td { padding: 14px 24px; font-size: 0.85rem; border-bottom: 1px solid var(--border); color: var(--ink); font-weight: 400; }
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: var(--off); }
 .empty-state { padding: 48px; text-align: center; color: var(--g400); font-size: 0.9rem; font-weight: 300; }
 
 /* ─── API UI ─── */
 .api-row { display: flex; align-items: center; gap: 12px; background: var(--off); border: 1px solid var(--border); padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; }
-.api-val { flex: 1; font-family: monospace; font-size: 0.85rem; color: var(--ink); letter-spacing: 0.02em; }
+.api-val { flex: 1; font-family: monospace; font-size: 0.85rem; color: var(--ink); letter-spacing: 0.02em; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .api-val.blur { filter: blur(4px); user-select: none; }
 
 /* ─── FORMS ─── */
@@ -115,7 +166,7 @@ tr:hover td { background: var(--off); }
 .fg label { display: block; font-size: 0.8rem; font-weight: 500; margin-bottom: 8px; color: var(--ink); }
 .fg input { width: 100%; max-width: 400px; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--white); font-family: 'Geist', sans-serif; font-size: 0.9rem; transition: all 0.2s; font-weight: 400; color: var(--ink); }
 .fg input:focus { outline: none; border-color: var(--border-s); box-shadow: 0 0 0 3px rgba(0,0,0,0.03); }
-.btn-primary { background: var(--ink); color: var(--white); padding: 10px 20px; border-radius: 8px; border: none; font-size: 0.85rem; font-weight: 400; cursor: pointer; transition: background 0.2s; font-family: 'Geist', sans-serif;}
+.btn-primary { background: var(--ink); color: var(--white); padding: 10px 20px; border-radius: 8px; border: none; font-size: 0.85rem; font-weight: 400; cursor: pointer; transition: background 0.2s; font-family: 'Geist', sans-serif; }
 .btn-primary:hover { background: #3f3e3a; }
 
 /* ─── LOADING ─── */
@@ -152,7 +203,7 @@ tr:hover td { background: var(--off); }
         Integration (API)
       </button>
 
-      <div class="nav-group" style="margin-top:24px;">Account</div>
+      <div class="nav-group" style="margin-top:20px;">Account</div>
       <button class="sb-link" onclick="nav('billing')" id="nav-billing">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
         Billing & Limits
@@ -163,16 +214,18 @@ tr:hover td { background: var(--off); }
       </button>
     </nav>
 
-    <!-- FIX 3: Separate user pill (display only) from logout button -->
     <div class="sb-footer">
       <div class="user-pill">
         <div class="u-avatar" id="u-initial">A</div>
         <div class="u-info">
           <div class="u-email" id="sb-email">loading...</div>
-          <div class="u-plan" id="sb-plan">FREE</div>
+          <div class="u-meta">
+            <div class="u-plan" id="sb-plan">FREE</div>
+            <span class="u-verified" id="sb-verified"></span>
+          </div>
         </div>
       </div>
-      <button class="sb-link" onclick="logout()" style="margin-top: 4px; color: var(--g600);">
+      <button class="sb-link" onclick="logout()" style="margin-top:4px; color:var(--g600);">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
         Log out
       </button>
@@ -189,7 +242,13 @@ tr:hover td { background: var(--off); }
 
     <div class="scroll-area">
 
+      <!-- ─── OVERVIEW ─── -->
       <div class="section active" id="sec-overview">
+        <div class="verify-banner" id="verify-banner">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          <span>Your developer account email is <strong>not verified</strong>. Some features may be limited. Check your inbox for a verification link.</span>
+        </div>
+
         <div class="pg-header">
           <div>
             <h1 class="pg-title">Dashboard Overview</h1>
@@ -216,6 +275,7 @@ tr:hover td { background: var(--off); }
         </div>
       </div>
 
+      <!-- ─── USER DATABASE ─── -->
       <div class="section" id="sec-users">
         <div class="pg-header">
           <div>
@@ -227,17 +287,24 @@ tr:hover td { background: var(--off); }
             <button class="btn-outline" onclick="exportData('json')">Export JSON</button>
           </div>
         </div>
-
         <div class="table-wrap">
-          <table id="users-table">
-            <thead><tr><th>User ID</th><th>Email Address</th><th>Registered Date</th></tr></thead>
+          <table>
+            <thead>
+              <tr>
+                <th>User ID</th>
+                <th>Email Address</th>
+                <th>Verified</th>
+                <th>Registered</th>
+              </tr>
+            </thead>
             <tbody id="users-tbody">
-              <tr><td colspan="3" class="empty-state">Loading users...</td></tr>
+              <tr><td colspan="4" class="empty-state">Loading users...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
 
+      <!-- ─── INTEGRATION ─── -->
       <div class="section" id="sec-api">
         <div class="pg-header">
           <div>
@@ -245,8 +312,7 @@ tr:hover td { background: var(--off); }
             <p class="pg-sub">Credentials to connect your app to Ageinx.</p>
           </div>
         </div>
-
-        <div class="card" style="margin-bottom: 24px;">
+        <div class="card" style="margin-bottom:24px;">
           <h3 style="font-size:1rem;margin-bottom:12px;font-weight:500;">Secret API Key</h3>
           <p style="font-size:0.85rem;color:var(--g600);margin-bottom:16px;">Used to verify user tokens on your backend.</p>
           <div class="api-row">
@@ -255,7 +321,6 @@ tr:hover td { background: var(--off); }
             <button class="btn-outline" onclick="copyText('api-key-val', this)">Copy</button>
           </div>
         </div>
-
         <div class="card">
           <h3 style="font-size:1rem;margin-bottom:12px;font-weight:500;">Hosted Login URL</h3>
           <p style="font-size:0.85rem;color:var(--g600);margin-bottom:16px;">Direct your users here to sign in or sign up.</p>
@@ -266,6 +331,7 @@ tr:hover td { background: var(--off); }
         </div>
       </div>
 
+      <!-- ─── BILLING ─── -->
       <div class="section" id="sec-billing">
         <div class="pg-header">
           <div>
@@ -281,6 +347,7 @@ tr:hover td { background: var(--off); }
         </div>
       </div>
 
+      <!-- ─── SECURITY ─── -->
       <div class="section" id="sec-settings">
         <div class="pg-header">
           <div>
@@ -314,69 +381,95 @@ let devData = null;
 let usersData = [];
 let keyRevealed = false;
 
-// ─── NAV LOGIC ───
+// ─── NAV ───
 function nav(id) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.sb-link').forEach(l => l.classList.remove('active'));
   document.getElementById('sec-' + id).classList.add('active');
   document.getElementById('nav-' + id).classList.add('active');
   document.getElementById('bc-text').textContent = document.getElementById('nav-' + id).textContent.trim();
-
   if (id === 'users' && usersData.length === 0) fetchUsers();
 }
 
-// ─── INIT DATA ───
+// ─── INIT ───
 async function init() {
   try {
-    const res = await fetch(`${API}/platform/dev/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+    const res = await fetch(`${API}/platform/dev/me`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
     if (res.status === 401) throw new Error("Unauth");
     devData = await res.json();
 
+    // Sidebar user info
     document.getElementById('sb-email').textContent = devData.email;
     document.getElementById('u-initial').textContent = devData.email.charAt(0).toUpperCase();
+    document.getElementById('sb-plan').textContent = devData.plan.toUpperCase();
+
+    // Email verification indicator in sidebar footer
+    const verifiedEl = document.getElementById('sb-verified');
+    if (devData.email_verified === false) {
+      verifiedEl.textContent = '⚠ unverified';
+      verifiedEl.className = 'u-verified no';
+      // Show warning banner on overview page
+      document.getElementById('verify-banner').classList.add('show');
+    } else {
+      verifiedEl.textContent = '✓ verified';
+      verifiedEl.className = 'u-verified yes';
+    }
+
+    // Stats
     document.getElementById('stat-users').textContent = devData.usage.users_registered;
     document.getElementById('stat-calls').textContent = devData.usage.api_calls_count;
     document.getElementById('stat-limit').textContent = `Limit: ${devData.usage.api_calls_limit} / month`;
     document.getElementById('stat-plan').textContent = devData.plan.toUpperCase();
-    document.getElementById('sb-plan').textContent = devData.plan.toUpperCase();
-    document.getElementById('bill-plan-name').textContent = devData.plan.toUpperCase() + " TIER";
+    document.getElementById('bill-plan-name').textContent = devData.plan.toUpperCase() + ' TIER';
 
+    // API keys
     document.getElementById('api-key-val').textContent = devData.api_key;
     document.getElementById('login-url-val').textContent = `https://ageinx.vercel.app/auth/${devData.slug}`;
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
   } catch(e) {
-    localStorage.clear(); window.location.href = 'https://ageinx.vercel.app/#auth';
+    localStorage.clear();
+    window.location.href = 'https://ageinx.vercel.app/#auth';
   }
 }
 
-// ─── FETCH USERS TABLE ───
+// ─── FETCH USERS ───
 async function fetchUsers() {
   const tbody = document.getElementById('users-tbody');
   try {
-    const res = await fetch(`${API}/platform/dev/users`, { headers: { 'Authorization': `Bearer ${token}` } });
+    const res = await fetch(`${API}/platform/dev/users`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
     const data = await res.json();
     usersData = data.users || [];
 
     if (usersData.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="3" class="empty-state">No users yet. Share your login URL to get started!</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="4" class="empty-state">No users yet. Share your login URL to get started!</td></tr>`;
       return;
     }
 
     tbody.innerHTML = usersData.map(u => `
       <tr>
         <td style="font-family:monospace;color:var(--g400)">${u.id.split('-')[0]}...</td>
-        <td style="font-weight:400">${u.email}</td>
+        <td>${u.email}</td>
+        <td>
+          ${u.email_verified
+            ? '<span class="badge badge-green">✓ Verified</span>'
+            : '<span class="badge badge-amber">⚠ Unverified</span>'
+          }
+        </td>
         <td>${new Date(u.created_at).toLocaleDateString()}</td>
       </tr>
     `).join('');
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="3" class="empty-state">Failed to load users.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" class="empty-state">Failed to load users.</td></tr>`;
   }
 }
 
-// ─── UI ACTIONS ───
+// ─── UI HELPERS ───
 function toggleKey(btn) {
   const el = document.getElementById('api-key-val');
   keyRevealed = !keyRevealed;
@@ -386,16 +479,17 @@ function toggleKey(btn) {
 
 function copyText(id, btn) {
   navigator.clipboard.writeText(document.getElementById(id).textContent);
-  btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 2000);
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 2000);
 }
 
-// ─── EXPORT LOGIC ───
+// ─── EXPORT ───
 async function exportData(type) {
-  if(usersData.length === 0) await fetchUsers();
-  if(usersData.length === 0) return alert("No users to export.");
+  if (usersData.length === 0) await fetchUsers();
+  if (usersData.length === 0) return alert("No users to export.");
 
   let content, filename, mime;
-  if(type === 'json') {
+  if (type === 'json') {
     content = JSON.stringify(usersData, null, 2);
     filename = "ageinx_users.json"; mime = "application/json";
   } else {
@@ -414,33 +508,35 @@ async function exportData(type) {
 async function updatePassword(btn) {
   const curr = document.getElementById('curr-pass').value;
   const next = document.getElementById('new-pass').value;
-  if(!curr || !next) return alert("Fill all fields.");
-
+  if (!curr || !next) return alert("Fill all fields.");
   btn.textContent = "Saving...";
   try {
     const res = await fetch(`${API}/platform/dev/change-password`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ current_password: curr, new_password: next })
     });
-    if(!res.ok) throw new Error("Failed");
+    if (!res.ok) throw new Error("Failed");
     alert("Password updated.");
-    document.getElementById('curr-pass').value = ''; document.getElementById('new-pass').value = '';
-  } catch(e) { alert("Update failed. Check current password."); }
-  finally { btn.textContent = "Update Password"; }
+    document.getElementById('curr-pass').value = '';
+    document.getElementById('new-pass').value = '';
+  } catch(e) {
+    alert("Update failed. Check current password.");
+  } finally {
+    btn.textContent = "Update Password";
+  }
 }
 
 // ─── LOGOUT ───
 async function logout() {
-  const planText = document.getElementById('sb-plan');
-  if (planText) planText.textContent = "Signing out...";
-
+  document.getElementById('sb-plan').textContent = "Signing out...";
   try {
     await fetch(`${API}/platform/dev/logout`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
     });
-  } catch (e) {
-    console.error("Backend session kill failed, forcing local logout.");
+  } catch(e) {
+    console.error("Backend logout failed, forcing local logout.");
   } finally {
     localStorage.removeItem('ax_access');
     window.location.href = 'https://ageinx.vercel.app/#auth';
@@ -451,4 +547,3 @@ init();
 </script>
 </body>
 </html>
-
