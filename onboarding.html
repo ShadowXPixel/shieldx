@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ageinx — Set Up Your App</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:      #2b2a27;
+  --off:      #fcfcfc;
+  --white:    #ffffff;
+  --g400:     #9a9895;
+  --g600:     #6a6965;
+  --border:   #e5e5e5;
+  --border-s: #d4d4d4;
+  --blue:     #1b6ef2;
+  --sh: 0 4px 12px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03);
+}
+
+body {
+  font-family: 'Geist', sans-serif;
+  background: var(--off);
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 480px;
+}
+
+.logo {
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 32px;
+  text-align: center;
+}
+.logo span { color: var(--blue); }
+
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: var(--sh);
+}
+
+.step-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--blue);
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 99px;
+  padding: 2px 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+h1 {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.9rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1.15;
+  margin-bottom: 8px;
+}
+
+.sub {
+  font-size: 0.9rem;
+  color: var(--g600);
+  font-weight: 300;
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+.fg { margin-bottom: 20px; }
+
+.fg label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.fg .hint {
+  font-size: 0.72rem;
+  color: var(--g400);
+  font-weight: 400;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.input-wrap { position: relative; }
+
+.fg input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  font-family: 'Geist', sans-serif;
+  font-size: 0.9rem;
+  color: var(--ink);
+  font-weight: 400;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+.fg input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(27,110,242,0.1);
+}
+.fg input.valid   { border-color: #22c55e; }
+.fg input.invalid { border-color: #f87171; }
+
+/* Live slug status indicator */
+.slug-status {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.72rem;
+  font-weight: 500;
+  display: none;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+}
+.slug-status.show    { display: flex; }
+.slug-status.ok      { color: #15803d; }
+.slug-status.taken   { color: #be123c; }
+.slug-status.checking { color: var(--g400); }
+
+.slug-preview {
+  font-size: 0.75rem;
+  color: var(--g400);
+  margin-top: 6px;
+  font-family: monospace;
+  min-height: 18px;
+}
+.slug-preview span { color: var(--ink); }
+
+.btn {
+  width: 100%;
+  background: var(--ink);
+  color: var(--white);
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Geist', sans-serif;
+  transition: background 0.2s;
+  margin-top: 8px;
+}
+.btn:hover    { background: #3f3e3a; }
+.btn:disabled { opacity: 0.5; cursor: default; }
+
+.msg {
+  display: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  margin-top: 16px;
+}
+.msg.show        { display: block; }
+.msg-success     { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.msg-error       { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 28px 0;
+}
+
+.what-is {
+  background: var(--off);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-top: 24px;
+}
+.what-is p {
+  font-size: 0.78rem;
+  color: var(--g600);
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+.what-is p:last-child { margin-bottom: 0; }
+.what-is strong { color: var(--ink); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="logo">NIMBO<span>ITY</span></div>
+
+  <div class="card">
+    <div class="step-badge">One-time setup</div>
+    <h1>Set up your app</h1>
+    <p class="sub">You signed in with OAuth — just pick a slug for your auth URL and tell us where to send your users after they log in.</p>
+
+    <!-- Slug -->
+    <div class="fg">
+      <label>App Slug</label>
+      <span class="hint">Lowercase letters, numbers, hyphens. 3–30 characters.</span>
+      <div class="input-wrap">
+        <input
+          type="text"
+          id="slug-input"
+          placeholder="my-awesome-app"
+          maxlength="30"
+          autocomplete="off"
+          oninput="onSlugInput(this.value)"
+        />
+        <div class="slug-status" id="slug-status"></div>
+      </div>
+      <div class="slug-preview" id="slug-preview">Your login URL: <span>ageinx.vercel.app/auth/...</span></div>
+    </div>
+
+    <!-- Callback URL -->
+    <div class="fg">
+      <label>Callback URL</label>
+      <span class="hint">Where Ageinx sends users after a successful login. Must be http/https.</span>
+      <input
+        type="url"
+        id="callback-input"
+        placeholder="https://yourapp.com/auth/callback"
+      />
+    </div>
+
+    <button class="btn" id="submit-btn" onclick="submit()" disabled>
+      Complete Setup →
+    </button>
+
+    <div class="msg" id="msg"></div>
+
+    <div class="what-is">
+      <p><strong>What is a slug?</strong> It's the unique identifier for your app's hosted login page — e.g. <code>ageinx.vercel.app/auth/my-awesome-app</code>. Your users will visit this URL to sign in or create accounts.</p>
+      <p><strong>What is the callback URL?</strong> After a user logs in, Ageinx redirects them here with their auth token. This should be a page in your own app that handles the token.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = window.location.origin;
+const token = localStorage.getItem('ax_access');
+
+// Also support HttpOnly cookie flow (OAuth) — if no localStorage token,
+// the cookie is sent automatically with every fetch. We just proceed.
+
+let slugDebounceTimer = null;
+let slugIsAvailable   = false;
+let slugIsValid       = false;
+
+const slugInput    = document.getElementById('slug-input');
+const slugStatus   = document.getElementById('slug-status');
+const slugPreview  = document.getElementById('slug-preview');
+const callbackInput = document.getElementById('callback-input');
+const submitBtn    = document.getElementById('submit-btn');
+const msgEl        = document.getElementById('msg');
+
+// ── Check if this dev actually needs onboarding ──────────────────────────────
+async function checkOnboarding() {
+  try {
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    const res  = await fetch(`${API}/platform/dev/me`, { headers });
+    if (!res.ok) {
+      // Not authed at all — send to login
+      window.location.href = 'https://ageinx.vercel.app/#auth';
+      return;
+    }
+    const data = await res.json();
+    if (data.onboarding_complete) {
+      // Already done — no reason to be here
+      window.location.href = 'https://ageinx.vercel.app/dashboard';
+    }
+  } catch(e) {
+    window.location.href = 'https://ageinx.vercel.app/#auth';
+  }
+}
+checkOnboarding();
+
+// ── Live slug checker ────────────────────────────────────────────────────────
+function onSlugInput(val) {
+  val = val.toLowerCase().replace(/[^a-z0-9-]/g, '');
+  slugInput.value = val;
+
+  // Update preview
+  slugPreview.innerHTML = val
+    ? `Your login URL: <span>ageinx.vercel.app/auth/${val}</span>`
+    : `Your login URL: <span>ageinx.vercel.app/auth/...</span>`;
+
+  clearTimeout(slugDebounceTimer);
+  slugIsAvailable = false;
+  slugIsValid     = false;
+  updateSubmitBtn();
+
+  // Basic format check first
+  const valid = /^[a-z0-9-]{3,30}$/.test(val);
+  if (!valid) {
+    if (val.length > 0) {
+      setSlugStatus('invalid', val.length < 3 ? 'Too short' : 'Invalid characters');
+      slugInput.className = 'invalid';
+    } else {
+      clearSlugStatus();
+    }
+    return;
+  }
+
+  // Debounce the API call 400ms
+  setSlugStatus('checking', 'Checking...');
+  slugInput.className = '';
+  slugDebounceTimer = setTimeout(() => checkSlugAvailability(val), 400);
+}
+
+async function checkSlugAvailability(slug) {
+  try {
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    const res  = await fetch(`${API}/platform/dev/check-slug?slug=${encodeURIComponent(slug)}`, { headers });
+    const data = await res.json();
+    if (data.available) {
+      setSlugStatus('ok', '✓ Available');
+      slugInput.className = 'valid';
+      slugIsAvailable = true;
+      slugIsValid     = true;
+    } else {
+      setSlugStatus('taken', data.error || '✗ Already taken');
+      slugInput.className = 'invalid';
+      slugIsAvailable = false;
+    }
+  } catch(e) {
+    clearSlugStatus();
+  }
+  updateSubmitBtn();
+}
+
+function setSlugStatus(type, text) {
+  slugStatus.textContent = text;
+  slugStatus.className   = `slug-status show ${type}`;
+}
+function clearSlugStatus() {
+  slugStatus.className = 'slug-status';
+  slugInput.className  = '';
+}
+
+callbackInput.addEventListener('input', updateSubmitBtn);
+
+function updateSubmitBtn() {
+  const cbVal = callbackInput.value.trim();
+  const cbOk  = cbVal.startsWith('http://') || cbVal.startsWith('https://');
+  submitBtn.disabled = !(slugIsAvailable && slugIsValid && cbOk);
+}
+
+// ── Submit ────────────────────────────────────────────────────────────────────
+async function submit() {
+  const slug        = slugInput.value.trim();
+  const callbackUrl = callbackInput.value.trim();
+
+  submitBtn.disabled  = true;
+  submitBtn.textContent = 'Saving...';
+  hideMsg();
+
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res  = await fetch(`${API}/platform/dev/onboarding`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ slug, callback_url: callbackUrl }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMsg(data.detail || 'Something went wrong.', 'error');
+      return;
+    }
+
+    showMsg('🎉 All set! Taking you to your dashboard...', 'success');
+    setTimeout(() => {
+      window.location.href = 'https://ageinx.vercel.app/dashboard';
+    }, 1200);
+
+  } catch(e) {
+    showMsg('Network error. Please try again.', 'error');
+  } finally {
+    submitBtn.disabled    = false;
+    submitBtn.textContent = 'Complete Setup →';
+  }
+}
+
+function showMsg(text, type) {
+  msgEl.textContent = text;
+  msgEl.className   = `msg show msg-${type}`;
+}
+function hideMsg() {
+  msgEl.className = 'msg';
+}
+</script>
+</body>
+</html>
+
