@@ -382,6 +382,16 @@ tr:hover td { background: var(--off); }
 
 <script>
 const API = window.location.origin;
+
+// Pick up OAuth token from URL hash (backend redirects here after Google/GitHub login)
+(function() {
+  const m = window.location.hash.match(/[#&]ax_token=([^&]+)/);
+  if (m) {
+    localStorage.setItem('ax_access', m[1]);
+    window.history.replaceState(null, '', window.location.pathname);
+  }
+})();
+
 const token = localStorage.getItem('ax_access');
 if (!token) window.location.href = 'https://ageinx.vercel.app/#auth';
 
