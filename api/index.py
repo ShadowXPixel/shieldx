@@ -405,8 +405,8 @@ async def oauth_callback(provider: str, request: Request, code: str, state: str)
                 api_key = f"ax_live_{secrets.token_urlsafe(24)}"
                 rand_slug = f"app-{secrets.token_hex(4)}"
                 dev_id = await conn.fetchval(
-                    "INSERT INTO developers (email,password_hash,api_key,slug,callback_url,is_active,email_verified,onboarding_complete) "
-                    "VALUES ($1,$2,$3,$4,$5,true,TRUE,FALSE) RETURNING id",
+                    "INSERT INTO developers (email,password_hash,api_key,slug,callback_url,is_active,email_verified) "
+                    "VALUES ($1,$2,$3,$4,$5,true,TRUE) RETURNING id",
                     email, dummy_hash, api_key, rand_slug, f"{APP_URL}/dashboard"
                 )
                 plan = "starter"
@@ -420,11 +420,10 @@ async def oauth_callback(provider: str, request: Request, code: str, state: str)
                 "INSERT INTO dev_sessions (developer_id,refresh_token,expires_at) VALUES ($1,$2,to_timestamp($3))",
                 dev_id, rt_jwt, int(time.time()) + REFRESH_TOKEN_EXPIRE
             )
-            # New devs go to onboarding; returning devs go straight to dashboard
+            # Pass token via URL hash — dashboard JS picks it up and stores in localStorage
+            # (HttpOnly cookie is invisible to JS, so localStorage is the correct approach here)
             dest = f"{APP_URL}/onboarding" if is_new_oauth_dev else f"{APP_URL}/dashboard"
-            response = RedirectResponse(url=dest)
-            response.set_cookie(key="ax_access", value=at_jwt, httponly=True, secure=True,
-                                samesite="lax", max_age=ACCESS_TOKEN_EXPIRE, path="/")
+            response = RedirectResponse(url=f"{dest}#ax_token={at_jwt}")
             response.delete_cookie("oauth_nonce", path="/")
             return response
 
