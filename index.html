@@ -615,7 +615,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
   headers: { <span class="str">'Authorization'</span>: <span class="str">`Bearer <span class="vr">${token}</span>`</span> }
 });
 <span class="kw">const</span> { <span class="vr">user_id</span>, <span class="vr">email</span> } = <span class="kw">await</span> <span class="vr">res</span>.<span class="fn">json</span>();
-<span class="cm">// → { user_id: "uuid", email: "<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6f18001d0418061b071c070e0b00185d5d5f5b2f08020e0603410c0002">[email&#160;protected]</a>" }</span></pre></div>
+<span class="cm">// → { user_id: "uuid", email: "<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="dea9b1acb5a9b7aab6adb6bfbab1a9ececeeea9eb9b3bfb7b2f0bdb1b3">[email&#160;protected]</a>" }</span></pre></div>
     </div>
   </div>
 
@@ -768,7 +768,7 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
         <h2>Let's talk.</h2>
         <p>Have a question about Ageinx? Want to discuss a custom plan? Or just want to connect — we always respond.</p>
         <div class="c-links">
-          <a class="c-link" href="/cdn-cgi/l/email-protection#45322a372e322c312d362d24212a3277777571052228242c296b262a28"><div class="c-ico">📧</div><span class="__cf_email__" data-cfemail="33445c4158445a475b405b52575c440101030773545e525a5f1d505c5e">[email&#160;protected]</span></a>
+          <a class="c-link" href="/cdn-cgi/l/email-protection#671008150c100e130f140f060308105555575327000a060e0b4904080a"><div class="c-ico">📧</div><span class="__cf_email__" data-cfemail="97e0f8e5fce0fee3ffe4fff6f3f8e0a5a5a7a3d7f0faf6fefbb9f4f8fa">[email&#160;protected]</span></a>
           <a class="c-link" href="#"><div class="c-ico">💬</div>Discord - @realmofshadow_</a>
           <a class="c-link" href="#"><div class="c-ico">🐙</div>github.com/ShadowXPixel</a>
         </div>
@@ -881,7 +881,7 @@ function go(id, tab = 'signup') {
   });
   if (id === 'auth') authTab(tab);
   window.scrollTo({ top: 0, behavior: 'instant' });
-  window.location.hash = id;
+  history.replaceState(null, '', '#' + id);
   closeMenu();
 }
 
@@ -939,7 +939,7 @@ async function handleSignup() {
     });
     const data = await res.json();
     if (!res.ok) { showMsg(msg, data.detail || 'Signup failed.', 'error'); return; }
-    showMsg(msg, `✅ Account created! <br/>Your API key: <code>${data.api_key}</code><br/>Save it — it won't be shown again. <br/><a href="#" onclick="authTab('login')" style="color:var(--accent);text-decoration:none;font-weight:500;">Sign in now →</a>`, 'success');
+    showMsg(msg, `✅ Account created! Your API key: <code>${data.api_key}</code><br/>Save it — it won't be shown again.`, 'success');
   } catch(e) {
     showMsg(msg, 'Network error. Try again.', 'error');
   } finally {
@@ -984,16 +984,15 @@ function showMsg(el, html, type) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Pick up OAuth token from URL hash (set by backend after Google/GitHub login)
-  const hash = window.location.hash;
-  const axMatch = hash.match(/ax_token=([^&]+)/);
+  // Handle OAuth redirect — backend sends #ax_token=... after Google/GitHub login
+  const axMatch = window.location.hash.match(/[#&]ax_token=([^&]+)/);
   if (axMatch) {
     localStorage.setItem('ax_access', axMatch[1]);
-    // Clean the token out of the URL immediately
     window.history.replaceState(null, '', window.location.pathname);
     window.location.href = '/dashboard';
     return;
   }
+
   const loggedIn = !!localStorage.getItem('ax_access');
   document.getElementById('nav-btn-login').style.display       = loggedIn ? 'none'  : '';
   document.getElementById('nav-btn-getstarted').style.display  = loggedIn ? 'none'  : '';
@@ -1002,8 +1001,10 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('ml-auth-getstarted').style.display  = loggedIn ? 'none'  : '';
   document.getElementById('ml-auth-dashboard').style.display   = loggedIn ? ''      : 'none';
 
-  const hash = window.location.hash.replace('#','') || 'home';
-  go(PAGES.includes(hash) ? hash : 'home');
+  // Route to the correct page based on hash, but ignore OAuth token hashes
+  const rawHash = window.location.hash.replace('#', '') || 'home';
+  const page = PAGES.includes(rawHash) ? rawHash : 'home';
+  go(page);
 });
 
 async function handleSubmit(btn) {
@@ -1040,7 +1041,6 @@ async function handleSubmit(btn) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || 'Failed');
     setMsg("✅ Message sent! We'll get back to you shortly.", true);
-    // Clear form on success
     document.getElementById('c-fname').value = '';
     document.getElementById('c-lname').value = '';
     document.getElementById('c-email').value = '';
