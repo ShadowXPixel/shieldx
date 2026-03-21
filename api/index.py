@@ -258,6 +258,13 @@ async def get_redis_call_count(dev_id: str) -> int:
 
 
 
+class DevSignup(BaseModel): email: EmailStr; password: str; slug: str; callback_url: str
+class DevLogin(BaseModel): email: EmailStr; password: str
+class ChangePassword(BaseModel): current_password: str; new_password: str
+class ContactForm(BaseModel): name: str; email: EmailStr; plan: str = ""; message: str
+class UserSignup(BaseModel): email: EmailStr; password: str
+class UserLogin(BaseModel): email: EmailStr; password: str
+
 async def send_contact_email(name: str, email: str, plan: str, message: str):
     """Send contact/support request to CONTACT_EMAIL via Resend."""
     client = get_http_client()
@@ -306,12 +313,6 @@ async def limit_body_size(request: Request, call_next):
     return await call_next(request)
 
 
-class DevSignup(BaseModel): email: EmailStr; password: str; slug: str; callback_url: str
-class DevLogin(BaseModel): email: EmailStr; password: str
-class ChangePassword(BaseModel): current_password: str; new_password: str
-class ContactForm(BaseModel): name: str; email: EmailStr; plan: str = ""; message: str
-class UserSignup(BaseModel): email: EmailStr; password: str
-class UserLogin(BaseModel): email: EmailStr; password: str
 
 
 # ── FIX 3: OAuth CSRF protection — signed JWT state + nonce cookie ───────────
