@@ -984,6 +984,16 @@ function showMsg(el, html, type) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  // Pick up OAuth token from URL hash (set by backend after Google/GitHub login)
+  const hash = window.location.hash;
+  const axMatch = hash.match(/ax_token=([^&]+)/);
+  if (axMatch) {
+    localStorage.setItem('ax_access', axMatch[1]);
+    // Clean the token out of the URL immediately
+    window.history.replaceState(null, '', window.location.pathname);
+    window.location.href = '/dashboard';
+    return;
+  }
   const loggedIn = !!localStorage.getItem('ax_access');
   document.getElementById('nav-btn-login').style.display       = loggedIn ? 'none'  : '';
   document.getElementById('nav-btn-getstarted').style.display  = loggedIn ? 'none'  : '';
