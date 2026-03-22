@@ -421,10 +421,10 @@ async def oauth_callback(provider: str, request: Request, code: str, state: str)
                 "INSERT INTO dev_sessions (developer_id,refresh_token,expires_at) VALUES ($1,$2,to_timestamp($3))",
                 dev_id, rt_jwt, int(time.time()) + REFRESH_TOKEN_EXPIRE
             )
-            # New devs go to /dashboard?setup=true so the modal fires
-            # Returning devs go straight to /dashboard — no modal
+            # New devs go to /onboarding to pick slug + callback URL
+            # Returning devs go straight to /dashboard
             if is_new_oauth_dev:
-                dest = f"{APP_URL}/dashboard?setup=true#ax_token={at_jwt}"
+                dest = f"{APP_URL}/onboarding#ax_token={at_jwt}"
             else:
                 dest = f"{APP_URL}/dashboard#ax_token={at_jwt}"
             response = RedirectResponse(url=dest)
