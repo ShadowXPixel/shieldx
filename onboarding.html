@@ -412,7 +412,8 @@ async function handleSubmit() {
     }, 1200);
 
   } catch(e) {
-    showMsg('Network error. Please try again.', 'error');
+    console.error('Onboarding submit error:', e);
+    showMsg(`Error: ${e.message || e}`, 'error');
   } finally {
     submitBtn.disabled    = false;
     submitBtn.textContent = 'Complete Setup →';
@@ -429,4 +430,3 @@ function hideMsg() {
 </script>
 </body>
 </html>
-
