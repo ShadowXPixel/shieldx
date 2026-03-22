@@ -942,7 +942,7 @@ h1{{font-size:1.4rem;font-weight:600;color:#18170f;letter-spacing:-0.02em;margin
 </div>
 
 <script>
-const SLUG = "{{slug}}";
+const SLUG = "{slug}";
 const API  = window.location.origin;
 function switchTab(tab) {{
   document.getElementById('tab-login').classList.toggle('active', tab==='login');
@@ -1126,4 +1126,3 @@ async def auth_user_login(slug: str, request: Request, data: UserLogin):
         USER_ACCESS_EXPIRE
     )
     return {"message": "login successful", "redirect_url": f"{row['callback_url']}#token={token}", "token": token}
-
