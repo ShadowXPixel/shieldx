@@ -1,3 +1,4 @@
+Hey
 
 <!DOCTYPE html>
 <html lang="en">
@@ -860,147 +861,152 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 const PAGES = ['home','ageinx','pricing','about','contact','auth'];
 const API = window.location.origin;
 
-/* ───────── NAVIGATION ───────── */
-
 function go(id, tab = 'signup') {
   if (id === 'auth' && localStorage.getItem('ax_access')) {
     window.location.href = '/dashboard';
     return;
   }
-
   PAGES.forEach(p => {
     const pageEl = document.getElementById('page-'+p);
     if(pageEl) pageEl.classList.remove('active');
-
     ['nl','ml'].forEach(pfx => {
       const navEl = document.getElementById(pfx+'-'+p);
       if (navEl) navEl.classList.remove('active');
     });
   });
-
   const targetPage = document.getElementById('page-'+id);
   if(targetPage) targetPage.classList.add('active');
-
   ['nl','ml'].forEach(pfx => {
     const navEl = document.getElementById(pfx+'-'+id);
     if (navEl) navEl.classList.add('active');
   });
-
   if (id === 'auth') authTab(tab);
-
   window.scrollTo({ top: 0, behavior: 'instant' });
-
-  // 🔥 DO NOT OVERRIDE TOKEN HASH
-  if (!window.location.hash.includes('ax_token')) {
-    history.replaceState(null, '', '#' + id);
-  }
-
+  history.replaceState(null, '', '#' + id);
   closeMenu();
+}
+
+function routeToContact(planName) {
+  go('contact');
+  const planSelect = document.getElementById('c-plan');
+  if(planSelect) planSelect.value = planName;
 }
 
 function toggleMenu() {
   const ham = document.getElementById('ham');
   const menu = document.getElementById('mobMenu');
   const open = ham.classList.toggle('open');
-  menu.classList.toggle('open', open);
+  if (open) menu.classList.add('open');
+  else menu.classList.remove('open');
 }
 
 function closeMenu() {
-  document.getElementById('ham')?.classList.remove('open');
-  document.getElementById('mobMenu')?.classList.remove('open');
+  const ham = document.getElementById('ham');
+  const menu = document.getElementById('mobMenu');
+  if(ham) ham.classList.remove('open');
+  if(menu) menu.classList.remove('open');
 }
-
-/* ───────── AUTH TABS ───────── */
 
 function authTab(tab) {
-  document.getElementById('tab-signup').classList.toggle('auth-tab-active', tab==='signup');
-  document.getElementById('tab-login').classList.toggle('auth-tab-active', tab==='login');
+  const signupTab = document.getElementById('tab-signup');
+  const loginTab = document.getElementById('tab-login');
+  const signupForm = document.getElementById('form-signup');
+  const loginForm = document.getElementById('form-login');
 
-  document.getElementById('form-signup').style.display = tab==='signup' ? 'block' : 'none';
-  document.getElementById('form-login').style.display  = tab==='login' ? 'block' : 'none';
+  if(signupTab) signupTab.classList.toggle('auth-tab-active', tab==='signup');
+  if(loginTab) loginTab.classList.toggle('auth-tab-active', tab==='login');
+  if(signupForm) signupForm.style.display = tab==='signup' ? 'block' : 'none';
+  if(loginForm) loginForm.style.display = tab==='login' ? 'block' : 'none';
 }
-
-/* ───────── AUTH HANDLERS ───────── */
 
 async function handleSignup() {
   const btn = document.getElementById('signup-btn');
   const msg = document.getElementById('signup-msg');
-
   const email = document.getElementById('su-email').value.trim();
   const password = document.getElementById('su-password').value;
   const slug = document.getElementById('su-slug').value.trim();
   const callback = document.getElementById('su-callback').value.trim();
 
   if (!email || !password || !slug || !callback) {
-    return showMsg(msg, 'All fields are required.', 'error');
+    showMsg(msg, 'All fields are required.', 'error'); return;
   }
 
-  btn.disabled = true;
-  btn.textContent = 'Creating account...';
-
+  btn.disabled = true; btn.textContent = 'Creating account...';
   try {
     const res = await fetch(`${API}/platform/dev/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, slug, callback_url: callback })
     });
-
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Signup failed');
-
-    showMsg(msg, `✅ Account created! API key: <code>${data.api_key}</code>`, 'success');
-
+    if (!res.ok) { showMsg(msg, data.detail || 'Signup failed.', 'error'); return; }
+    showMsg(msg, `✅ Account created! Your API key: <code>${data.api_key}</code><br/>Save it — it won't be shown again.`, 'success');
   } catch(e) {
-    showMsg(msg, e.message, 'error');
+    showMsg(msg, 'Network error. Try again.', 'error');
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Create account';
+    btn.disabled = false; btn.textContent = 'Create account';
   }
 }
 
 async function handleLogin() {
   const btn = document.getElementById('login-btn');
   const msg = document.getElementById('login-msg');
-
   const email = document.getElementById('li-email').value.trim();
   const password = document.getElementById('li-password').value;
 
   if (!email || !password) {
-    return showMsg(msg, 'All fields are required.', 'error');
+    showMsg(msg, 'All fields are required.', 'error'); return;
   }
 
-  btn.disabled = true;
-  btn.textContent = 'Signing in...';
-
+  btn.disabled = true; btn.textContent = 'Signing in...';
   try {
     const res = await fetch(`${API}/platform/dev/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
-
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Login failed');
-
-    // 🔥 SAVE TOKEN + REDIRECT
+    if (!res.ok) { showMsg(msg, data.detail || 'Login failed.', 'error'); return; }
+    showMsg(msg, '✅ Logged in! Redirecting...', 'success');
     localStorage.setItem('ax_access', data.access_token);
-    window.location.href = '/dashboard';
-
+    setTimeout(() => { window.location.href = '/dashboard'; }, 1000);
   } catch(e) {
-    showMsg(msg, e.message, 'error');
+    showMsg(msg, 'Network error. Try again.', 'error');
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Sign in';
+    btn.disabled = false; btn.textContent = 'Sign in';
   }
 }
 
 function showMsg(el, html, type) {
+  if(!el) return;
   el.innerHTML = html;
   el.style.display = 'block';
   el.className = 'auth-msg auth-msg-' + type;
 }
 
-/* ───────── CONTACT FORM ───────── */
+window.addEventListener('DOMContentLoaded', () => {
+  // Handle OAuth redirect — backend sends #ax_token=... after Google/GitHub login
+  const axMatch = window.location.hash.match(/[#&]ax_token=([^&]+)/);
+  if (axMatch) {
+    localStorage.setItem('ax_access', axMatch[1]);
+    window.history.replaceState(null, '', window.location.pathname);
+    window.location.href = '/dashboard';
+    return;
+  }
+
+  const loggedIn = !!localStorage.getItem('ax_access');
+  document.getElementById('nav-btn-login').style.display       = loggedIn ? 'none'  : '';
+  document.getElementById('nav-btn-getstarted').style.display  = loggedIn ? 'none'  : '';
+  document.getElementById('nav-btn-dashboard').style.display   = loggedIn ? ''      : 'none';
+  document.getElementById('ml-auth-login').style.display       = loggedIn ? 'none'  : '';
+  document.getElementById('ml-auth-getstarted').style.display  = loggedIn ? 'none'  : '';
+  document.getElementById('ml-auth-dashboard').style.display   = loggedIn ? ''      : 'none';
+
+  // Route to the correct page based on hash, but ignore OAuth token hashes
+  const rawHash = window.location.hash.replace('#', '') || 'home';
+  const page = PAGES.includes(rawHash) ? rawHash : 'home';
+  go(page);
+});
 
 async function handleSubmit(btn) {
   const fname   = document.getElementById('c-fname').value.trim();
@@ -1018,16 +1024,13 @@ async function handleSubmit(btn) {
     msgEl.textContent = text;
   }
 
-  if (!email || !message) {
-    return setMsg('Please fill in your email and message.', false);
-  }
+  if (!email || !message) { setMsg('Please fill in your email and message.', false); return; }
 
   btn.disabled = true;
   btn.textContent = 'Sending…';
 
   try {
     const token = localStorage.getItem('ax_access');
-
     const res = await fetch(`${API}/platform/contact`, {
       method: 'POST',
       headers: {
@@ -1036,56 +1039,21 @@ async function handleSubmit(btn) {
       },
       body: JSON.stringify({ name: `${fname} ${lname}`.trim(), email, plan, message })
     });
-
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || 'Failed');
-
-    setMsg("✅ Message sent!", true);
-
+    setMsg("✅ Message sent! We'll get back to you shortly.", true);
     document.getElementById('c-fname').value = '';
     document.getElementById('c-lname').value = '';
     document.getElementById('c-email').value = '';
     document.getElementById('c-plan').value = '';
     document.getElementById('c-message').value = '';
-
   } catch(e) {
-    setMsg(e.message || 'Something went wrong.', false);
+    setMsg(e.message || 'Something went wrong. Please try again.', false);
   } finally {
     btn.disabled = false;
     btn.textContent = 'Send message';
   }
 }
-
-/* ───────── INIT (CRITICAL FIX) ───────── */
-
-window.addEventListener('DOMContentLoaded', () => {
-  const hash = window.location.hash || "";
-
-  // 🔥 OAUTH TOKEN HANDLER
-  const axMatch = hash.match(/[#&]ax_token=([^&]+)/);
-  if (axMatch) {
-    localStorage.setItem('ax_access', axMatch[1]);
-    window.history.replaceState(null, '', '/dashboard');
-    window.location.href = '/dashboard';
-    return;
-  }
-
-  // 🚫 DO NOT BREAK USER TOKEN FLOW
-  if (hash.includes('token=')) return;
-
-  const loggedIn = !!localStorage.getItem('ax_access');
-
-  document.getElementById('nav-btn-login').style.display       = loggedIn ? 'none'  : '';
-  document.getElementById('nav-btn-getstarted').style.display  = loggedIn ? 'none'  : '';
-  document.getElementById('nav-btn-dashboard').style.display   = loggedIn ? ''      : 'none';
-  document.getElementById('ml-auth-login').style.display       = loggedIn ? 'none'  : '';
-  document.getElementById('ml-auth-getstarted').style.display  = loggedIn ? 'none'  : '';
-  document.getElementById('ml-auth-dashboard').style.display   = loggedIn ? ''      : 'none';
-
-  const rawHash = hash.replace('#','') || 'home';
-  const page = PAGES.includes(rawHash) ? rawHash : 'home';
-  go(page);
-});
 </script>
 </body>
 </html>
