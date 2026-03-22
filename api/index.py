@@ -342,9 +342,10 @@ async def oauth_login(provider: str, type: str, slug: str = ""):
     else:
         raise HTTPException(status_code=400, detail="Provider not supported")
 
-    response = RedirectResponse(url=oauth_url)
-    response.set_cookie(key="oauth_nonce", value=nonce, httponly=True, secure=True,
-                        samesite="lax", max_age=600, path="/")
+    is_secure = APP_URL.startswith("https")
+    response  = RedirectResponse(url=oauth_url)
+    response.set_cookie(key="oauth_nonce", value=nonce, httponly=True,
+                        secure=is_secure, samesite="lax", max_age=600, path="/")
     return response
 
 
@@ -420,10 +421,13 @@ async def oauth_callback(provider: str, request: Request, code: str, state: str)
                 "INSERT INTO dev_sessions (developer_id,refresh_token,expires_at) VALUES ($1,$2,to_timestamp($3))",
                 dev_id, rt_jwt, int(time.time()) + REFRESH_TOKEN_EXPIRE
             )
-            # Pass token via URL hash — dashboard JS picks it up and stores in localStorage
-            # (HttpOnly cookie is invisible to JS, so localStorage is the correct approach here)
-            dest = f"{APP_URL}/onboarding" if is_new_oauth_dev else f"{APP_URL}/dashboard"
-            response = RedirectResponse(url=f"{dest}#ax_token={at_jwt}")
+            # New devs go to /dashboard?setup=true so the modal fires
+            # Returning devs go straight to /dashboard — no modal
+            if is_new_oauth_dev:
+                dest = f"{APP_URL}/dashboard?setup=true#ax_token={at_jwt}"
+            else:
+                dest = f"{APP_URL}/dashboard#ax_token={at_jwt}"
+            response = RedirectResponse(url=dest)
             response.delete_cookie("oauth_nonce", path="/")
             return response
 
@@ -535,7 +539,8 @@ async def dev_me(token: dict = Depends(verify_token)):
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
         dev = await conn.fetchrow(
-            "SELECT email,api_key,slug,callback_url,plan,is_active,created_at,api_calls_count,onboarding_complete "
+            "SELECT email,api_key,slug,callback_url,plan,is_active,created_at,api_calls_count,"
+            "COALESCE(onboarding_complete, TRUE) AS onboarding_complete "
             "FROM developers WHERE id=$1", safe_uuid(dev_id)
         )
         if not dev: raise HTTPException(status_code=404, detail="developer not found")
@@ -861,5 +866,3 @@ async def auth_user_login(slug: str, request: Request, data: UserLogin):
         USER_ACCESS_EXPIRE
     )
     return {"message": "login successful", "redirect_url": f"{row['callback_url']}#token={token}", "token": token}
-
-
