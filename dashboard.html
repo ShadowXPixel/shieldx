@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ageinx — Command Center</title>
+<title>Ageinx — Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -175,6 +175,38 @@ tr:hover td { background: var(--off); }
 .btn-danger { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; padding: 10px 20px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: 'Geist', sans-serif; }
 .btn-danger:hover { background: #ffe4e6; border-color: #fda4af; color: #9f1239; }
 
+/* ─── ONBOARDING MODAL ─── */
+.modal-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.45); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center; padding: 24px;
+}
+.modal-backdrop.show { display: flex; }
+.modal-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 16px; padding: 40px; width: 100%; max-width: 480px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.15);
+  animation: fadeIn 0.25s ease;
+}
+.modal-card h2 {
+  font-family: 'Instrument Serif', serif; font-size: 1.7rem;
+  font-weight: 400; letter-spacing: -0.02em; color: var(--ink);
+  margin-bottom: 6px; line-height: 1.2;
+}
+.modal-card p { font-size: 0.875rem; color: var(--g600); margin-bottom: 24px; line-height: 1.6; }
+.modal-badge {
+  display: inline-block; font-size: 0.65rem; font-weight: 600;
+  color: #1b6ef2; background: #eff6ff; border: 1px solid #bfdbfe;
+  border-radius: 99px; padding: 2px 10px; letter-spacing: 0.05em;
+  text-transform: uppercase; margin-bottom: 14px;
+}
+.slug-status { font-size: 0.72rem; font-weight: 500; margin-top: 5px; min-height: 16px; }
+.slug-status.ok     { color: #15803d; }
+.slug-status.taken  { color: #be123c; }
+.slug-status.check  { color: var(--g400); }
+.slug-preview { font-size: 0.72rem; color: var(--g400); margin-top: 4px; font-family: monospace; }
+.modal-actions { display: flex; justify-content: flex-end; margin-top: 28px; }
+
 /* ─── LOADING ─── */
 #loading { position: fixed; inset: 0; background: var(--white); z-index: 999; display: flex; align-items: center; justify-content: center; }
 .spinner { width: 30px; height: 30px; border: 2px solid var(--border); border-top-color: var(--ink); border-radius: 50%; animation: spin 0.8s linear infinite; }
@@ -182,6 +214,36 @@ tr:hover td { background: var(--off); }
 </style>
 </head>
 <body>
+
+
+<!-- ─── ONBOARDING MODAL ─── -->
+<div class="modal-backdrop" id="onboarding-modal">
+  <div class="modal-card">
+    <div class="modal-badge">One-time setup</div>
+    <h2>Set up your app</h2>
+    <p>You signed in with OAuth. Pick a slug for your auth URL and set your callback URL before using the dashboard.</p>
+
+    <div class="fg">
+      <label>App Slug</label>
+      <input type="text" id="ob-slug" placeholder="my-awesome-app" maxlength="30"
+             oninput="onObSlugInput(this.value)" autocomplete="off"/>
+      <div class="slug-status" id="ob-slug-status"></div>
+      <div class="slug-preview" id="ob-slug-preview">ageinx.vercel.app/auth/...</div>
+    </div>
+
+    <div class="fg">
+      <label>Callback URL</label>
+      <input type="url" id="ob-callback" placeholder="https://yourapp.com/callback"/>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-primary" id="ob-submit" onclick="submitOnboarding()" disabled>
+        Complete Setup →
+      </button>
+    </div>
+    <div id="ob-msg" style="display:none;margin-top:14px;padding:10px 14px;border-radius:8px;font-size:0.82rem;"></div>
+  </div>
+</div>
 
 <div id="loading"><div class="spinner"></div></div>
 
@@ -448,6 +510,12 @@ async function init() {
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
+
+    // Show onboarding modal if new OAuth dev or setup=true in URL
+    const needsSetup = devData.onboarding_complete === false ||
+                       new URLSearchParams(window.location.search).get('setup') === 'true';
+    if (needsSetup) showOnboardingModal();
+
   } catch(e) {
     localStorage.clear();
     window.location.href = 'https://ageinx.vercel.app/#auth';
@@ -558,6 +626,101 @@ async function logout() {
   } finally {
     localStorage.removeItem('ax_access');
     window.location.href = 'https://ageinx.vercel.app/#auth';
+  }
+}
+
+
+// ─── ONBOARDING MODAL ───
+let _obSlugTimer = null;
+let _obSlugOk    = false;
+
+function showOnboardingModal() {
+  document.getElementById('onboarding-modal').classList.add('show');
+}
+
+function onObSlugInput(val) {
+  val = val.toLowerCase().replace(/[^a-z0-9-]/g, '');
+  document.getElementById('ob-slug').value = val;
+  document.getElementById('ob-slug-preview').textContent =
+    val ? `ageinx.vercel.app/auth/${val}` : 'ageinx.vercel.app/auth/...';
+
+  _obSlugOk = false;
+  updateObSubmit();
+  clearTimeout(_obSlugTimer);
+
+  const valid = /^[a-z0-9-]{3,30}$/.test(val);
+  if (!valid) {
+    const st = document.getElementById('ob-slug-status');
+    st.textContent = val.length > 0 ? (val.length < 3 ? 'Too short' : 'Invalid characters') : '';
+    st.className = 'slug-status taken';
+    return;
+  }
+
+  document.getElementById('ob-slug-status').textContent = 'Checking...';
+  document.getElementById('ob-slug-status').className = 'slug-status check';
+
+  _obSlugTimer = setTimeout(async () => {
+    try {
+      const res  = await fetch(`${API}/platform/dev/check-slug?slug=${encodeURIComponent(val)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const st   = document.getElementById('ob-slug-status');
+      if (data.available) {
+        st.textContent = '✓ Available';
+        st.className   = 'slug-status ok';
+        _obSlugOk = true;
+      } else {
+        st.textContent = data.error || '✗ Already taken';
+        st.className   = 'slug-status taken';
+        _obSlugOk = false;
+      }
+    } catch(e) {
+      document.getElementById('ob-slug-status').textContent = '';
+    }
+    updateObSubmit();
+  }, 400);
+}
+
+function updateObSubmit() {
+  const cb  = document.getElementById('ob-callback').value.trim();
+  const cbOk = cb.startsWith('http://') || cb.startsWith('https://');
+  document.getElementById('ob-submit').disabled = !(_obSlugOk && cbOk);
+}
+
+document.getElementById('ob-callback')?.addEventListener('input', updateObSubmit);
+
+async function submitOnboarding() {
+  const slug = document.getElementById('ob-slug').value.trim();
+  const cb   = document.getElementById('ob-callback').value.trim();
+  const btn  = document.getElementById('ob-submit');
+  const msg  = document.getElementById('ob-msg');
+
+  btn.disabled  = true;
+  btn.textContent = 'Saving...';
+  msg.style.display = 'none';
+
+  try {
+    const res  = await fetch(`${API}/platform/dev/onboarding`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ slug, callback_url: cb })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Failed');
+
+    // Success — close modal and refresh dashboard data
+    document.getElementById('onboarding-modal').classList.remove('show');
+    await init();
+
+  } catch(e) {
+    msg.textContent = e.message;
+    msg.style.display = 'block';
+    msg.style.background = '#fff1f2';
+    msg.style.color = '#be123c';
+    msg.style.border = '1px solid #fecdd3';
+    btn.disabled = false;
+    btn.textContent = 'Complete Setup →';
   }
 }
 
