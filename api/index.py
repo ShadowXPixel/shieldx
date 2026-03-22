@@ -11,6 +11,9 @@ import base64
 import httpx
 import hashlib
 import secrets
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request, HTTPException, Depends, Response
@@ -25,14 +28,16 @@ JWT_SECRET           = os.getenv("JWT_SECRET")
 UPSTASH_URL          = os.getenv("UPSTASH_REDIS_REST_URL")
 UPSTASH_TOKEN        = os.getenv("UPSTASH_REDIS_REST_TOKEN")
 INTERNAL_API_KEY     = os.getenv("INTERNAL_API_KEY")
-RESEND_API_KEY       = os.getenv("RESEND_API_KEY")
+GMAIL_USER           = os.getenv("GMAIL_USER")
+GMAIL_APP_PASSWORD   = os.getenv("GMAIL_APP_PASSWORD")
+CONTACT_TO_EMAIL     = os.getenv("CONTACT_TO_EMAIL", "kjuhi1496@gmail.com")
 GOOGLE_CLIENT_ID     = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GITHUB_CLIENT_ID     = os.getenv("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
 APP_URL              = "https://ageinx.vercel.app"
 
-CONTACT_EMAIL        = "kjuhi1496@gmail.com"
+CONTACT_EMAIL        = os.getenv("CONTACT_TO_EMAIL", "kjuhi1496@gmail.com")
 ALGORITHM            = "HS256"
 ACCESS_TOKEN_EXPIRE  = 60 * 60 * 24
 REFRESH_TOKEN_EXPIRE = 60 * 60 * 24 * 7
@@ -264,33 +269,77 @@ class ChangePassword(BaseModel): current_password: str; new_password: str
 class ContactForm(BaseModel): name: str; email: EmailStr; plan: str = ""; message: str
 class UserSignup(BaseModel): email: EmailStr; password: str
 class UserLogin(BaseModel): email: EmailStr; password: str
+class VerifyCodePayload(BaseModel): email: EmailStr; code: str
 
-async def send_contact_email(name: str, email: str, plan: str, message: str):
-    """Send contact/support request to CONTACT_EMAIL via Resend."""
-    client = get_http_client()
+def generate_code():
+    return f"{secrets.randbelow(1000000):06d}"
+
+def hash_code(code):
+    return hashlib.sha256(code.encode()).hexdigest()
+
+
+def _send_gmail(to, subject, html, reply_to=None):
+    if not GMAIL_USER or not GMAIL_APP_PASSWORD:
+        print("[Gmail] credentials not set")
+        return
+    msg = MIMEMultipart("alternative")
+    msg["From"] = "Ageinx <" + GMAIL_USER + ">"
+    msg["To"] = to
+    msg["Subject"] = subject
+    if reply_to:
+        msg["Reply-To"] = reply_to
+    msg.attach(MIMEText(html, "html"))
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.login(GMAIL_USER, GMAIL_APP_PASSWORD)
+        smtp.sendmail(GMAIL_USER, to, msg.as_string())
+
+
+async def send_contact_email(name, email, plan, message):
+    subject = "[Ageinx] Contact from " + name + " — " + (plan or "no plan")
+    html = (
+        "<div style='font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px;'>"
+        "<h2 style='color:#18170f;margin-bottom:4px;'>New contact request</h2>"
+        "<p style='color:#9a9895;font-size:0.85rem;margin-bottom:24px;'>Via Ageinx website</p>"
+        "<table style='width:100%;border-collapse:collapse;'>"
+        "<tr><td style='padding:8px 0;color:#6a6965;font-size:0.85rem;width:80px;'>Name</td>"
+        "<td style='padding:8px 0;font-size:0.9rem;'>" + name + "</td></tr>"
+        "<tr><td style='padding:8px 0;color:#6a6965;font-size:0.85rem;'>Email</td>"
+        "<td style='padding:8px 0;font-size:0.9rem;'><a href='mailto:" + email + "'>" + email + "</a></td></tr>"
+        "<tr><td style='padding:8px 0;color:#6a6965;font-size:0.85rem;'>Plan</td>"
+        "<td style='padding:8px 0;font-size:0.9rem;'>" + (plan or "—") + "</td></tr>"
+        "</table>"
+        "<div style='margin-top:20px;padding:16px;background:#f8f7f5;border-radius:8px;"
+        "font-size:0.9rem;line-height:1.6;white-space:pre-wrap;'>" + message + "</div>"
+        "</div>"
+    )
     try:
-        await client.post(
-            "https://api.resend.com/emails",
-            headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
-            json={
-                "from": "Ageinx Contact <no-reply@ageinx.com>",
-                "to": CONTACT_EMAIL,
-                "reply_to": email,
-                "subject": f"[Ageinx] Contact from {name} — {plan or 'no plan'}",
-                "html": f"""<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px;">
-                  <h2 style="color:#18170f;margin-bottom:4px;">New contact request</h2>
-                  <p style="color:#9a9895;font-size:0.85rem;margin-bottom:24px;">Via Ageinx dashboard</p>
-                  <table style="width:100%;border-collapse:collapse;">
-                    <tr><td style="padding:8px 0;color:#6a6965;font-size:0.85rem;width:80px;">Name</td><td style="padding:8px 0;font-size:0.9rem;">{name}</td></tr>
-                    <tr><td style="padding:8px 0;color:#6a6965;font-size:0.85rem;">Email</td><td style="padding:8px 0;font-size:0.9rem;"><a href="mailto:{email}">{email}</a></td></tr>
-                    <tr><td style="padding:8px 0;color:#6a6965;font-size:0.85rem;">Plan</td><td style="padding:8px 0;font-size:0.9rem;">{plan or "—"}</td></tr>
-                  </table>
-                  <div style="margin-top:20px;padding:16px;background:#f8f7f5;border-radius:8px;font-size:0.9rem;line-height:1.6;white-space:pre-wrap;">{message}</div>
-                </div>""",
-            },
-        )
+        await run_in_threadpool(_send_gmail, CONTACT_TO_EMAIL, subject, html, reply_to=email)
     except Exception as e:
-        print(f"[Resend] Contact email failed: {e}")
+        print("[Gmail] Contact email failed: " + str(e))
+
+
+async def send_code_email(to_email, code, is_dev=True):
+    who = "developer" if is_dev else "user"
+    subject = "Your Ageinx verification code"
+    html = (
+        "<div style='font-family:sans-serif;max-width:480px;margin:0 auto;padding:40px 24px;'>"
+        "<div style='font-size:0.8rem;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;"
+        "color:#1b6ef2;margin-bottom:24px;'>AGEINX</div>"
+        "<h2 style='color:#18170f;font-size:1.4rem;font-weight:600;margin-bottom:8px;'>Verify your email</h2>"
+        "<p style='color:#6a6965;font-size:0.9rem;margin-bottom:28px;line-height:1.6;'>"
+        "Enter this code to verify your Ageinx " + who + " account. "
+        "It expires in <strong>10 minutes</strong>.</p>"
+        "<div style='font-size:2.8rem;font-weight:700;letter-spacing:0.4em;color:#18170f;"
+        "background:#f3f3f1;border-radius:12px;padding:20px;text-align:center;"
+        "font-family:monospace;margin-bottom:28px;'>" + code + "</div>"
+        "<p style='color:#9a9895;font-size:0.78rem;'>If you didn't sign up for Ageinx, ignore this email.</p>"
+        "</div>"
+    )
+    try:
+        await run_in_threadpool(_send_gmail, to_email, subject, html)
+    except Exception as e:
+        print("[Gmail] Code email failed: " + str(e))
+
 
 
 @app.post("/platform/contact")
@@ -342,10 +391,9 @@ async def oauth_login(provider: str, type: str, slug: str = ""):
     else:
         raise HTTPException(status_code=400, detail="Provider not supported")
 
-    is_secure = APP_URL.startswith("https")
-    response  = RedirectResponse(url=oauth_url)
-    response.set_cookie(key="oauth_nonce", value=nonce, httponly=True,
-                        secure=is_secure, samesite="lax", max_age=600, path="/")
+    response = RedirectResponse(url=oauth_url)
+    response.set_cookie(key="oauth_nonce", value=nonce, httponly=True, secure=True,
+                        samesite="lax", max_age=600, path="/")
     return response
 
 
@@ -406,8 +454,8 @@ async def oauth_callback(provider: str, request: Request, code: str, state: str)
                 api_key = f"ax_live_{secrets.token_urlsafe(24)}"
                 rand_slug = f"app-{secrets.token_hex(4)}"
                 dev_id = await conn.fetchval(
-                    "INSERT INTO developers (email,password_hash,api_key,slug,callback_url,is_active,email_verified,onboarding_complete) "
-                    "VALUES ($1,$2,$3,$4,$5,true,TRUE,FALSE) RETURNING id",
+                    "INSERT INTO developers (email,password_hash,api_key,slug,callback_url,is_active,email_verified) "
+                    "VALUES ($1,$2,$3,$4,$5,true,TRUE) RETURNING id",
                     email, dummy_hash, api_key, rand_slug, f"{APP_URL}/dashboard"
                 )
                 plan = "starter"
@@ -421,13 +469,10 @@ async def oauth_callback(provider: str, request: Request, code: str, state: str)
                 "INSERT INTO dev_sessions (developer_id,refresh_token,expires_at) VALUES ($1,$2,to_timestamp($3))",
                 dev_id, rt_jwt, int(time.time()) + REFRESH_TOKEN_EXPIRE
             )
-            # New devs go to /onboarding to pick slug + callback URL
-            # Returning devs go straight to /dashboard
-            if is_new_oauth_dev:
-                dest = f"{APP_URL}/onboarding#ax_token={at_jwt}"
-            else:
-                dest = f"{APP_URL}/dashboard#ax_token={at_jwt}"
-            response = RedirectResponse(url=dest)
+            # Pass token via URL hash — dashboard JS picks it up and stores in localStorage
+            # (HttpOnly cookie is invisible to JS, so localStorage is the correct approach here)
+            dest = f"{APP_URL}/onboarding" if is_new_oauth_dev else f"{APP_URL}/dashboard"
+            response = RedirectResponse(url=f"{dest}#ax_token={at_jwt}")
             response.delete_cookie("oauth_nonce", path="/")
             return response
 
@@ -491,16 +536,27 @@ async def dev_signup(request: Request, data: DevSignup):
     async with db_pool.acquire() as conn:
         try:
             await conn.execute(
-                "INSERT INTO developers (email,password_hash,api_key,slug,callback_url,is_active,email_verified,onboarding_complete) "
-                "VALUES ($1,$2,$3,$4,$5,true,TRUE,TRUE)",
+                "INSERT INTO developers (email,password_hash,api_key,slug,callback_url,is_active,email_verified) "
+                "VALUES ($1,$2,$3,$4,$5,true,FALSE)",
                 data.email, password_hash, api_key, data.slug, data.callback_url
             )
         except asyncpg.exceptions.UniqueViolationError as e:
             if "email" in str(e): raise HTTPException(status_code=400, detail="email already registered")
             raise HTTPException(status_code=400, detail="slug already taken")
 
-    return {"message": "Account created!", "api_key": api_key,
-            "auth_url": f"{APP_URL}/auth/{data.slug}", "active": True}
+    code = generate_code()
+    code_hash = hash_code(code)
+    expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=10)
+    db_pool2 = await get_pool()
+    async with db_pool2.acquire() as conn2:
+        await conn2.execute(
+            "UPDATE developers SET email_verified=FALSE, verify_token_hash=$1, verify_expires=$2 WHERE email=$3",
+            code_hash, expires_at, data.email
+        )
+    await send_code_email(data.email, code, is_dev=True)
+    return {"message": "Account created! Check your email for a verification code.",
+            "api_key": api_key, "auth_url": f"{APP_URL}/auth/{data.slug}",
+            "active": True, "requires_verification": True}
 
 
 @app.post("/platform/dev/login")
@@ -539,8 +595,7 @@ async def dev_me(token: dict = Depends(verify_token)):
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
         dev = await conn.fetchrow(
-            "SELECT email,api_key,slug,callback_url,plan,is_active,created_at,api_calls_count,"
-            "COALESCE(onboarding_complete, FALSE) AS onboarding_complete "
+            "SELECT email,api_key,slug,callback_url,plan,is_active,created_at,api_calls_count,onboarding_complete "
             "FROM developers WHERE id=$1", safe_uuid(dev_id)
         )
         if not dev: raise HTTPException(status_code=404, detail="developer not found")
@@ -677,6 +732,113 @@ async def complete_onboarding(data: OnboardingData, token: dict = Depends(verify
     return {"message": "Onboarding complete", "slug": data.slug, "callback_url": data.callback_url}
 
 
+
+
+@app.post("/platform/dev/verify-code")
+async def dev_verify_code(data: VerifyCodePayload):
+    db_pool = await get_pool()
+    async with db_pool.acquire() as conn:
+        dev = await conn.fetchrow(
+            "SELECT id, verify_token_hash, verify_expires FROM developers WHERE email=$1", data.email
+        )
+    if not dev or not dev["verify_token_hash"]:
+        raise HTTPException(status_code=400, detail="No pending verification for this email")
+    if dev["verify_expires"] and datetime.datetime.utcnow() > dev["verify_expires"].replace(tzinfo=None):
+        raise HTTPException(status_code=400, detail="Code expired. Request a new one.")
+    if not secrets.compare_digest(hash_code(data.code), dev["verify_token_hash"]):
+        raise HTTPException(status_code=400, detail="Invalid code. Try again.")
+    db_pool2 = await get_pool()
+    async with db_pool2.acquire() as conn2:
+        await conn2.execute(
+            "UPDATE developers SET email_verified=TRUE, verify_token_hash=NULL, verify_expires=NULL WHERE id=$1",
+            dev["id"]
+        )
+    return {"message": "Email verified!"}
+
+
+@app.post("/auth/{slug}/verify-code")
+async def user_verify_code(slug: str, data: VerifyCodePayload):
+    db_pool = await get_pool()
+    async with db_pool.acquire() as conn:
+        dev = await conn.fetchrow("SELECT id FROM developers WHERE slug=$1 AND is_active=true", slug)
+        if not dev:
+            raise HTTPException(status_code=404, detail="App not found")
+        user = await conn.fetchrow(
+            "SELECT id, verify_token_hash, verify_expires FROM users WHERE developer_id=$1 AND email=$2",
+            dev["id"], data.email
+        )
+    if not user or not user["verify_token_hash"]:
+        raise HTTPException(status_code=400, detail="No pending verification for this email")
+    if user["verify_expires"] and datetime.datetime.utcnow() > user["verify_expires"].replace(tzinfo=None):
+        raise HTTPException(status_code=400, detail="Code expired. Request a new one.")
+    if not secrets.compare_digest(hash_code(data.code), user["verify_token_hash"]):
+        raise HTTPException(status_code=400, detail="Invalid code. Try again.")
+    db_pool2 = await get_pool()
+    async with db_pool2.acquire() as conn2:
+        await conn2.execute(
+            "UPDATE users SET email_verified=TRUE, verify_token_hash=NULL, verify_expires=NULL WHERE id=$1",
+            user["id"]
+        )
+    return {"message": "Email verified!"}
+
+
+@app.post("/platform/dev/resend-code")
+async def dev_resend_code(request: Request):
+    body = await request.json()
+    email = body.get("email")
+    if not email:
+        raise HTTPException(status_code=400, detail="email required")
+    db_pool = await get_pool()
+    async with db_pool.acquire() as conn:
+        dev = await conn.fetchrow("SELECT id, email_verified FROM developers WHERE email=$1", email)
+    if not dev:
+        raise HTTPException(status_code=404, detail="Account not found")
+    if dev["email_verified"]:
+        raise HTTPException(status_code=400, detail="Email already verified")
+    code = generate_code()
+    code_hash = hash_code(code)
+    expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=10)
+    db_pool2 = await get_pool()
+    async with db_pool2.acquire() as conn2:
+        await conn2.execute(
+            "UPDATE developers SET verify_token_hash=$1, verify_expires=$2 WHERE email=$3",
+            code_hash, expires_at, email
+        )
+    await send_code_email(email, code, is_dev=True)
+    return {"message": "Code resent"}
+
+
+@app.post("/auth/{slug}/resend-code")
+async def user_resend_code(slug: str, request: Request):
+    body = await request.json()
+    email = body.get("email")
+    if not email:
+        raise HTTPException(status_code=400, detail="email required")
+    db_pool = await get_pool()
+    async with db_pool.acquire() as conn:
+        dev = await conn.fetchrow("SELECT id FROM developers WHERE slug=$1 AND is_active=true", slug)
+        if not dev:
+            raise HTTPException(status_code=404, detail="App not found")
+        user = await conn.fetchrow(
+            "SELECT id, email_verified FROM users WHERE developer_id=$1 AND email=$2",
+            dev["id"], email
+        )
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user["email_verified"]:
+        raise HTTPException(status_code=400, detail="Email already verified")
+    code = generate_code()
+    code_hash = hash_code(code)
+    expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=10)
+    db_pool2 = await get_pool()
+    async with db_pool2.acquire() as conn2:
+        await conn2.execute(
+            "UPDATE users SET verify_token_hash=$1, verify_expires=$2 WHERE id=$3",
+            code_hash, expires_at, user["id"]
+        )
+    await send_code_email(email, code, is_dev=False)
+    return {"message": "Code resent"}
+
 @app.get("/auth/userinfo")
 async def auth_userinfo(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
     payload = verify_token_payload(credentials.credentials, expected_type="user_access")
@@ -759,8 +921,28 @@ h1{{font-size:1.4rem;font-weight:600;color:#18170f;letter-spacing:-0.02em;margin
   </div>
   <div class="powered">Protected by <a href="https://ageinx.vercel.app" target="_blank">Ageinx</a></div>
 </div>
+
+<!-- verify modal -->
+<div id="vmodal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center;padding:24px;">
+  <div style="background:#fff;border-radius:14px;padding:40px;width:100%;max-width:400px;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,0.15);">
+    <h3 style="font-size:1.2rem;font-weight:600;color:#18170f;margin-bottom:8px;">Check your email</h3>
+    <p style="font-size:0.84rem;color:#6a6965;margin-bottom:20px;line-height:1.6;">We sent a 6-digit code to <strong id="vm-email"></strong>. Enter it below.</p>
+    <div id="vm-inputs" style="display:flex;gap:8px;justify-content:center;margin-bottom:16px;">
+      <input type="text" maxlength="1" inputmode="numeric" style="width:42px;height:52px;text-align:center;font-size:1.3rem;font-weight:700;border:2px solid #c6c5c1;border-radius:8px;font-family:'Geist',sans-serif;outline:none;"/>
+      <input type="text" maxlength="1" inputmode="numeric" style="width:42px;height:52px;text-align:center;font-size:1.3rem;font-weight:700;border:2px solid #c6c5c1;border-radius:8px;font-family:'Geist',sans-serif;outline:none;"/>
+      <input type="text" maxlength="1" inputmode="numeric" style="width:42px;height:52px;text-align:center;font-size:1.3rem;font-weight:700;border:2px solid #c6c5c1;border-radius:8px;font-family:'Geist',sans-serif;outline:none;"/>
+      <input type="text" maxlength="1" inputmode="numeric" style="width:42px;height:52px;text-align:center;font-size:1.3rem;font-weight:700;border:2px solid #c6c5c1;border-radius:8px;font-family:'Geist',sans-serif;outline:none;"/>
+      <input type="text" maxlength="1" inputmode="numeric" style="width:42px;height:52px;text-align:center;font-size:1.3rem;font-weight:700;border:2px solid #c6c5c1;border-radius:8px;font-family:'Geist',sans-serif;outline:none;"/>
+      <input type="text" maxlength="1" inputmode="numeric" style="width:42px;height:52px;text-align:center;font-size:1.3rem;font-weight:700;border:2px solid #c6c5c1;border-radius:8px;font-family:'Geist',sans-serif;outline:none;"/>
+    </div>
+    <button id="vm-btn" onclick="verifyCode()" style="width:100%;background:#18170f;color:#fff;border:none;padding:11px;border-radius:8px;font-family:'Geist',sans-serif;font-size:0.9rem;font-weight:500;cursor:pointer;margin-bottom:12px;">Verify</button>
+    <div style="font-size:0.8rem;color:#9a9895;">Didn't get it? <a onclick="resendCode()" style="color:#1b6ef2;cursor:pointer;font-weight:500;">Resend</a></div>
+    <div id="vm-msg" style="display:none;margin-top:12px;padding:8px 12px;border-radius:7px;font-size:0.82rem;"></div>
+  </div>
+</div>
+
 <script>
-const SLUG = "{slug}";
+const SLUG = "{{slug}}";
 const API  = window.location.origin;
 function switchTab(tab) {{
   document.getElementById('tab-login').classList.toggle('active', tab==='login');
@@ -802,8 +984,10 @@ async function handleSignup() {{
     const data = await res.json();
     if (!res.ok) {{ showMsg('su-msg', data.detail || 'Signup failed.', 'error'); return; }}
     if (data.requires_verification) {{
-      showMsg('su-msg', '\u2709\ufe0f Check your email for a verification link.', 'success');
-      document.getElementById('su-email').value = ''; document.getElementById('su-password').value = '';
+      showMsg('su-msg', '\u2705 Account created! Check your email for a 6-digit code.', 'success');
+      document.getElementById('su-email').value = '';
+      document.getElementById('su-password').value = '';
+      showVerifyModal(email);
     }} else {{
       showMsg('su-msg', '\u2705 Account created! Redirecting\u2026', 'success');
       setTimeout(() => {{ window.location.href = data.redirect_url; }}, 800);
@@ -811,6 +995,72 @@ async function handleSignup() {{
   }} catch(e) {{ showMsg('su-msg', 'Network error. Try again.', 'error'); }}
   finally {{ btn.disabled = false; btn.textContent = 'Create account'; }}
 
+}}
+
+let _vmEmail = '';
+function showVerifyModal(email) {{
+  _vmEmail = email;
+  document.getElementById('vm-email').textContent = email;
+  const modal = document.getElementById('vmodal');
+  modal.style.display = 'flex';
+  const inputs = modal.querySelectorAll('input');
+  inputs.forEach(i => i.value = '');
+  inputs[0].focus();
+  inputs.forEach((inp, i) => {{
+    inp.oninput = () => {{
+      inp.value = inp.value.replace(/[^0-9]/g,'');
+      if (inp.value && i < inputs.length-1) inputs[i+1].focus();
+    }};
+    inp.onkeydown = e => {{
+      if (e.key==='Backspace' && !inp.value && i>0) inputs[i-1].focus();
+    }};
+  }});
+}}
+
+function getVCode() {{
+  return [...document.querySelectorAll('#vmodal input')].map(i => i.value).join('');
+}}
+
+function setVMsg(text, ok) {{
+  const el = document.getElementById('vm-msg');
+  el.textContent = text;
+  el.style.display = 'block';
+  el.style.background = ok ? '#f0fdf4' : '#fff1f2';
+  el.style.color      = ok ? '#15803d' : '#be123c';
+  el.style.border     = ok ? '1px solid #bbf7d0' : '1px solid #fecdd3';
+}}
+
+async function verifyCode() {{
+  const code = getVCode();
+  if (code.length < 6) {{ setVMsg('Enter all 6 digits.', false); return; }}
+  const btn = document.getElementById('vm-btn');
+  btn.disabled = true; btn.textContent = 'Verifying...';
+  try {{
+    const res  = await fetch(`${{API}}/auth/${{SLUG}}/verify-code`, {{
+      method: 'POST',
+      headers: {{'Content-Type': 'application/json'}},
+      body: JSON.stringify({{ email: _vmEmail, code }})
+    }});
+    const data = await res.json();
+    if (!res.ok) {{ setVMsg(data.detail || 'Invalid code.', false); return; }}
+    setVMsg('\u2705 Email verified! You can now sign in.', true);
+    setTimeout(() => {{
+      document.getElementById('vmodal').style.display = 'none';
+      switchTab('login');
+    }}, 1800);
+  }} catch(e) {{ setVMsg('Network error.', false); }}
+  finally {{ btn.disabled = false; btn.textContent = 'Verify'; }}
+}}
+
+async function resendCode() {{
+  try {{
+    await fetch(`${{API}}/auth/${{SLUG}}/resend-code`, {{
+      method: 'POST',
+      headers: {{'Content-Type': 'application/json'}},
+      body: JSON.stringify({{ email: _vmEmail }})
+    }});
+    setVMsg('New code sent!', true);
+  }} catch(e) {{ setVMsg('Failed to resend.', false); }}
 }}
 </script>
 </body>
@@ -834,14 +1084,24 @@ async def auth_user_signup(slug: str, request: Request, data: UserSignup):
         try:
             await conn.fetchval(
                 "INSERT INTO users (developer_id,email,password_hash,email_verified) "
-                "VALUES ($1,$2,$3,TRUE) RETURNING id",
+                "VALUES ($1,$2,$3,FALSE) RETURNING id",
                 dev["id"], data.email, password_hash
             )
         except asyncpg.exceptions.UniqueViolationError:
             raise HTTPException(status_code=400, detail="email already registered")
 
     await enforce_plan_limit(str(dev["id"]), dev["plan"] or "starter")
-    return {"message": "Account created.", "requires_verification": False}
+    code = generate_code()
+    code_hash = hash_code(code)
+    expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=10)
+    db_pool2 = await get_pool()
+    async with db_pool2.acquire() as conn2:
+        await conn2.execute(
+            "UPDATE users SET email_verified=FALSE, verify_token_hash=$1, verify_expires=$2 WHERE developer_id=$3 AND email=$4",
+            code_hash, expires_at, dev["id"], data.email
+        )
+    await send_code_email(data.email, code, is_dev=False)
+    return {"message": "Account created! Check your email for a verification code.", "requires_verification": True}
 
 
 @app.post("/auth/{slug}/login")
@@ -866,3 +1126,4 @@ async def auth_user_login(slug: str, request: Request, data: UserLogin):
         USER_ACCESS_EXPIRE
     )
     return {"message": "login successful", "redirect_url": f"{row['callback_url']}#token={token}", "token": token}
+
