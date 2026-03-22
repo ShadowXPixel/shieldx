@@ -246,7 +246,7 @@ h1 {
       />
     </div>
 
-    <button class="btn" id="submit-btn" onclick="submit()" disabled>
+    <button class="btn" id="submit-btn" onclick="handleSubmit()" disabled>
       Complete Setup →
     </button>
 
@@ -382,7 +382,7 @@ function updateSubmitBtn() {
 }
 
 // ── Submit ────────────────────────────────────────────────────────────────────
-async function submit() {
+async function handleSubmit() {
   const slug        = slugInput.value.trim();
   const callbackUrl = callbackInput.value.trim();
 
@@ -429,3 +429,4 @@ function hideMsg() {
 </script>
 </body>
 </html>
+
