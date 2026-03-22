@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -348,6 +347,42 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
 .sub-btn { background: var(--accent); color: var(--white); border: none; padding: 10px 22px; border-radius: var(--r); font-family: 'Geist', sans-serif; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: background 0.15s, box-shadow 0.15s; }
 .sub-btn:hover { background: var(--accent-d); box-shadow: 0 0 0 3px rgba(27,110,242,0.15); }
 .sub-btn:disabled { opacity: 0.55; cursor: default; box-shadow: none; }
+
+/* ════════════ VERIFY MODAL ════════════ */
+.vmodal-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center; padding: 24px;
+}
+.vmodal-backdrop.show { display: flex; }
+.vmodal {
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 14px; padding: 40px; width: 100%; max-width: 420px;
+  box-shadow: var(--sh-lg); animation: scaleIn 0.25s ease;
+  text-align: center;
+}
+.vmodal h3 { font-family: 'Instrument Serif', serif; font-size: 1.5rem; font-weight: 400; color: var(--ink); margin-bottom: 8px; }
+.vmodal p  { font-size: 0.85rem; color: var(--g600); margin-bottom: 24px; line-height: 1.6; }
+.code-inputs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+.code-inputs input {
+  width: 46px; height: 56px; text-align: center; font-size: 1.4rem; font-weight: 700;
+  border: 2px solid var(--border-s); border-radius: 8px; font-family: 'Geist', sans-serif;
+  color: var(--ink); outline: none; transition: border-color 0.15s;
+}
+.code-inputs input:focus { border-color: var(--accent); }
+.vmodal-submit {
+  width: 100%; background: var(--ink); color: #fff; border: none;
+  padding: 11px; border-radius: 8px; font-family: 'Geist', sans-serif;
+  font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: background 0.15s; margin-bottom: 14px;
+}
+.vmodal-submit:hover { background: var(--g800); }
+.vmodal-submit:disabled { opacity: 0.5; cursor: default; }
+.vmodal-resend { font-size: 0.8rem; color: var(--g400); }
+.vmodal-resend a { color: var(--accent); cursor: pointer; text-decoration: none; font-weight: 500; }
+.vmodal-msg { font-size: 0.82rem; margin-top: 12px; padding: 8px 12px; border-radius: 7px; display: none; }
+.vmodal-msg.show { display: block; }
+.vmodal-msg.ok  { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.vmodal-msg.err { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
 
 /* ════════════ AUTH ════════════ */
 .auth-wrap {
@@ -857,6 +892,25 @@ footer { border-top: 1px solid var(--border); padding: 26px 28px; }
   </div>
 </div>
 
+<!-- ─── EMAIL VERIFICATION MODAL ─── -->
+<div class="vmodal-backdrop" id="vmodal">
+  <div class="vmodal">
+    <h3>Check your email</h3>
+    <p id="vmodal-desc">We sent a 6-digit code to <strong id="vmodal-email"></strong>. Enter it below.</p>
+    <div class="code-inputs" id="code-inputs">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"/>
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"/>
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"/>
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"/>
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"/>
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"/>
+    </div>
+    <button class="vmodal-submit" id="vmodal-btn" onclick="verifyCode()">Verify</button>
+    <div class="vmodal-resend">Didn't get it? <a onclick="resendCode()">Resend code</a></div>
+    <div class="vmodal-msg" id="vmodal-msg"></div>
+  </div>
+</div>
+
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 const PAGES = ['home','ageinx','pricing','about','contact','auth'];
 const API = window.location.origin;
@@ -940,7 +994,12 @@ async function handleSignup() {
     });
     const data = await res.json();
     if (!res.ok) { showMsg(msg, data.detail || 'Signup failed.', 'error'); return; }
-    showMsg(msg, `✅ Account created! Your API key: <code>${data.api_key}</code><br/>Save it — it won't be shown again.`, 'success');
+    if (data.requires_verification) {
+      showMsg(msg, `✅ Account created! API key: <code>${data.api_key}</code> — Save it now!`, 'success');
+      showVerifyModal(email, true);
+    } else {
+      showMsg(msg, `✅ Account created! API key: <code>${data.api_key}</code>`, 'success');
+    }
   } catch(e) {
     showMsg(msg, 'Network error. Try again.', 'error');
   } finally {
@@ -1054,6 +1113,98 @@ async function handleSubmit(btn) {
     btn.textContent = 'Send message';
   }
 }
+
+/* ───────── VERIFICATION MODAL ───────── */
+let _vEmail = '';
+let _vIsDevModal = true;
+
+function showVerifyModal(email, isDev) {
+  _vEmail  = email;
+  _vIsDevModal = isDev;
+  document.getElementById('vmodal-email').textContent = email;
+  document.getElementById('vmodal').classList.add('show');
+  document.getElementById('vmodal-msg').className = 'vmodal-msg';
+  // Clear inputs
+  document.querySelectorAll('#code-inputs input').forEach(i => i.value = '');
+  document.querySelectorAll('#code-inputs input')[0].focus();
+}
+
+// Auto-advance between code input boxes
+document.addEventListener('DOMContentLoaded', () => {
+  const inputs = document.querySelectorAll('#code-inputs input');
+  inputs.forEach((inp, i) => {
+    inp.addEventListener('input', () => {
+      inp.value = inp.value.replace(/[^0-9]/g, '');
+      if (inp.value && i < inputs.length - 1) inputs[i+1].focus();
+    });
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !inp.value && i > 0) inputs[i-1].focus();
+    });
+    inp.addEventListener('paste', e => {
+      e.preventDefault();
+      const digits = (e.clipboardData.getData('text')).replace(/[^0-9]/g,'').slice(0,6);
+      digits.split('').forEach((d,j) => { if(inputs[j]) inputs[j].value = d; });
+      if(inputs[Math.min(digits.length, 5)]) inputs[Math.min(digits.length, 5)].focus();
+    });
+  });
+});
+
+function getCode() {
+  return [...document.querySelectorAll('#code-inputs input')].map(i => i.value).join('');
+}
+
+function setVMsg(text, ok) {
+  const el = document.getElementById('vmodal-msg');
+  el.textContent = text;
+  el.className = 'vmodal-msg show ' + (ok ? 'ok' : 'err');
+}
+
+async function verifyCode() {
+  const code = getCode();
+  if (code.length < 6) { setVMsg('Enter all 6 digits.', false); return; }
+  const btn = document.getElementById('vmodal-btn');
+  btn.disabled = true; btn.textContent = 'Verifying...';
+
+  const url = _vIsDevModal
+    ? `${API}/platform/dev/verify-code`
+    : `${API}/auth/${window._vSlug || ''}/verify-code`;
+
+  try {
+    const res  = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: _vEmail, code })
+    });
+    const data = await res.json();
+    if (!res.ok) { setVMsg(data.detail || 'Invalid code.', false); return; }
+    setVMsg('✅ Email verified! You can now sign in.', true);
+    setTimeout(() => {
+      document.getElementById('vmodal').classList.remove('show');
+      authTab('login');
+    }, 1800);
+  } catch(e) {
+    setVMsg('Network error. Try again.', false);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Verify';
+  }
+}
+
+async function resendCode() {
+  const url = _vIsDevModal
+    ? `${API}/platform/dev/resend-code`
+    : `${API}/auth/${window._vSlug || ''}/resend-code`;
+  try {
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: _vEmail })
+    });
+    setVMsg('New code sent!', true);
+  } catch(e) {
+    setVMsg('Failed to resend.', false);
+  }
+}
+
 </script>
 </body>
-</html>
+    </html>
