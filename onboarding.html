@@ -262,10 +262,24 @@ h1 {
 
 <script>
 const API = window.location.origin;
+
+// Extract ax_token from URL hash FIRST (set by OAuth backend redirect)
+// Must happen before localStorage.getItem or the token won't be there yet
+(function() {
+  const m = window.location.hash.match(/[#&]ax_token=([^&]+)/);
+  if (m) {
+    localStorage.setItem('ax_access', m[1]);
+    window.history.replaceState(null, '', window.location.pathname);
+  }
+})();
+
+// Read AFTER the IIFE so token is guaranteed to be in localStorage
 const token = localStorage.getItem('ax_access');
 
-// Also support HttpOnly cookie flow (OAuth) — if no localStorage token,
-// the cookie is sent automatically with every fetch. We just proceed.
+// If still no token after checking hash, kick to login
+if (!token) {
+  window.location.href = 'https://ageinx.vercel.app/#auth';
+}
 
 let slugDebounceTimer = null;
 let slugIsAvailable   = false;
@@ -278,23 +292,20 @@ const callbackInput = document.getElementById('callback-input');
 const submitBtn    = document.getElementById('submit-btn');
 const msgEl        = document.getElementById('msg');
 
-// ── Check if this dev actually needs onboarding ──────────────────────────────
+// ── Guard: skip onboarding if already complete ───────────────────────────────
 async function checkOnboarding() {
   try {
-    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-    const res  = await fetch(`${API}/platform/dev/me`, { headers });
-    if (!res.ok) {
-      // Not authed at all — send to login
-      window.location.href = 'https://ageinx.vercel.app/#auth';
-      return;
-    }
+    const res  = await fetch(`${API}/platform/dev/me`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) return; // let the page show — submit will fail gracefully
     const data = await res.json();
-    if (data.onboarding_complete) {
-      // Already done — no reason to be here
+    if (data.onboarding_complete === true) {
+      // Already set up — go straight to dashboard
       window.location.href = 'https://ageinx.vercel.app/dashboard';
     }
   } catch(e) {
-    window.location.href = 'https://ageinx.vercel.app/#auth';
+    // Network error — let the page show, user can retry submit
   }
 }
 checkOnboarding();
@@ -418,4 +429,3 @@ function hideMsg() {
 </script>
 </body>
 </html>
-
