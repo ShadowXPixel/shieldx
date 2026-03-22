@@ -406,8 +406,8 @@ async def oauth_callback(provider: str, request: Request, code: str, state: str)
                 api_key = f"ax_live_{secrets.token_urlsafe(24)}"
                 rand_slug = f"app-{secrets.token_hex(4)}"
                 dev_id = await conn.fetchval(
-                    "INSERT INTO developers (email,password_hash,api_key,slug,callback_url,is_active,email_verified) "
-                    "VALUES ($1,$2,$3,$4,$5,true,TRUE) RETURNING id",
+                    "INSERT INTO developers (email,password_hash,api_key,slug,callback_url,is_active,email_verified,onboarding_complete) "
+                    "VALUES ($1,$2,$3,$4,$5,true,TRUE,FALSE) RETURNING id",
                     email, dummy_hash, api_key, rand_slug, f"{APP_URL}/dashboard"
                 )
                 plan = "starter"
@@ -491,8 +491,8 @@ async def dev_signup(request: Request, data: DevSignup):
     async with db_pool.acquire() as conn:
         try:
             await conn.execute(
-                "INSERT INTO developers (email,password_hash,api_key,slug,callback_url,is_active,email_verified) "
-                "VALUES ($1,$2,$3,$4,$5,true,TRUE)",
+                "INSERT INTO developers (email,password_hash,api_key,slug,callback_url,is_active,email_verified,onboarding_complete) "
+                "VALUES ($1,$2,$3,$4,$5,true,TRUE,TRUE)",
                 data.email, password_hash, api_key, data.slug, data.callback_url
             )
         except asyncpg.exceptions.UniqueViolationError as e:
@@ -540,7 +540,7 @@ async def dev_me(token: dict = Depends(verify_token)):
     async with db_pool.acquire() as conn:
         dev = await conn.fetchrow(
             "SELECT email,api_key,slug,callback_url,plan,is_active,created_at,api_calls_count,"
-            "COALESCE(onboarding_complete, TRUE) AS onboarding_complete "
+            "COALESCE(onboarding_complete, FALSE) AS onboarding_complete "
             "FROM developers WHERE id=$1", safe_uuid(dev_id)
         )
         if not dev: raise HTTPException(status_code=404, detail="developer not found")
