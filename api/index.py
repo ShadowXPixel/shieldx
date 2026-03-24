@@ -372,7 +372,9 @@ async def limit_body_size(request: Request, call_next):
 #      Attacker can't forge state (no JWT_SECRET), can't read cookie (HttpOnly).
 
 @app.get("/api/oauth/{provider}")
-async def oauth_login(provider: str, type: str, slug: str = ""):
+async def oauth_login(provider: str, request: Request, type: str, slug: str = ""):
+    ip = get_client_ip(request)
+    await rate_limit(f"oauth:{ip}", limit=20, window=300)  # 20 OAuth initiations per 5 min per IP
     nonce = secrets.token_urlsafe(32)
     state_token = jwt.encode(
         {"nonce": nonce, "type": type, "slug": slug, "exp": int(time.time()) + 600},
@@ -538,7 +540,7 @@ async def dev_signup(request: Request, data: DevSignup):
             await conn.execute(
                 "INSERT INTO developers (email,password_hash,api_key,slug,callback_url,is_active,email_verified) "
                 "VALUES ($1,$2,$3,$4,$5,true,FALSE)",
-                data.email, password_hash, api_key, data.slug, data.callback_url
+                data.email.lower().strip(), password_hash, api_key, data.slug, data.callback_url
             )
         except asyncpg.exceptions.UniqueViolationError as e:
             if "email" in str(e): raise HTTPException(status_code=400, detail="email already registered")
@@ -567,13 +569,15 @@ async def dev_login(request: Request, data: DevLogin):
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
         dev = await conn.fetchrow(
-            "SELECT id,email,password_hash,is_active FROM developers WHERE email=$1", data.email
+            "SELECT id,email,password_hash,is_active,email_verified FROM developers WHERE email=$1", data.email.lower().strip()
         )
 
     if not dev or not await run_in_threadpool(pwd_context.verify, data.password, dev["password_hash"]):
         raise HTTPException(status_code=401, detail="invalid credentials")
     if not dev["is_active"]:
         raise HTTPException(status_code=403, detail="account not yet activated")
+    if not dev["email_verified"]:
+        raise HTTPException(status_code=403, detail="email not verified. Check your inbox for a 6-digit code.")
 
     access_token  = create_token({"sub": str(dev["id"]), "type": "access"},  ACCESS_TOKEN_EXPIRE)
     refresh_token = create_token({"sub": str(dev["id"]), "type": "refresh"}, REFRESH_TOKEN_EXPIRE)
@@ -735,11 +739,14 @@ async def complete_onboarding(data: OnboardingData, token: dict = Depends(verify
 
 
 @app.post("/platform/dev/verify-code")
-async def dev_verify_code(data: VerifyCodePayload):
+async def dev_verify_code(request: Request, data: VerifyCodePayload):
+    ip = get_client_ip(request)
+    await rate_limit(f"verify_dev:{data.email}", limit=5, window=900)  # 5 attempts per 15 min per email
+    await rate_limit(f"verify_ip:{ip}", limit=20, window=900)           # 20 attempts per 15 min per IP
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
         dev = await conn.fetchrow(
-            "SELECT id, verify_token_hash, verify_expires FROM developers WHERE email=$1", data.email
+            "SELECT id, verify_token_hash, verify_expires FROM developers WHERE email=$1", data.email.lower().strip()
         )
     if not dev or not dev["verify_token_hash"]:
         raise HTTPException(status_code=400, detail="No pending verification for this email")
@@ -757,7 +764,10 @@ async def dev_verify_code(data: VerifyCodePayload):
 
 
 @app.post("/auth/{slug}/verify-code")
-async def user_verify_code(slug: str, data: VerifyCodePayload):
+async def user_verify_code(slug: str, request: Request, data: VerifyCodePayload):
+    ip = get_client_ip(request)
+    await rate_limit(f"verify_user:{data.email}", limit=5, window=900)
+    await rate_limit(f"verify_ip:{ip}", limit=20, window=900)
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
         dev = await conn.fetchrow("SELECT id FROM developers WHERE slug=$1 AND is_active=true", slug)
@@ -784,10 +794,13 @@ async def user_verify_code(slug: str, data: VerifyCodePayload):
 
 @app.post("/platform/dev/resend-code")
 async def dev_resend_code(request: Request):
+    ip = get_client_ip(request)
     body = await request.json()
     email = body.get("email")
     if not email:
         raise HTTPException(status_code=400, detail="email required")
+    await rate_limit(f"resend_dev:{email}", limit=3, window=300)  # max 3 resends per 5 min
+    await rate_limit(f"resend_ip:{ip}", limit=10, window=300)
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
         dev = await conn.fetchrow("SELECT id, email_verified FROM developers WHERE email=$1", email)
@@ -810,10 +823,13 @@ async def dev_resend_code(request: Request):
 
 @app.post("/auth/{slug}/resend-code")
 async def user_resend_code(slug: str, request: Request):
+    ip = get_client_ip(request)
     body = await request.json()
     email = body.get("email")
     if not email:
         raise HTTPException(status_code=400, detail="email required")
+    await rate_limit(f"resend_user:{email}", limit=3, window=300)
+    await rate_limit(f"resend_ip:{ip}", limit=10, window=300)
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
         dev = await conn.fetchrow("SELECT id FROM developers WHERE slug=$1 AND is_active=true", slug)
@@ -1085,7 +1101,7 @@ async def auth_user_signup(slug: str, request: Request, data: UserSignup):
             await conn.fetchval(
                 "INSERT INTO users (developer_id,email,password_hash,email_verified) "
                 "VALUES ($1,$2,$3,FALSE) RETURNING id",
-                dev["id"], data.email, password_hash
+                dev["id"], data.email.lower().strip(), password_hash
             )
         except asyncpg.exceptions.UniqueViolationError:
             raise HTTPException(status_code=400, detail="email already registered")
@@ -1115,14 +1131,20 @@ async def auth_user_login(slug: str, request: Request, data: UserLogin):
             "SELECT d.id AS dev_id,d.callback_url,d.plan,u.id AS user_id,u.email,u.password_hash,u.email_verified "
             "FROM developers d LEFT JOIN users u ON u.developer_id=d.id AND u.email=$2 "
             "WHERE d.slug=$1 AND d.is_active=true",
-            slug, data.email
+            slug, data.email.lower().strip()
         )
     if not row: raise HTTPException(status_code=404, detail="app not found")
     if not row["user_id"] or not await run_in_threadpool(pwd_context.verify, data.password, row["password_hash"]):
         raise HTTPException(status_code=401, detail="invalid credentials")
+    if not row["email_verified"]:
+        raise HTTPException(status_code=403, detail="email not verified. Check your inbox for a 6-digit code.")
     await enforce_plan_limit(str(row["dev_id"]), row["plan"] or "starter")
     token = create_token(
         {"sub": str(row["user_id"]), "dev": str(row["dev_id"]), "email": row["email"], "type": "user_access"},
         USER_ACCESS_EXPIRE
     )
-    return {"message": "login successful", "redirect_url": f"{row['callback_url']}#token={token}", "token": token}
+    # Validate redirect target matches stored callback origin (prevent open redirect)
+    parsed_cb = urlparse(row["callback_url"])
+    cb_origin  = f"{parsed_cb.scheme}://{parsed_cb.netloc}"
+    redirect_url = f"{row['callback_url']}#token={token}"
+    return {"message": "login successful", "redirect_url": redirect_url, "token": token}
