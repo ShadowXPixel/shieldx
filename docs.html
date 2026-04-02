@@ -82,14 +82,15 @@
             border-bottom: 1px solid var(--border);
         }
         .section:last-child { border-bottom: none; }
-        .section:first-child { padding-top: 60px; } /* Slight breathing room for very top only */
+        .section:first-child { padding-top: 60px; }
 
-        h1 { font-size: 1.8rem; margin-bottom: 8px; letter-spacing: -0.04em; font-weight: 600; }
+        h1 { font-size: 1.8rem; margin-bottom: 16px; letter-spacing: -0.04em; font-weight: 600; }
         h2 { font-size: 1.3rem; margin-top: 24px; margin-bottom: 8px; letter-spacing: -0.02em; font-weight: 600; }
         h3 { font-size: 1.1rem; margin-top: 16px; margin-bottom: 8px; font-weight: 600; }
         
         ul.dense-list { margin-bottom: 16px; margin-left: 20px; color: var(--ink); font-size: 0.95rem; }
         ul.dense-list li { margin-bottom: 4px; }
+        ul.dense-list strong { font-weight: 600; }
         
         /* ─── CTA BOX ─── */
         .cta-box { border: 1px solid var(--border); border-radius: 6px; padding: 16px; margin: 16px 0; background: var(--g50); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
@@ -97,7 +98,7 @@
         .cta-text p { margin: 0; font-size: 0.8rem; color: var(--g600); }
         .btn-primary { display: inline-flex; align-items: center; justify-content: center; background: var(--ink); color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 0.9rem; font-weight: 500; white-space: nowrap; box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.1); }
         
-        /* ─── CODE BLOCKS (HEAVY VISUAL WEIGHT) ─── */
+        /* ─── CODE BLOCKS ─── */
         code:not(pre code) { background: var(--g50); padding: 2px 4px; border-radius: 4px; font-size: 0.85em; font-family: monospace; border: 1px solid var(--border); }
         .code-wrap { position: relative; margin: 8px 0 16px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 6px; }
         .code-wrap::before { content: attr(data-lang); position: absolute; top: 0; left: 0; background: rgba(255,255,255,0.1); color: #a1a1aa; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; padding: 2px 8px; border-radius: 6px 0 6px 0; }
@@ -127,12 +128,12 @@
     <div id="toast">Copied to clipboard</div>
 
     <div class="mobile-header">
-        <a href="#home" class="logo" style="margin:0; padding: 10px 0;">Nimbo<span>ity</span></a>
+        <a href="/#home" class="logo" style="margin:0; padding: 10px 0;">NIMBO<span>ITY</span></a>
         <button class="hamburger" onclick="toggleMenu()">☰</button>
     </div>
 
     <nav class="sidebar" id="sidebar">
-        <a href="#home" class="logo">Nimbo<span>ity</span><small>Ageinx Docs</small></a>
+        <a href="/#home" class="logo">NIMBO<span>ITY</span><small>Ageinx Docs</small></a>
         
         <div class="nav-group">
             <div class="nav-label">Start Here</div>
@@ -163,9 +164,16 @@
         <section id="intro" class="section">
             <h1>Auth in 5 minutes. No backend needed.</h1>
             <ul class="dense-list">
-                <li><strong>What it does:</strong> Redirects → issues token → verifies backend → grants access.</li>
-                <li><strong>Why it's needed:</strong> No JWT boilerplates, no session configs, zero auth maintenance.</li>
-                <li><strong>Edge case:</strong> Fails closed strictly if token is expired or altered.</li>
+                <li><strong>auth type:</strong> token-based (JWT)</li>
+                <li><strong>flow:</strong> redirect → callback → verify → session</li>
+                <li><strong>backend:</strong> required for real security</li>
+                <li><strong>frontend:</strong> only for UX, NOT for trust</li>
+                <li><strong>token location:</strong> URL hash (#token)</li>
+                <li><strong>token usage:</strong> Authorization header (Bearer)</li>
+                <li><strong>expiry:</strong> ~60 minutes (short-lived)</li>
+                <li><strong>refresh:</strong> re-login required (no refresh tokens yet)</li>
+                <li><strong>DX:</strong> works with ANY stack (just HTTP), no SDK lock-in, no config required</li>
+                <li><strong>pricing:</strong> no MAU limits, flat logic</li>
             </ul>
 
             <div class="cta-box">
@@ -183,54 +191,71 @@
             <h3>1. Login</h3>
             <div class="code-wrap" data-lang="HTML">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
-                <pre><code><span class="cmt">&lt;!-- user clicks this to start auth flow --&gt;</span>
+                <pre><code><span class="cmt">&lt;!-- redirect user to init auth flow --&gt;</span>
 <span class="op">&lt;</span><span class="var">a</span> <span class="fn">href</span><span class="op">=</span><span class="str">"https://ageinx.vercel.app/auth/YOUR_SLUG"</span><span class="op">&gt;</span>Login<span class="op">&lt;/</span><span class="var">a</span><span class="op">&gt;</span></code></pre>
             </div>
             <ul class="dense-list">
-                <li>redirect user → auth page</li>
-                <li>slug = project id</li>
+                <li><strong>method:</strong> GET redirect</li>
+                <li><strong>endpoint:</strong> /auth/{slug}</li>
+                <li><strong>slug:</strong> unique project identifier</li>
+                <li><strong>supports:</strong> login + signup same flow</li>
+                <li><strong>no SDK:</strong> pure redirect-based auth</li>
+                <li><strong>failure:</strong> user stays on auth page</li>
+                <li><strong>success:</strong> redirect with token</li>
             </ul>
 
             <h3>2. Callback</h3>
             <div class="code-wrap" data-lang="JavaScript">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
-                <pre><code><span class="cmt">// extract token from URL</span>
+                <pre><code><span class="cmt">// extract token immediately on load</span>
 <span class="kw">const</span> <span class="var">token</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">URLSearchParams</span>(<span class="var">window</span>.<span class="var">location</span>.<span class="var">hash</span>.<span class="fn">substring</span>(<span class="var">1</span>)).<span class="fn">get</span>(<span class="str">'token'</span>);
 
 <span class="kw">if</span> (<span class="var">token</span>) {
     <span class="var">localStorage</span>.<span class="fn">setItem</span>(<span class="str">'token'</span>, <span class="var">token</span>);
-    <span class="cmt">// IMPORTANT: remove hash after reading</span>
+    <span class="cmt">// MUST remove from URL for security</span>
     <span class="var">window</span>.<span class="var">history</span>.<span class="fn">replaceState</span>(<span class="kw">null</span>, <span class="kw">null</span>, <span class="var">window</span>.<span class="var">location</span>.<span class="var">pathname</span>); 
 }</code></pre>
             </div>
             <ul class="dense-list">
-                <li>token in URL (#token=...)</li>
-                <li>extract immediately</li>
-                <li>remove from URL (security)</li>
+                <li><strong>token source:</strong> window.location.hash</li>
+                <li><strong>format:</strong> #token=JWT</li>
+                <li><strong>must extract:</strong> immediately on load</li>
+                <li><strong>must remove:</strong> using history.replaceState</li>
+                <li><strong>storage:</strong> localStorage (dev only)</li>
+                <li><strong>production:</strong> send to backend → HTTP-only cookie</li>
+                <li><strong>risk:</strong> URL leak if not cleared</li>
+                <li><strong>edge case:</strong> token missing → redirect to login</li>
             </ul>
 
             <h3>3. Verify</h3>
             <div class="code-wrap" data-lang="HTTP">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
-                <pre><code><span class="cmt"># send token to backend for every protected request</span>
+                <pre><code><span class="cmt"># send token to backend for EVERY protected request</span>
 <span class="method">GET</span> <span class="url">https://ageinx.vercel.app/auth/userinfo</span>
 <span class="kw">Authorization:</span> Bearer &lt;token&gt;</code></pre>
             </div>
             <ul class="dense-list">
-                <li>send token to backend</li>
-                <li>call /auth/userinfo</li>
-                <li>reject if invalid</li>
+                <li><strong>endpoint:</strong> /auth/userinfo</li>
+                <li><strong>method:</strong> GET</li>
+                <li><strong>header:</strong> Authorization: Bearer &lt;token&gt;</li>
+                <li><strong>response:</strong> user object (id, email)</li>
+                <li><strong>invalid token:</strong> 401</li>
+                <li><strong>expired token:</strong> 401</li>
+                <li><strong>network fail:</strong> treat as 503</li>
+                <li><strong>MUST:</strong> verify on EVERY protected request</li>
+                <li><strong>NEVER:</strong> trust frontend-only auth</li>
             </ul>
-            
-            <strong>Done. User authenticated.</strong>
         </section>
 
         <section id="react" class="section">
             <h1>React / Next.js</h1>
             <ul class="dense-list">
-                <li>extracts token silently</li>
-                <li>redirects user to dashboard</li>
-                <li>handles failure gracefully</li>
+                <li><strong>runs:</strong> on mount (useEffect)</li>
+                <li><strong>action:</strong> extracts token once</li>
+                <li><strong>storage:</strong> stores token client-side</li>
+                <li><strong>success:</strong> redirects after success</li>
+                <li><strong>fallback:</strong> redirect to /login</li>
+                <li><strong>compatibility:</strong> no SSR dependency required (works in SPA + Next.js)</li>
             </ul>
             <div class="code-wrap" data-lang="React">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
@@ -259,28 +284,32 @@
         <section id="node" class="section">
             <h1>Node.js / Express</h1>
             <ul class="dense-list">
-                <li>middleware protects routes</li>
-                <li>verifies token validity</li>
-                <li>attaches user data to request</li>
+                <li><strong>pattern:</strong> middleware-based protection</li>
+                <li><strong>execution:</strong> runs before route handler</li>
+                <li><strong>action:</strong> extracts token from headers, calls Ageinx API</li>
+                <li><strong>success:</strong> attaches req.user</li>
+                <li><strong>failure:</strong> blocks request if invalid</li>
+                <li><strong>security:</strong> fail closed (secure by default)</li>
+                <li><strong>optional:</strong> cache userinfo (Redis 5–10 min)</li>
             </ul>
             <div class="code-wrap" data-lang="Node.js">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
                 <pre><code><span class="kw">const</span> <span class="var">axios</span> <span class="op">=</span> <span class="fn">require</span>(<span class="str">'axios'</span>);
 
 <span class="kw">async function</span> <span class="fn">requireAuth</span>(<span class="var">req</span>, <span class="var">res</span>, <span class="var">next</span>) {
-    <span class="cmt">// grab bearer token from headers</span>
+    <span class="cmt">// extract token from headers</span>
     <span class="kw">const</span> <span class="var">token</span> <span class="op">=</span> <span class="var">req</span>.<span class="var">headers</span>.<span class="var">authorization</span>?.<span class="fn">split</span>(<span class="str">' '</span>)[<span class="var">1</span>];
     <span class="kw">if</span> (<span class="op">!</span><span class="var">token</span>) <span class="kw">return</span> <span class="var">res</span>.<span class="fn">status</span>(<span class="var">401</span>).<span class="fn">json</span>({ <span class="var">error</span>: <span class="str">"Denied"</span> });
 
     <span class="kw">try</span> {
-        <span class="cmt">// hit Ageinx API to validate</span>
+        <span class="cmt">// call Ageinx API to attach req.user</span>
         <span class="kw">const</span> { <span class="var">data</span> } <span class="op">=</span> <span class="kw">await</span> <span class="var">axios</span>.<span class="fn">get</span>(<span class="str">'https://ageinx.vercel.app/auth/userinfo'</span>, {
             <span class="var">headers</span>: { <span class="str">'Authorization'</span>: <span class="str">`Bearer ${token}`</span> }
         });
         <span class="var">req</span>.<span class="var">user</span> <span class="op">=</span> <span class="var">data</span>; 
         <span class="fn">next</span>();
     } <span class="kw">catch</span> (<span class="var">error</span>) {
-        <span class="cmt">// fail closed immediately if invalid</span>
+        <span class="cmt">// fail closed (secure by default)</span>
         <span class="kw">return</span> <span class="var">res</span>.<span class="fn">status</span>(<span class="var">401</span>).<span class="fn">json</span>({ <span class="var">error</span>: <span class="str">"Invalid token"</span> });
     }
 }</code></pre>
@@ -290,9 +319,11 @@
         <section id="python" class="section">
             <h1>Python / FastAPI</h1>
             <ul class="dense-list">
-                <li>dependency injected auth</li>
-                <li>rejects 401s automatically</li>
-                <li>clean route protection</li>
+                <li><strong>pattern:</strong> dependency injection (FastAPI Depends)</li>
+                <li><strong>network:</strong> async HTTP call (httpx)</li>
+                <li><strong>handling:</strong> automatic 401 handling</li>
+                <li><strong>DX:</strong> clean route-level protection, reusable across endpoints</li>
+                <li><strong>perf:</strong> minimal overhead</li>
             </ul>
             <div class="code-wrap" data-lang="Python">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
@@ -305,7 +336,7 @@
 
 <span class="kw">async def</span> <span class="fn">verify_user</span>(<span class="var">credentials</span> <span class="op">=</span> <span class="fn">Depends</span>(<span class="var">security</span>)):
     <span class="kw">async with</span> <span class="var">httpx</span>.<span class="fn">AsyncClient</span>() <span class="kw">as</span> <span class="var">client</span>:
-        <span class="cmt"># forward token for validation</span>
+        <span class="cmt"># verify token async</span>
         <span class="var">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="var">client</span>.<span class="fn">get</span>(
             <span class="str">"https://ageinx.vercel.app/auth/userinfo"</span>,
             <span class="var">headers</span><span class="op">=</span>{<span class="str">"Authorization"</span>: <span class="str">f"Bearer {credentials.credentials}"</span>}
@@ -319,21 +350,26 @@
         <section id="security" class="section">
             <h1>Security</h1>
             <ul class="dense-list">
-                <li><strong>passwords</strong> → hashed (bcrypt/argon2)</li>
-                <li><strong>tokens</strong> → expire (~60 min)</li>
-                <li><strong>frontend</strong> → never trusted</li>
-                <li><strong>backend</strong> → must verify every request</li>
-                <li><strong>optional</strong> → use HTTP-only cookies (prod)</li>
+                <li><strong>hashing:</strong> bcrypt / argon2</li>
+                <li><strong>tokens:</strong> signed JWT (HS256/RS256)</li>
+                <li><strong>storage:</strong> no plaintext passwords</li>
+                <li><strong>isolation:</strong> app never sees credentials</li>
+                <li><strong>replay attacks:</strong> mitigated server-side</li>
+                <li><strong>rate limiting:</strong> built-in (no need to implement)</li>
+                <li><strong>brute force:</strong> blocked automatically</li>
+                <li><strong>XSS risk:</strong> localStorage unsafe (prod warning)</li>
             </ul>
         </section>
 
         <section id="mistakes" class="section">
             <h1>Common Mistakes</h1>
             <ul class="dense-list">
-                <li><strong>trusting frontend</strong> = wrong</li>
-                <li><strong>not verifying token</strong> = insecure</li>
-                <li><strong>not clearing URL</strong> = token leak</li>
-                <li><strong>ignoring 401</strong> = broken UX</li>
+                <li><strong>storing token forever:</strong> bad (handle expiry)</li>
+                <li><strong>not handling 401:</strong> user stuck</li>
+                <li><strong>trusting client:</strong> insecure</li>
+                <li><strong>exposing token in URL:</strong> major leak</li>
+                <li><strong>skipping backend:</strong> fake auth possible</li>
+                <li><strong>not using HTTPS:</strong> insecure transport</li>
             </ul>
         </section>
 
@@ -353,7 +389,6 @@
             const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
             progressBar.style.width = (winScroll / height) * 100 + "%";
             
-            // Fast spy nav update
             let current = "";
             sections.forEach(sec => {
                 if (window.scrollY >= sec.offsetTop - 100) { current = sec.getAttribute("id"); }
@@ -384,3 +419,4 @@
     </script>
 </body>
 </html>
+
