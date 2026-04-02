@@ -391,7 +391,8 @@ async def oauth_login(provider: str, request: Request, type: str, slug: str = ""
         oauth_url = (f"https://github.com/login/oauth/authorize"
                      f"?client_id={GITHUB_CLIENT_ID}"
                      f"&redirect_uri={APP_URL}/api/oauth/callback/github"
-                     f"&scope=user:email&state={state_token}")
+                     f"&scope=user:email&state={state_token}"
+                     f"&code_challenge={code_challenge}&code_challenge_method=S256")
     else:
         raise HTTPException(status_code=400, detail="Provider not supported")
 
@@ -434,9 +435,13 @@ async def oauth_callback(provider: str, request: Request, code: str, state: str)
         email = user_res.json().get("email")
 
     elif provider == "github":
+        code_verifier = state_data.get("code_verifier")
+        if not code_verifier:
+            raise HTTPException(status_code=400, detail="Missing code verifier")
         token_res = await client.post("https://github.com/login/oauth/access_token",
             data={"client_id": GITHUB_CLIENT_ID, "client_secret": GITHUB_CLIENT_SECRET,
-                  "code": code, "redirect_uri": f"{APP_URL}/api/oauth/callback/github"},
+                  "code": code, "redirect_uri": f"{APP_URL}/api/oauth/callback/github",
+                  "code_verifier": code_verifier},
             headers={"Accept": "application/json"})
         at = token_res.json().get("access_token")
         if not at: raise HTTPException(status_code=400, detail="GitHub auth failed")
