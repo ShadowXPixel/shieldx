@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -8,16 +8,14 @@
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         
-        /* SCROLL SNAPPING & BEHAVIOR */
         html { 
             scroll-behavior: smooth; 
-            scroll-snap-type: y proximity; /* Proximity used to avoid cutting off tall sections while still snapping to headers */
+            scroll-snap-type: y proximity; 
         }
         
         :root { 
             --ink: #0a0a0a; 
             --accent: #1b6ef2; 
-            --accent-hover: #1558c4;
             --border: #eaeaea; 
             --border-s: #d4d4d4;
             --g50: #fafafa;
@@ -38,7 +36,6 @@
             overflow-x: hidden;
         }
 
-        /* ─── SCROLL PROGRESS BAR ─── */
         #progress-bar {
             position: fixed; top: 0; left: 0; height: 3px; 
             background: linear-gradient(90deg, #1b6ef2, #7dd3fc, #1b6ef2);
@@ -48,7 +45,6 @@
         }
         @keyframes gradientMove { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
 
-        /* ─── SIDEBAR ─── */
         .sidebar {
             width: var(--sidebar-w); background: #fff; border-right: 1px solid var(--border);
             position: fixed; top: 0; left: 0; bottom: 0; padding: 32px 20px;
@@ -70,7 +66,6 @@
         .nav-link:hover { background: var(--g50); color: var(--ink); }
         .nav-link.active { background: #eff6ff; color: var(--accent); font-weight: 500; }
 
-        /* ─── MOBILE HEADER ─── */
         .mobile-header {
             display: none; position: fixed; top: 0; left: 0; right: 0;
             height: 60px; background: rgba(255,255,255,0.8); backdrop-filter: blur(8px);
@@ -79,15 +74,12 @@
         }
         .hamburger { background: none; border: none; font-size: 1.5rem; color: var(--ink); cursor: pointer; }
 
-        /* ─── MAIN CONTENT ─── */
-        .main-content {
-            flex: 1; margin-left: var(--sidebar-w); padding: 0 48px; max-width: 900px;
-        }
+        .main-content { flex: 1; margin-left: var(--sidebar-w); padding: 0 48px; max-width: 850px; }
 
         .section {
             padding-top: 80px; padding-bottom: 60px;
             border-bottom: 1px solid var(--border);
-            scroll-snap-align: start; /* Scroll snapping */
+            scroll-snap-align: start;
             opacity: 0; transform: translateY(10px);
             transition: opacity 0.5s ease, transform 0.5s ease;
         }
@@ -95,43 +87,35 @@
         .section:last-child { border-bottom: none; }
 
         h1 { font-size: 2.2rem; margin-bottom: 12px; letter-spacing: -0.04em; font-weight: 600; }
-        .lead { font-size: 1.1rem; color: var(--g600); margin-bottom: 32px; max-width: 650px; }
+        .lead { font-size: 1.2rem; color: var(--ink); margin-bottom: 24px; font-weight: 500; }
         h2 { font-size: 1.4rem; margin-top: 48px; margin-bottom: 16px; letter-spacing: -0.02em; font-weight: 600; }
-        h3 { font-size: 1.1rem; margin-top: 24px; margin-bottom: 12px; font-weight: 600; }
-        p { color: var(--g600); margin-bottom: 16px; font-size: 1rem; }
-        ul.benefits { margin-bottom: 24px; margin-left: 20px; color: var(--g600); }
-        ul.benefits li { margin-bottom: 8px; }
+        h3 { font-size: 1.1rem; margin-top: 32px; margin-bottom: 12px; font-weight: 600; }
+        p { color: var(--g600); margin-bottom: 16px; font-size: 0.95rem; }
         
-        /* ─── HERO CTA ─── */
         .cta-box { border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin: 32px 0; background: var(--g50); display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-        .cta-text h3 { margin: 0 0 4px 0; }
-        .cta-text p { margin: 0; font-size: 0.85rem; color: var(--g400); }
+        .cta-text h3 { margin: 0 0 4px 0; font-size: 1.1rem; }
+        .cta-text p { margin: 0; font-size: 0.85rem; color: var(--g600); }
         
         .btn-primary { 
             display: inline-flex; align-items: center; justify-content: center; 
             background: var(--ink); color: #fff; padding: 12px 24px; border-radius: 6px; 
             text-decoration: none; font-size: 0.95rem; font-weight: 500; 
             transition: all 0.2s ease; white-space: nowrap;
-            box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.15); /* Slight shadow */
+            box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.15);
         }
         .btn-primary:hover { 
             background: #333; transform: translateY(-1px);
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); 
         }
         
-        .trust-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--g400); margin-top: 12px; }
-        .trust-badge svg { width: 14px; height: 14px; fill: currentColor; }
+        .trust-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--g600); margin-top: 12px; font-weight: 500; }
+        .trust-badge svg { width: 16px; height: 16px; fill: var(--success); }
 
-        /* ─── CALLOUTS ─── */
         .callout { background: var(--g50); border-left: 4px solid var(--border-s); padding: 16px 20px; border-radius: 0 6px 6px 0; margin: 24px 0; font-size: 0.9rem; color: var(--g600); }
         .callout strong { color: var(--ink); font-weight: 600; }
-        .callout.danger { background: var(--danger-bg); border-left-color: var(--danger); color: #9f1239; }
-        .callout.danger strong { color: #881337; }
-        .callout.success { background: #ecfdf5; border-left-color: var(--success); color: #065f46; }
 
-        /* ─── CODE BLOCKS ─── */
         code:not(pre code) { background: var(--g50); padding: 2px 6px; border-radius: 4px; font-size: 0.85em; font-family: monospace; border: 1px solid var(--border); }
-        .code-wrap { position: relative; margin: 24px 0; }
+        .code-wrap { position: relative; margin: 16px 0 32px 0; }
         .code-wrap::before { content: attr(data-lang); position: absolute; top: 0; left: 0; background: rgba(255,255,255,0.1); color: #a1a1aa; font-size: 0.7rem; font-family: 'Geist', sans-serif; font-weight: 600; text-transform: uppercase; padding: 4px 10px; border-radius: 8px 0 8px 0; }
         pre { background: #111; color: #ededed; padding: 36px 20px 20px; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; line-height: 1.6; font-family: monospace; border: 1px solid #333; }
         
@@ -144,12 +128,7 @@
         .copy-btn:hover { background: rgba(255,255,255,0.2); }
 
         .kw { color: #ff7b72; } .fn { color: #d2a8ff; } .str { color: #a5d6ff; } .cmt { color: #8b949e; font-style: italic; } .op { color: #c9d1d9; } .var { color: #79c0ff; } .method { color: #7ee787; font-weight: 600; } .url { color: #f2cc60; }
-        
-        .status-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.7rem; font-weight: 600; color: var(--success); background: #ecfdf5; padding: 4px 10px; border-radius: 100px; border: 1px solid #a7f3d0; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em; }
-        .status-badge::before { content: ''; width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
-        .status-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; display: inline-block; margin-right: 4px; box-shadow: 0 0 8px var(--success); }
 
-        /* ─── UTILITIES ─── */
         #toast { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: #fff; padding: 12px 24px; border-radius: 8px; font-size: 0.85rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transform: translateY(100px); opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); z-index: 1000; font-weight: 500; }
         #toast.show { transform: translateY(0); opacity: 1; }
 
@@ -175,30 +154,24 @@
     </div>
 
     <nav class="sidebar" id="sidebar">
-        <div class="logo">Nimbo<span>ity</span><small>Ageinx API v1</small></div>
+        <div class="logo">Nimbo<span>ity</span><small>Ageinx Docs</small></div>
         
         <div class="nav-group">
-            <div class="nav-label">Overview</div>
+            <div class="nav-label">Start Here</div>
             <a href="#intro" class="nav-link active">Introduction</a>
-            <a href="#setup" class="nav-link">5-Minute Setup</a>
-            <a href="#use-cases" class="nav-link">Use Cases</a>
+            <a href="#example" class="nav-link">Complete Example</a>
         </div>
 
         <div class="nav-group">
-            <div class="nav-label">Frontend</div>
-            <a href="#vanilla" class="nav-link">Vanilla JS</a>
+            <div class="nav-label">Frameworks</div>
             <a href="#react" class="nav-link">React / Next.js</a>
-        </div>
-
-        <div class="nav-group">
-            <div class="nav-label">Backend (Mandatory)</div>
             <a href="#node" class="nav-link">Node.js / Express</a>
             <a href="#python" class="nav-link">Python / FastAPI</a>
         </div>
 
         <div class="nav-group">
-            <div class="nav-label">Production</div>
-            <a href="#security" class="nav-link">Security & Trust</a>
+            <div class="nav-label">Platform</div>
+            <a href="#security" class="nav-link">Security</a>
             <a href="#mistakes" class="nav-link">Common Mistakes</a>
         </div>
         
@@ -211,61 +184,50 @@
     <main class="main-content">
 
         <section id="intro" class="section">
-            <div class="status-badge">API v1 Stable</div>
-            <h1>Ship production-ready auth in under 5 minutes.</h1>
-            <p class="lead">Built for indie devs and frontend-first builders. You handle the product, we handle the credentials.</p>
+            <h1>Auth in 5 minutes. No backend needed.</h1>
+            <p class="lead">Redirect → get token → verify → done.</p>
             
-            <div class="callout success">
-                <strong>Architecture Clarity:</strong> Ageinx = Hosted Auth UI + Token Issuer (not a full database replacement). It perfectly bridges standard web requests with secure validation. <strong>No heavy SDKs required.</strong>
-            </div>
-
-            <ul class="benefits">
-                <li><strong>No MAU pricing:</strong> Flat rates to support unlimited scaling.</li>
-                <li><strong>No vendor lock-in:</strong> 1-click export of your data anytime.</li>
-                <li><strong>Works with any stack:</strong> Standard HTTP APIs.</li>
-            </ul>
+            <p>No JWT headache. No session setup. No auth boilerplate. Takes under 5 minutes to integrate.</p>
 
             <div class="cta-box">
                 <div class="cta-text">
                     <h3>Ready to secure your app?</h3>
-                    <p>No credit card • 5 min setup • Unlimited users</p>
+                    <p>No credit card • Unlimited users</p>
                 </div>
                 <div>
-                    <a href="https://ageinx.vercel.app" class="btn-primary">Start free →</a>
+                    <a href="https://ageinx.vercel.app" class="btn-primary">Try it now (2 min setup)</a>
                     <div class="trust-badge">
                         <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                        Trusted by thousands of devs
+                        We handle passwords. You never see them.
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="setup" class="section">
-            <h1>5-Minute Setup</h1>
-            <p class="lead">Just three standard HTTP steps to integrate secure JWT authentication.</p>
-            
-            <div class="callout danger">
-                <strong>Requirement:</strong> Auth only works on <strong>HTTPS</strong> domains (except for <code>localhost</code> environments during development).
-            </div>
+        <section id="example" class="section">
+            <h1>Complete Example</h1>
+            <p>The entire flow in one place. We give you a token after login, you verify the token on your backend.</p>
 
-            <h3>1. The Redirect</h3>
-            <p>Direct users to your hosted Ageinx page. Replace <code>{your-slug}</code> with your project ID.</p>
-            <div class="code-wrap" data-lang="HTTP">
+            <h3>1. The Login Button (HTML)</h3>
+            <p>Send users to your hosted login page.</p>
+            <div class="code-wrap" data-lang="HTML">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
-                <pre><code><span class="cmt"># Attach to your "Login" button</span>
-<span class="method">GET</span> <span class="url">https://ageinx.vercel.app/auth/</span><span class="var">{your-slug}</span></code></pre>
+                <pre><code><span class="op">&lt;</span><span class="var">a</span> <span class="fn">href</span><span class="op">=</span><span class="str">"https://ageinx.vercel.app/auth/YOUR_SLUG"</span><span class="op">&gt;</span>Login<span class="op">&lt;/</span><span class="var">a</span><span class="op">&gt;</span></code></pre>
             </div>
 
-            <h3>2. The Callback</h3>
-            <p>Ageinx securely authenticates the user and redirects back to your app.</p>
-            <div class="code-wrap" data-lang="URL">
+            <h3>2. The Callback (Frontend JS)</h3>
+            <p>Grab the token from the URL when they return.</p>
+            <div class="code-wrap" data-lang="JavaScript">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
-                <pre><code><span class="cmt"># User lands here after successful login</span>
-<span class="url">https://yourapp.com/dashboard</span><span class="var">#token=eyJhbGciOiJIUzI...</span></code></pre>
+                <pre><code><span class="kw">const</span> <span class="var">token</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">URLSearchParams</span>(<span class="var">window</span>.<span class="var">location</span>.<span class="var">hash</span>.<span class="fn">substring</span>(<span class="var">1</span>)).<span class="fn">get</span>(<span class="str">'token'</span>);
+<span class="kw">if</span> (<span class="var">token</span>) {
+    <span class="var">localStorage</span>.<span class="fn">setItem</span>(<span class="str">'token'</span>, <span class="var">token</span>);
+    <span class="var">window</span>.<span class="var">history</span>.<span class="fn">replaceState</span>(<span class="kw">null</span>, <span class="kw">null</span>, <span class="var">window</span>.<span class="var">location</span>.<span class="var">pathname</span>); <span class="cmt">// clean URL</span>
+}</code></pre>
             </div>
 
-            <h3>3. Backend Verification</h3>
-            <p>Never trust the frontend. Send the token to your backend to verify it with Ageinx.</p>
+            <h3>3. The Verification (Backend API)</h3>
+            <p>Make sure the token is real before giving them data.</p>
             <div class="code-wrap" data-lang="HTTP">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
                 <pre><code><span class="method">GET</span> <span class="url">https://ageinx.vercel.app/auth/userinfo</span>
@@ -273,37 +235,9 @@
             </div>
         </section>
 
-        <section id="use-cases" class="section">
-            <h1>Use Cases</h1>
-            <p class="lead">Ageinx fits seamlessly into modern architectures.</p>
-            <ul>
-                <li><strong>SaaS Dashboards:</strong> Protect core features without spending days writing login flows.</li>
-                <li><strong>Fast MVPs:</strong> Launch over the weekend with zero auth configuration overhead.</li>
-                <li><strong>REST APIs:</strong> Secure your endpoints for mobile clients or external consumers easily.</li>
-                <li><strong>Indie Projects:</strong> Keep costs predictable. No surprising bills if a project goes viral.</li>
-            </ul>
-        </section>
-
-        <section id="vanilla" class="section">
-            <h1>Vanilla JavaScript</h1>
-            
-            <div class="code-wrap" data-lang="JavaScript">
-                <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
-                <pre><code><span class="kw">const</span> <span class="var">hash</span> <span class="op">=</span> <span class="var">window</span>.<span class="var">location</span>.<span class="var">hash</span>.<span class="fn">substring</span>(<span class="var">1</span>);
-<span class="kw">const</span> <span class="var">token</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">URLSearchParams</span>(<span class="var">hash</span>).<span class="fn">get</span>(<span class="str">'token'</span>);
-
-<span class="kw">if</span> (<span class="var">token</span>) {
-    <span class="var">localStorage</span>.<span class="fn">setItem</span>(<span class="str">'ax_token'</span>, <span class="var">token</span>);
-    <span class="cmt">// CRITICAL: Remove token from URL immediately</span>
-    <span class="var">window</span>.<span class="var">history</span>.<span class="fn">replaceState</span>(<span class="kw">null</span>, <span class="kw">null</span>, <span class="var">window</span>.<span class="var">location</span>.<span class="var">pathname</span>);
-    <span class="var">window</span>.<span class="var">location</span>.<span class="var">href</span> <span class="op">=</span> <span class="str">'/dashboard'</span>;
-}</code></pre>
-            </div>
-        </section>
-
         <section id="react" class="section">
             <h1>React / Next.js</h1>
-            
+            <p>A simple hook to handle the redirect.</p>
             <div class="code-wrap" data-lang="React">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
                 <pre><code><span class="kw">import</span> { <span class="var">useEffect</span> } <span class="kw">from</span> <span class="str">'react'</span>;
@@ -322,15 +256,14 @@
         }
     }, []);
 
-    <span class="kw">return</span> <span class="op">&lt;</span><span class="var">div</span><span class="op">&gt;</span><span class="str">Authenticating...</span><span class="op">&lt;/</span><span class="var">div</span><span class="op">&gt;</span>;
+    <span class="kw">return</span> <span class="op">&lt;</span><span class="var">div</span><span class="op">&gt;</span><span class="str">Logging in...</span><span class="op">&lt;/</span><span class="var">div</span><span class="op">&gt;</span>;
 }</code></pre>
             </div>
         </section>
 
         <section id="node" class="section">
             <h1>Node.js / Express</h1>
-            <p class="lead">Backend verification is mandatory.</p>
-            
+            <p>Protect your routes using this middleware.</p>
             <div class="code-wrap" data-lang="Node.js">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
                 <pre><code><span class="kw">const</span> <span class="var">axios</span> <span class="op">=</span> <span class="fn">require</span>(<span class="str">'axios'</span>);
@@ -340,17 +273,13 @@
     <span class="kw">if</span> (<span class="op">!</span><span class="var">token</span>) <span class="kw">return</span> <span class="var">res</span>.<span class="fn">status</span>(<span class="var">401</span>).<span class="fn">json</span>({ <span class="var">error</span>: <span class="str">"Denied"</span> });
 
     <span class="kw">try</span> {
-        <span class="cmt">// OPTIMIZATION: Cache /userinfo response (5-10 mins) using Redis to reduce latency.</span>
-        <span class="cmt">// Avoid calling Ageinx on every single request without caching.</span>
         <span class="kw">const</span> { <span class="var">data</span> } <span class="op">=</span> <span class="kw">await</span> <span class="var">axios</span>.<span class="fn">get</span>(<span class="str">'https://ageinx.vercel.app/auth/userinfo'</span>, {
             <span class="var">headers</span>: { <span class="str">'Authorization'</span>: <span class="str">`Bearer ${token}`</span> }
         });
-        
         <span class="var">req</span>.<span class="var">user</span> <span class="op">=</span> <span class="var">data</span>; 
         <span class="fn">next</span>();
     } <span class="kw">catch</span> (<span class="var">error</span>) {
-        <span class="cmt">// SECURITY: Fail closed on verification failure (deny access)</span>
-        <span class="kw">return</span> <span class="var">res</span>.<span class="fn">status</span>(<span class="var">401</span>).<span class="fn">json</span>({ <span class="var">error</span>: <span class="str">"Invalid or expired token"</span> });
+        <span class="kw">return</span> <span class="var">res</span>.<span class="fn">status</span>(<span class="var">401</span>).<span class="fn">json</span>({ <span class="var">error</span>: <span class="str">"Invalid token"</span> });
     }
 }</code></pre>
             </div>
@@ -358,7 +287,6 @@
 
         <section id="python" class="section">
             <h1>Python / FastAPI</h1>
-            
             <div class="code-wrap" data-lang="Python">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
                 <pre><code><span class="kw">import</span> <span class="var">httpx</span>
@@ -375,41 +303,32 @@
             <span class="var">headers</span><span class="op">=</span>{<span class="str">"Authorization"</span>: <span class="str">f"Bearer {credentials.credentials}"</span>}
         )
         <span class="kw">if</span> <span class="var">response</span>.<span class="var">status_code</span> <span class="op">!=</span> <span class="var">200</span>:
-            <span class="kw">raise</span> <span class="fn">HTTPException</span>(<span class="var">status_code</span><span class="op">=</span><span class="var">401</span>, <span class="var">detail</span><span class="op">=</span><span class="str">"Token invalid"</span>)
+            <span class="kw">raise</span> <span class="fn">HTTPException</span>(<span class="var">status_code</span><span class="op">=</span><span class="var">401</span>, <span class="var">detail</span><span class="op">=</span><span class="str">"Invalid token"</span>)
         <span class="kw">return</span> <span class="var">response</span>.<span class="fn">json</span>()</code></pre>
             </div>
         </section>
 
         <section id="security" class="section">
-            <h1>Security & Trust</h1>
-            <p class="lead">Built-in protections to ensure your credentials are ironclad.</p>
+            <h1>Security</h1>
             <ul>
-                <li><strong>No Plaintext Storage:</strong> Ageinx never stores plaintext credentials. Passwords are heavily hashed and salted (bcrypt/argon2).</li>
-                <li><strong>Absolute Isolation:</strong> We never expose user passwords to your app. Only the user ID and Email are returned from the <code>/userinfo</code> endpoint.</li>
-                <li><strong>Token Lifecycle:</strong> Tokens expire in 60 minutes (short-lived for security). They are stateless JWTs signed using HS256/RS256 algorithms.</li>
-                <li><strong>Attack Prevention:</strong> Replay attack protection is handled entirely server-side.</li>
+                <li><strong>No Plaintext Storage:</strong> Passwords are heavily hashed and salted.</li>
+                <li><strong>Absolute Isolation:</strong> Only the user ID and Email are returned to your app.</li>
+                <li><strong>Token Expiry:</strong> Tokens expire in 60 minutes.</li>
             </ul>
         </section>
 
         <section id="mistakes" class="section">
-            <h1>Common Mistakes to Avoid</h1>
-            <p class="lead">Don't fall into these common implementation traps.</p>
+            <h1>Common Mistakes</h1>
             <ul>
-                <li>❌ <strong>Trusting frontend data:</strong> Checking for a token on the frontend is UX, not security. <strong>Backend verification is mandatory.</strong></li>
-                <li>❌ <strong>Not clearing the URL hash:</strong> Failing to run <code>history.replaceState</code> means users might copy their URL and accidentally send their active token to someone else.</li>
-                <li>❌ <strong>Ignoring 401 errors:</strong> Tokens expire. Your frontend must catch 401s from your API and seamlessly redirect the user back to the login route.</li>
-                <li>❌ <strong>Insecure storage:</strong> Using <code>localStorage</code> is fine for side projects, but for enterprise apps, transfer the token to an HTTP-Only cookie via your backend.</li>
+                <li>❌ <strong>Trusting frontend data:</strong> Backend verification is mandatory.</li>
+                <li>❌ <strong>Not clearing the URL hash:</strong> Clean the URL so users don't copy/paste their active token.</li>
+                <li>❌ <strong>Ignoring 401 errors:</strong> Tokens expire. Catch 401s and redirect to login.</li>
             </ul>
         </section>
 
         <footer style="margin-top: 40px; padding: 40px 0; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--g400); display: flex; justify-content: space-between;">
-            <div>
-                <a href="https://ageinx.vercel.app" style="color: var(--ink); text-decoration: none; font-weight: 500;">Nimboity Studio</a> — v1.2 API Docs
-            </div>
-            <div style="display: flex; gap: 16px;">
-                <span><span class="status-dot"></span>All systems operational</span>
-                <a href="https://ageinx.vercel.app/changelog" style="color: var(--g400); text-decoration: none;">Changelog</a>
-            </div>
+            <div><a href="https://ageinx.vercel.app" style="color: var(--ink); text-decoration: none; font-weight: 500;">Nimboity Studio</a></div>
+            <div><a href="https://ageinx.vercel.app/changelog" style="color: var(--g400); text-decoration: none;">Changelog</a></div>
         </footer>
     </main>
 
@@ -419,7 +338,6 @@
         const progressBar = document.getElementById('progress-bar');
         const toast = document.getElementById('toast');
 
-        // OPTIMIZATION: Repaint debouncing using requestAnimationFrame
         let ticking = false;
         window.addEventListener('scroll', () => {
             if (!ticking) {
@@ -434,7 +352,6 @@
             }
         });
 
-        // Intersection Observer for Scroll Spy & Fade In
         const observerOptions = { root: null, rootMargin: '-20% 0px -60% 0px', threshold: 0 };
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -456,7 +373,6 @@
             if (sec.getBoundingClientRect().top < window.innerHeight) sec.classList.add('visible');
         });
 
-        // Keyboard Navigation (j/k for section, h/l for top/bottom)
         document.addEventListener('keydown', (e) => {
             if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
             
@@ -477,7 +393,6 @@
             }
         });
 
-        // Smooth Scroll for Sidebar Links
         navLinks.forEach(link => {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -488,7 +403,6 @@
 
         function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); }
 
-        // Copy Code with Toast Notification
         function copyCode(btn) {
             const codeBlock = btn.nextElementSibling.innerText;
             navigator.clipboard.writeText(codeBlock).then(() => {
