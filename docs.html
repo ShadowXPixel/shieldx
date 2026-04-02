@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -8,10 +8,7 @@
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         
-        html { 
-            scroll-behavior: smooth; 
-            scroll-snap-type: y proximity; 
-        }
+        html { scroll-behavior: smooth; }
         
         :root { 
             --ink: #0a0a0a; 
@@ -21,9 +18,8 @@
             --g50: #fafafa;
             --g400: #888888; 
             --g600: #666666; 
-            --sidebar-w: 260px;
+            --sidebar-w: 240px;
             --danger: #e11d48;
-            --danger-bg: #ffe4e6;
             --success: #10b981;
         }
         
@@ -31,7 +27,7 @@
             font-family: 'Geist', sans-serif; 
             background: #fff; 
             color: var(--ink); 
-            line-height: 1.6; 
+            line-height: 1.5; 
             display: flex;
             overflow-x: hidden;
         }
@@ -39,122 +35,104 @@
         #progress-bar {
             position: fixed; top: 0; left: 0; height: 3px; 
             background: linear-gradient(90deg, #1b6ef2, #7dd3fc, #1b6ef2);
-            background-size: 200% 100%;
-            animation: gradientMove 3s linear infinite;
-            width: 0%; z-index: 1000; transition: width 0.1s ease-out;
+            background-size: 200% 100%; animation: gradientMove 3s linear infinite;
+            width: 0%; z-index: 1000; transition: width 0.05s linear;
         }
         @keyframes gradientMove { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
 
+        /* ─── SIDEBAR ─── */
         .sidebar {
             width: var(--sidebar-w); background: #fff; border-right: 1px solid var(--border);
-            position: fixed; top: 0; left: 0; bottom: 0; padding: 32px 20px;
-            overflow-y: auto; z-index: 100; transition: transform 0.3s ease;
+            position: fixed; top: 0; left: 0; bottom: 0; padding: 24px 16px;
+            overflow-y: auto; z-index: 100;
         }
         
-        .logo { font-weight: 600; letter-spacing: 0.1em; margin-bottom: 32px; font-size: 1rem; color: var(--ink); }
+        .logo { 
+            display: block; font-weight: 600; letter-spacing: 0.1em; margin-bottom: 24px; 
+            font-size: 1rem; color: var(--ink); text-decoration: none; padding: 8px 0;
+        }
         .logo span { color: var(--accent); }
-        .logo small { display: block; font-size: 0.7rem; color: var(--g400); letter-spacing: 0; margin-top: 4px; font-weight: 400; }
+        .logo small { display: block; font-size: 0.7rem; color: var(--g400); letter-spacing: 0; margin-top: 2px; font-weight: 400; }
 
-        .nav-group { margin-bottom: 24px; }
-        .nav-label { font-size: 0.7rem; font-weight: 600; color: var(--g400); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; padding-left: 12px; }
+        .nav-group { margin-bottom: 16px; }
+        .nav-label { font-size: 0.65rem; font-weight: 600; color: var(--g400); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; padding-left: 8px; }
         .nav-link {
             display: block; width: 100%; text-align: left; background: none; border: none;
-            padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; color: var(--g600);
-            cursor: pointer; transition: all 0.15s ease; font-family: 'Geist', sans-serif; margin-bottom: 2px;
+            padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; color: var(--g600);
+            cursor: pointer; transition: all 0.1s ease; font-family: 'Geist', sans-serif;
             text-decoration: none;
         }
         .nav-link:hover { background: var(--g50); color: var(--ink); }
         .nav-link.active { background: #eff6ff; color: var(--accent); font-weight: 500; }
 
+        /* ─── MOBILE HEADER ─── */
         .mobile-header {
             display: none; position: fixed; top: 0; left: 0; right: 0;
-            height: 60px; background: rgba(255,255,255,0.8); backdrop-filter: blur(8px);
+            height: 50px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
             border-bottom: 1px solid var(--border); z-index: 99; align-items: center; 
-            justify-content: space-between; padding: 0 20px;
+            justify-content: space-between; padding: 0 16px;
         }
         .hamburger { background: none; border: none; font-size: 1.5rem; color: var(--ink); cursor: pointer; }
 
-        .main-content { flex: 1; margin-left: var(--sidebar-w); padding: 0 48px; max-width: 850px; }
+        /* ─── MAIN CONTENT ─── */
+        .main-content { flex: 1; margin-left: var(--sidebar-w); padding: 0 40px; max-width: 800px; }
 
         .section {
-            padding-top: 80px; padding-bottom: 60px;
+            padding-top: 40px; padding-bottom: 32px;
             border-bottom: 1px solid var(--border);
-            scroll-snap-align: start;
-            opacity: 0; transform: translateY(10px);
-            transition: opacity 0.5s ease, transform 0.5s ease;
         }
-        .section.visible { opacity: 1; transform: translateY(0); }
         .section:last-child { border-bottom: none; }
+        .section:first-child { padding-top: 60px; } /* Slight breathing room for very top only */
 
-        h1 { font-size: 2.2rem; margin-bottom: 12px; letter-spacing: -0.04em; font-weight: 600; }
-        .lead { font-size: 1.2rem; color: var(--ink); margin-bottom: 24px; font-weight: 500; }
-        h2 { font-size: 1.4rem; margin-top: 48px; margin-bottom: 16px; letter-spacing: -0.02em; font-weight: 600; }
-        h3 { font-size: 1.1rem; margin-top: 32px; margin-bottom: 12px; font-weight: 600; }
-        p { color: var(--g600); margin-bottom: 16px; font-size: 0.95rem; }
+        h1 { font-size: 1.8rem; margin-bottom: 8px; letter-spacing: -0.04em; font-weight: 600; }
+        h2 { font-size: 1.3rem; margin-top: 24px; margin-bottom: 8px; letter-spacing: -0.02em; font-weight: 600; }
+        h3 { font-size: 1.1rem; margin-top: 16px; margin-bottom: 8px; font-weight: 600; }
         
-        .cta-box { border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin: 32px 0; background: var(--g50); display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-        .cta-text h3 { margin: 0 0 4px 0; font-size: 1.1rem; }
-        .cta-text p { margin: 0; font-size: 0.85rem; color: var(--g600); }
+        ul.dense-list { margin-bottom: 16px; margin-left: 20px; color: var(--ink); font-size: 0.95rem; }
+        ul.dense-list li { margin-bottom: 4px; }
         
-        .btn-primary { 
-            display: inline-flex; align-items: center; justify-content: center; 
-            background: var(--ink); color: #fff; padding: 12px 24px; border-radius: 6px; 
-            text-decoration: none; font-size: 0.95rem; font-weight: 500; 
-            transition: all 0.2s ease; white-space: nowrap;
-            box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.15);
-        }
-        .btn-primary:hover { 
-            background: #333; transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); 
-        }
+        /* ─── CTA BOX ─── */
+        .cta-box { border: 1px solid var(--border); border-radius: 6px; padding: 16px; margin: 16px 0; background: var(--g50); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .cta-text h3 { margin: 0 0 2px 0; font-size: 1rem; }
+        .cta-text p { margin: 0; font-size: 0.8rem; color: var(--g600); }
+        .btn-primary { display: inline-flex; align-items: center; justify-content: center; background: var(--ink); color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 0.9rem; font-weight: 500; white-space: nowrap; box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.1); }
         
-        .trust-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--g600); margin-top: 12px; font-weight: 500; }
-        .trust-badge svg { width: 16px; height: 16px; fill: var(--success); }
-
-        .callout { background: var(--g50); border-left: 4px solid var(--border-s); padding: 16px 20px; border-radius: 0 6px 6px 0; margin: 24px 0; font-size: 0.9rem; color: var(--g600); }
-        .callout strong { color: var(--ink); font-weight: 600; }
-
-        code:not(pre code) { background: var(--g50); padding: 2px 6px; border-radius: 4px; font-size: 0.85em; font-family: monospace; border: 1px solid var(--border); }
-        .code-wrap { position: relative; margin: 16px 0 32px 0; }
-        .code-wrap::before { content: attr(data-lang); position: absolute; top: 0; left: 0; background: rgba(255,255,255,0.1); color: #a1a1aa; font-size: 0.7rem; font-family: 'Geist', sans-serif; font-weight: 600; text-transform: uppercase; padding: 4px 10px; border-radius: 8px 0 8px 0; }
-        pre { background: #111; color: #ededed; padding: 36px 20px 20px; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; line-height: 1.6; font-family: monospace; border: 1px solid #333; }
+        /* ─── CODE BLOCKS (HEAVY VISUAL WEIGHT) ─── */
+        code:not(pre code) { background: var(--g50); padding: 2px 4px; border-radius: 4px; font-size: 0.85em; font-family: monospace; border: 1px solid var(--border); }
+        .code-wrap { position: relative; margin: 8px 0 16px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 6px; }
+        .code-wrap::before { content: attr(data-lang); position: absolute; top: 0; left: 0; background: rgba(255,255,255,0.1); color: #a1a1aa; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; padding: 2px 8px; border-radius: 6px 0 6px 0; }
+        pre { background: #0d0d0d; color: #ededed; padding: 28px 16px 16px; border-radius: 6px; overflow-x: auto; font-size: 0.9rem; line-height: 1.5; font-family: monospace; border: 1px solid #222; }
         
-        .copy-btn { 
-            position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.1); 
-            border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 4px 10px; 
-            border-radius: 4px; font-size: 0.7rem; cursor: pointer; transition: all 0.2s; 
-            font-family: 'Geist', sans-serif; display: flex; align-items: center; gap: 4px;
-        }
-        .copy-btn:hover { background: rgba(255,255,255,0.2); }
-
+        .copy-btn { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.65rem; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        
         .kw { color: #ff7b72; } .fn { color: #d2a8ff; } .str { color: #a5d6ff; } .cmt { color: #8b949e; font-style: italic; } .op { color: #c9d1d9; } .var { color: #79c0ff; } .method { color: #7ee787; font-weight: 600; } .url { color: #f2cc60; }
 
-        #toast { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: #fff; padding: 12px 24px; border-radius: 8px; font-size: 0.85rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transform: translateY(100px); opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); z-index: 1000; font-weight: 500; }
+        #toast { position: fixed; bottom: 16px; right: 16px; background: var(--ink); color: #fff; padding: 8px 16px; border-radius: 6px; font-size: 0.8rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(100px); opacity: 0; transition: all 0.2s ease; z-index: 1000; font-weight: 500; }
         #toast.show { transform: translateY(0); opacity: 1; }
 
-        .kbd { background: var(--g50); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; font-family: monospace; color: var(--ink); }
+        .kbd { background: var(--g50); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 1px 4px; font-size: 0.7rem; font-family: monospace; color: var(--ink); }
 
         @media (max-width: 768px) {
             .mobile-header { display: flex; }
-            .sidebar { transform: translateX(-100%); top: 60px; border-right: none; box-shadow: 4px 0 24px rgba(0,0,0,0.1); }
+            .sidebar { transform: translateX(-100%); top: 50px; border-right: none; box-shadow: 4px 0 24px rgba(0,0,0,0.1); }
             .sidebar.open { transform: translateX(0); }
-            .main-content { margin-left: 0; padding: 0 24px; }
-            .cta-box { flex-direction: column; align-items: flex-start; }
+            .main-content { margin-left: 0; padding: 0 16px; padding-top: 50px; }
+            .cta-box { flex-direction: column; align-items: flex-start; gap: 12px; }
         }
     </style>
 </head>
-<body>
+<body id="home">
 
     <div id="progress-bar"></div>
     <div id="toast">Copied to clipboard</div>
 
     <div class="mobile-header">
-        <div class="logo">Nimbo<span>ity</span></div>
+        <a href="#home" class="logo" style="margin:0; padding: 10px 0;">Nimbo<span>ity</span></a>
         <button class="hamburger" onclick="toggleMenu()">☰</button>
     </div>
 
     <nav class="sidebar" id="sidebar">
-        <div class="logo">Nimbo<span>ity</span><small>Ageinx Docs</small></div>
+        <a href="#home" class="logo">Nimbo<span>ity</span><small>Ageinx Docs</small></a>
         
         <div class="nav-group">
             <div class="nav-label">Start Here</div>
@@ -175,9 +153,8 @@
             <a href="#mistakes" class="nav-link">Common Mistakes</a>
         </div>
         
-        <div style="margin-top: auto; padding-top: 24px; font-size: 0.7rem; color: var(--g400);">
-            Press <span class="kbd">j</span> / <span class="kbd">k</span> to scroll<br>
-            Press <span class="kbd">h</span> / <span class="kbd">l</span> for top/bottom
+        <div style="margin-top: auto; padding-top: 16px; font-size: 0.65rem; color: var(--g400);">
+            Press <span class="kbd">j</span> / <span class="kbd">k</span> to scroll
         </div>
     </nav>
 
@@ -185,59 +162,76 @@
 
         <section id="intro" class="section">
             <h1>Auth in 5 minutes. No backend needed.</h1>
-            <p class="lead">Redirect → get token → verify → done.</p>
-            
-            <p>No JWT headache. No session setup. No auth boilerplate. Takes under 5 minutes to integrate.</p>
+            <ul class="dense-list">
+                <li><strong>What it does:</strong> Redirects → issues token → verifies backend → grants access.</li>
+                <li><strong>Why it's needed:</strong> No JWT boilerplates, no session configs, zero auth maintenance.</li>
+                <li><strong>Edge case:</strong> Fails closed strictly if token is expired or altered.</li>
+            </ul>
 
             <div class="cta-box">
                 <div class="cta-text">
                     <h3>Ready to secure your app?</h3>
-                    <p>No credit card • Unlimited users</p>
+                    <p>No credit card • Unlimited users • Under 5 mins</p>
                 </div>
-                <div>
-                    <a href="https://ageinx.vercel.app" class="btn-primary">Try it now (2 min setup)</a>
-                    <div class="trust-badge">
-                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                        We handle passwords. You never see them.
-                    </div>
-                </div>
+                <a href="https://ageinx.vercel.app" class="btn-primary">Try it now (2 min setup)</a>
             </div>
         </section>
 
         <section id="example" class="section">
             <h1>Complete Example</h1>
-            <p>The entire flow in one place. We give you a token after login, you verify the token on your backend.</p>
 
-            <h3>1. The Login Button (HTML)</h3>
-            <p>Send users to your hosted login page.</p>
+            <h3>1. Login</h3>
             <div class="code-wrap" data-lang="HTML">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
-                <pre><code><span class="op">&lt;</span><span class="var">a</span> <span class="fn">href</span><span class="op">=</span><span class="str">"https://ageinx.vercel.app/auth/YOUR_SLUG"</span><span class="op">&gt;</span>Login<span class="op">&lt;/</span><span class="var">a</span><span class="op">&gt;</span></code></pre>
+                <pre><code><span class="cmt">&lt;!-- user clicks this to start auth flow --&gt;</span>
+<span class="op">&lt;</span><span class="var">a</span> <span class="fn">href</span><span class="op">=</span><span class="str">"https://ageinx.vercel.app/auth/YOUR_SLUG"</span><span class="op">&gt;</span>Login<span class="op">&lt;/</span><span class="var">a</span><span class="op">&gt;</span></code></pre>
             </div>
+            <ul class="dense-list">
+                <li>redirect user → auth page</li>
+                <li>slug = project id</li>
+            </ul>
 
-            <h3>2. The Callback (Frontend JS)</h3>
-            <p>Grab the token from the URL when they return.</p>
+            <h3>2. Callback</h3>
             <div class="code-wrap" data-lang="JavaScript">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
-                <pre><code><span class="kw">const</span> <span class="var">token</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">URLSearchParams</span>(<span class="var">window</span>.<span class="var">location</span>.<span class="var">hash</span>.<span class="fn">substring</span>(<span class="var">1</span>)).<span class="fn">get</span>(<span class="str">'token'</span>);
+                <pre><code><span class="cmt">// extract token from URL</span>
+<span class="kw">const</span> <span class="var">token</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">URLSearchParams</span>(<span class="var">window</span>.<span class="var">location</span>.<span class="var">hash</span>.<span class="fn">substring</span>(<span class="var">1</span>)).<span class="fn">get</span>(<span class="str">'token'</span>);
+
 <span class="kw">if</span> (<span class="var">token</span>) {
     <span class="var">localStorage</span>.<span class="fn">setItem</span>(<span class="str">'token'</span>, <span class="var">token</span>);
-    <span class="var">window</span>.<span class="var">history</span>.<span class="fn">replaceState</span>(<span class="kw">null</span>, <span class="kw">null</span>, <span class="var">window</span>.<span class="var">location</span>.<span class="var">pathname</span>); <span class="cmt">// clean URL</span>
+    <span class="cmt">// IMPORTANT: remove hash after reading</span>
+    <span class="var">window</span>.<span class="var">history</span>.<span class="fn">replaceState</span>(<span class="kw">null</span>, <span class="kw">null</span>, <span class="var">window</span>.<span class="var">location</span>.<span class="var">pathname</span>); 
 }</code></pre>
             </div>
+            <ul class="dense-list">
+                <li>token in URL (#token=...)</li>
+                <li>extract immediately</li>
+                <li>remove from URL (security)</li>
+            </ul>
 
-            <h3>3. The Verification (Backend API)</h3>
-            <p>Make sure the token is real before giving them data.</p>
+            <h3>3. Verify</h3>
             <div class="code-wrap" data-lang="HTTP">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
-                <pre><code><span class="method">GET</span> <span class="url">https://ageinx.vercel.app/auth/userinfo</span>
+                <pre><code><span class="cmt"># send token to backend for every protected request</span>
+<span class="method">GET</span> <span class="url">https://ageinx.vercel.app/auth/userinfo</span>
 <span class="kw">Authorization:</span> Bearer &lt;token&gt;</code></pre>
             </div>
+            <ul class="dense-list">
+                <li>send token to backend</li>
+                <li>call /auth/userinfo</li>
+                <li>reject if invalid</li>
+            </ul>
+            
+            <strong>Done. User authenticated.</strong>
         </section>
 
         <section id="react" class="section">
             <h1>React / Next.js</h1>
-            <p>A simple hook to handle the redirect.</p>
+            <ul class="dense-list">
+                <li>extracts token silently</li>
+                <li>redirects user to dashboard</li>
+                <li>handles failure gracefully</li>
+            </ul>
             <div class="code-wrap" data-lang="React">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
                 <pre><code><span class="kw">import</span> { <span class="var">useEffect</span> } <span class="kw">from</span> <span class="str">'react'</span>;
@@ -247,6 +241,7 @@
     <span class="kw">const</span> <span class="var">router</span> <span class="op">=</span> <span class="fn">useRouter</span>();
 
     <span class="fn">useEffect</span>(() <span class="kw">=></span> {
+        <span class="cmt">// read and store token instantly on mount</span>
         <span class="kw">const</span> <span class="var">token</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">URLSearchParams</span>(<span class="var">window</span>.<span class="var">location</span>.<span class="var">hash</span>.<span class="fn">substring</span>(<span class="var">1</span>)).<span class="fn">get</span>(<span class="str">'token'</span>);
         <span class="kw">if</span> (<span class="var">token</span>) {
             <span class="var">localStorage</span>.<span class="fn">setItem</span>(<span class="str">'ax_token'</span>, <span class="var">token</span>);
@@ -263,22 +258,29 @@
 
         <section id="node" class="section">
             <h1>Node.js / Express</h1>
-            <p>Protect your routes using this middleware.</p>
+            <ul class="dense-list">
+                <li>middleware protects routes</li>
+                <li>verifies token validity</li>
+                <li>attaches user data to request</li>
+            </ul>
             <div class="code-wrap" data-lang="Node.js">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
                 <pre><code><span class="kw">const</span> <span class="var">axios</span> <span class="op">=</span> <span class="fn">require</span>(<span class="str">'axios'</span>);
 
 <span class="kw">async function</span> <span class="fn">requireAuth</span>(<span class="var">req</span>, <span class="var">res</span>, <span class="var">next</span>) {
+    <span class="cmt">// grab bearer token from headers</span>
     <span class="kw">const</span> <span class="var">token</span> <span class="op">=</span> <span class="var">req</span>.<span class="var">headers</span>.<span class="var">authorization</span>?.<span class="fn">split</span>(<span class="str">' '</span>)[<span class="var">1</span>];
     <span class="kw">if</span> (<span class="op">!</span><span class="var">token</span>) <span class="kw">return</span> <span class="var">res</span>.<span class="fn">status</span>(<span class="var">401</span>).<span class="fn">json</span>({ <span class="var">error</span>: <span class="str">"Denied"</span> });
 
     <span class="kw">try</span> {
+        <span class="cmt">// hit Ageinx API to validate</span>
         <span class="kw">const</span> { <span class="var">data</span> } <span class="op">=</span> <span class="kw">await</span> <span class="var">axios</span>.<span class="fn">get</span>(<span class="str">'https://ageinx.vercel.app/auth/userinfo'</span>, {
             <span class="var">headers</span>: { <span class="str">'Authorization'</span>: <span class="str">`Bearer ${token}`</span> }
         });
         <span class="var">req</span>.<span class="var">user</span> <span class="op">=</span> <span class="var">data</span>; 
         <span class="fn">next</span>();
     } <span class="kw">catch</span> (<span class="var">error</span>) {
+        <span class="cmt">// fail closed immediately if invalid</span>
         <span class="kw">return</span> <span class="var">res</span>.<span class="fn">status</span>(<span class="var">401</span>).<span class="fn">json</span>({ <span class="var">error</span>: <span class="str">"Invalid token"</span> });
     }
 }</code></pre>
@@ -287,6 +289,11 @@
 
         <section id="python" class="section">
             <h1>Python / FastAPI</h1>
+            <ul class="dense-list">
+                <li>dependency injected auth</li>
+                <li>rejects 401s automatically</li>
+                <li>clean route protection</li>
+            </ul>
             <div class="code-wrap" data-lang="Python">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
                 <pre><code><span class="kw">import</span> <span class="var">httpx</span>
@@ -298,6 +305,7 @@
 
 <span class="kw">async def</span> <span class="fn">verify_user</span>(<span class="var">credentials</span> <span class="op">=</span> <span class="fn">Depends</span>(<span class="var">security</span>)):
     <span class="kw">async with</span> <span class="var">httpx</span>.<span class="fn">AsyncClient</span>() <span class="kw">as</span> <span class="var">client</span>:
+        <span class="cmt"># forward token for validation</span>
         <span class="var">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="var">client</span>.<span class="fn">get</span>(
             <span class="str">"https://ageinx.vercel.app/auth/userinfo"</span>,
             <span class="var">headers</span><span class="op">=</span>{<span class="str">"Authorization"</span>: <span class="str">f"Bearer {credentials.credentials}"</span>}
@@ -310,25 +318,27 @@
 
         <section id="security" class="section">
             <h1>Security</h1>
-            <ul>
-                <li><strong>No Plaintext Storage:</strong> Passwords are heavily hashed and salted.</li>
-                <li><strong>Absolute Isolation:</strong> Only the user ID and Email are returned to your app.</li>
-                <li><strong>Token Expiry:</strong> Tokens expire in 60 minutes.</li>
+            <ul class="dense-list">
+                <li><strong>passwords</strong> → hashed (bcrypt/argon2)</li>
+                <li><strong>tokens</strong> → expire (~60 min)</li>
+                <li><strong>frontend</strong> → never trusted</li>
+                <li><strong>backend</strong> → must verify every request</li>
+                <li><strong>optional</strong> → use HTTP-only cookies (prod)</li>
             </ul>
         </section>
 
         <section id="mistakes" class="section">
             <h1>Common Mistakes</h1>
-            <ul>
-                <li>❌ <strong>Trusting frontend data:</strong> Backend verification is mandatory.</li>
-                <li>❌ <strong>Not clearing the URL hash:</strong> Clean the URL so users don't copy/paste their active token.</li>
-                <li>❌ <strong>Ignoring 401 errors:</strong> Tokens expire. Catch 401s and redirect to login.</li>
+            <ul class="dense-list">
+                <li><strong>trusting frontend</strong> = wrong</li>
+                <li><strong>not verifying token</strong> = insecure</li>
+                <li><strong>not clearing URL</strong> = token leak</li>
+                <li><strong>ignoring 401</strong> = broken UX</li>
             </ul>
         </section>
 
-        <footer style="margin-top: 40px; padding: 40px 0; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--g400); display: flex; justify-content: space-between;">
-            <div><a href="https://ageinx.vercel.app" style="color: var(--ink); text-decoration: none; font-weight: 500;">Nimboity Studio</a></div>
-            <div><a href="https://ageinx.vercel.app/changelog" style="color: var(--g400); text-decoration: none;">Changelog</a></div>
+        <footer style="margin-top: 16px; padding: 16px 0; font-size: 0.75rem; color: var(--g400); display: flex; justify-content: space-between;">
+            <a href="https://ageinx.vercel.app" style="color: var(--ink); text-decoration: none; font-weight: 500;">Nimboity Studio</a>
         </footer>
     </main>
 
@@ -338,83 +348,37 @@
         const progressBar = document.getElementById('progress-bar');
         const toast = document.getElementById('toast');
 
-        let ticking = false;
         window.addEventListener('scroll', () => {
-            if (!ticking) {
-                window.requestAnimationFrame(() => {
-                    const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-                    const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-                    const scrolled = (winScroll / height) * 100;
-                    progressBar.style.width = scrolled + "%";
-                    ticking = false;
-                });
-                ticking = true;
-            }
-        });
-
-        const observerOptions = { root: null, rootMargin: '-20% 0px -60% 0px', threshold: 0 };
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting || entry.boundingClientRect.top < window.innerHeight) {
-                    entry.target.classList.add('visible');
-                }
-                if (entry.isIntersecting) {
-                    const id = entry.target.getAttribute('id');
-                    navLinks.forEach(link => {
-                        link.classList.remove('active');
-                        if (link.getAttribute('href') === `#${id}`) link.classList.add('active');
-                    });
-                }
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            progressBar.style.width = (winScroll / height) * 100 + "%";
+            
+            // Fast spy nav update
+            let current = "";
+            sections.forEach(sec => {
+                if (window.scrollY >= sec.offsetTop - 100) { current = sec.getAttribute("id"); }
             });
-        }, observerOptions);
-
-        sections.forEach(sec => {
-            observer.observe(sec);
-            if (sec.getBoundingClientRect().top < window.innerHeight) sec.classList.add('visible');
+            navLinks.forEach(link => {
+                link.classList.remove("active");
+                if (link.getAttribute("href").includes(current)) link.classList.add("active");
+            });
         });
 
         document.addEventListener('keydown', (e) => {
             if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-            
-            let currentIndex = -1;
-            sections.forEach((sec, index) => {
-                const rect = sec.getBoundingClientRect();
-                if (rect.top >= -100 && rect.top < window.innerHeight / 2) currentIndex = index;
-            });
-
-            if (e.key === 'j' && currentIndex < sections.length - 1) {
-                sections[currentIndex + 1].scrollIntoView({ behavior: 'smooth' });
-            } else if (e.key === 'k' && currentIndex > 0) {
-                sections[currentIndex - 1].scrollIntoView({ behavior: 'smooth' });
-            } else if (e.key === 'h') {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            } else if (e.key === 'l') {
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-            }
-        });
-
-        navLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
-                if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
-            });
+            let currentIdx = Array.from(sections).findIndex(s => s.getAttribute('id') === document.querySelector('.nav-link.active')?.getAttribute('href')?.substring(1));
+            if (e.key === 'j' && currentIdx < sections.length - 1) document.querySelector(navLinks[currentIdx + 1].getAttribute('href')).scrollIntoView();
+            if (e.key === 'k' && currentIdx > 0) document.querySelector(navLinks[currentIdx - 1].getAttribute('href')).scrollIntoView();
         });
 
         function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); }
 
         function copyCode(btn) {
-            const codeBlock = btn.nextElementSibling.innerText;
-            navigator.clipboard.writeText(codeBlock).then(() => {
-                const originalText = btn.innerHTML;
-                btn.innerHTML = "✅ Copied";
-                toast.innerText = "Code copied to clipboard!";
+            navigator.clipboard.writeText(btn.nextElementSibling.innerText).then(() => {
+                const orig = btn.innerHTML;
+                btn.innerHTML = "✅";
                 toast.classList.add('show');
-                
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    toast.classList.remove('show');
-                }, 2000);
+                setTimeout(() => { btn.innerHTML = orig; toast.classList.remove('show'); }, 1500);
             });
         }
     </script>
