@@ -138,7 +138,8 @@
         <div class="nav-group">
             <div class="nav-label">Start Here</div>
             <a href="#intro" class="nav-link active">Introduction</a>
-            <a href="#example" class="nav-link">Complete Example</a>
+            <a href="#flow" class="nav-link">How It Works</a>
+            <a href="#tokens" class="nav-link">Token System</a>
         </div>
 
         <div class="nav-group">
@@ -150,8 +151,8 @@
 
         <div class="nav-group">
             <div class="nav-label">Platform</div>
-            <a href="#security" class="nav-link">Security</a>
-            <a href="#mistakes" class="nav-link">Common Mistakes</a>
+            <a href="#security" class="nav-link">Security Model</a>
+            <a href="#mistakes" class="nav-link">Common Failures</a>
         </div>
         
         <div style="margin-top: auto; padding-top: 16px; font-size: 0.65rem; color: var(--g400);">
@@ -164,16 +165,11 @@
         <section id="intro" class="section">
             <h1>Auth in 5 minutes. No backend needed.</h1>
             <ul class="dense-list">
-                <li><strong>auth type:</strong> token-based (JWT)</li>
-                <li><strong>flow:</strong> redirect → callback → verify → session</li>
-                <li><strong>backend:</strong> required for real security</li>
-                <li><strong>frontend:</strong> only for UX, NOT for trust</li>
-                <li><strong>token location:</strong> URL hash (#token)</li>
-                <li><strong>token usage:</strong> Authorization header (Bearer)</li>
-                <li><strong>expiry:</strong> ~60 minutes (short-lived)</li>
-                <li><strong>refresh:</strong> re-login required (no refresh tokens yet)</li>
-                <li><strong>DX:</strong> works with ANY stack (just HTTP), no SDK lock-in, no config required</li>
-                <li><strong>pricing:</strong> no MAU limits, flat logic</li>
+                <li><strong>What it is:</strong> Hosted auth service removing the need to build login systems.</li>
+                <li><strong>What you skip:</strong> No auth boilerplate, no session management, no password logic.</li>
+                <li><strong>Core flow:</strong> User → Redirect → Ageinx Login → Token → Your App → Backend Verification.</li>
+                <li><strong>Mental model:</strong> Ageinx = Auth Provider. Your App = Business Logic.</li>
+                <li><strong>CRITICAL:</strong> Frontend is ONLY for UX. Security is ALWAYS enforced on backend.</li>
             </ul>
 
             <div class="cta-box">
@@ -185,49 +181,46 @@
             </div>
         </section>
 
-        <section id="example" class="section">
-            <h1>Complete Example</h1>
+        <section id="flow" class="section">
+            <h1>How It Actually Works</h1>
 
-            <h3>1. Login</h3>
+            <h3>Step 1: Redirect to Ageinx</h3>
             <div class="code-wrap" data-lang="HTML">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
-                <pre><code><span class="cmt">&lt;!-- redirect user to init auth flow --&gt;</span>
+                <pre><code><span class="cmt">&lt;!-- user clicks login → sent to Ageinx --&gt;</span>
 <span class="op">&lt;</span><span class="var">a</span> <span class="fn">href</span><span class="op">=</span><span class="str">"https://ageinx.vercel.app/auth/YOUR_SLUG"</span><span class="op">&gt;</span>Login<span class="op">&lt;/</span><span class="var">a</span><span class="op">&gt;</span></code></pre>
             </div>
             <ul class="dense-list">
-                <li><strong>method:</strong> GET redirect</li>
-                <li><strong>endpoint:</strong> /auth/{slug}</li>
-                <li><strong>slug:</strong> unique project identifier</li>
+                <li><strong>slug:</strong> your project identifier</li>
                 <li><strong>supports:</strong> login + signup same flow</li>
-                <li><strong>no SDK:</strong> pure redirect-based auth</li>
-                <li><strong>failure:</strong> user stays on auth page</li>
-                <li><strong>success:</strong> redirect with token</li>
+                <li><strong>no SDK:</strong> pure redirect-based</li>
             </ul>
 
-            <h3>2. Callback</h3>
+            <h3>Step 2: User Authenticates</h3>
+            <ul class="dense-list">
+                <li><strong>Ageinx handles:</strong> UI, hashing (bcrypt/argon2), abuse protection.</li>
+                <li><strong>Privacy:</strong> You NEVER see user passwords.</li>
+            </ul>
+
+            <h3>Step 3 & 4: Callback & Extract</h3>
             <div class="code-wrap" data-lang="JavaScript">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
-                <pre><code><span class="cmt">// extract token immediately on load</span>
+                <pre><code><span class="cmt">// user lands on: https://yourapp.com/#token=JWT_TOKEN</span>
 <span class="kw">const</span> <span class="var">token</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">URLSearchParams</span>(<span class="var">window</span>.<span class="var">location</span>.<span class="var">hash</span>.<span class="fn">substring</span>(<span class="var">1</span>)).<span class="fn">get</span>(<span class="str">'token'</span>);
 
 <span class="kw">if</span> (<span class="var">token</span>) {
     <span class="var">localStorage</span>.<span class="fn">setItem</span>(<span class="str">'token'</span>, <span class="var">token</span>);
-    <span class="cmt">// MUST remove from URL for security</span>
+    <span class="cmt">// MUST remove from URL immediately to prevent token leak</span>
     <span class="var">window</span>.<span class="var">history</span>.<span class="fn">replaceState</span>(<span class="kw">null</span>, <span class="kw">null</span>, <span class="var">window</span>.<span class="var">location</span>.<span class="var">pathname</span>); 
 }</code></pre>
             </div>
             <ul class="dense-list">
-                <li><strong>token source:</strong> window.location.hash</li>
-                <li><strong>format:</strong> #token=JWT</li>
-                <li><strong>must extract:</strong> immediately on load</li>
-                <li><strong>must remove:</strong> using history.replaceState</li>
-                <li><strong>storage:</strong> localStorage (dev only)</li>
-                <li><strong>production:</strong> send to backend → HTTP-only cookie</li>
+                <li><strong>token location:</strong> in URL hash (#)</li>
+                <li><strong>must extract:</strong> manually, immediately on load</li>
                 <li><strong>risk:</strong> URL leak if not cleared</li>
-                <li><strong>edge case:</strong> token missing → redirect to login</li>
             </ul>
 
-            <h3>3. Verify</h3>
+            <h3>Step 5: Verify (Backend)</h3>
             <div class="code-wrap" data-lang="HTTP">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
                 <pre><code><span class="cmt"># send token to backend for EVERY protected request</span>
@@ -235,15 +228,19 @@
 <span class="kw">Authorization:</span> Bearer &lt;token&gt;</code></pre>
             </div>
             <ul class="dense-list">
-                <li><strong>endpoint:</strong> /auth/userinfo</li>
-                <li><strong>method:</strong> GET</li>
-                <li><strong>header:</strong> Authorization: Bearer &lt;token&gt;</li>
-                <li><strong>response:</strong> user object (id, email)</li>
-                <li><strong>invalid token:</strong> 401</li>
-                <li><strong>expired token:</strong> 401</li>
-                <li><strong>network fail:</strong> treat as 503</li>
-                <li><strong>MUST:</strong> verify on EVERY protected request</li>
-                <li><strong>NEVER:</strong> trust frontend-only auth</li>
+                <li><strong>response:</strong> user id, email</li>
+                <li><strong>invalid/expired token:</strong> returns 401</li>
+            </ul>
+        </section>
+
+        <section id="tokens" class="section">
+            <h1>Token System</h1>
+            <ul class="dense-list">
+                <li><strong>format:</strong> JWT</li>
+                <li><strong>signed:</strong> secure (cannot be faked)</li>
+                <li><strong>expiry:</strong> ~60 minutes</li>
+                <li><strong>stateless:</strong> no session storage needed</li>
+                <li><strong>refresh:</strong> not supported yet (re-login required)</li>
             </ul>
         </section>
 
@@ -251,11 +248,8 @@
             <h1>React / Next.js</h1>
             <ul class="dense-list">
                 <li><strong>runs:</strong> on mount (useEffect)</li>
-                <li><strong>action:</strong> extracts token once</li>
-                <li><strong>storage:</strong> stores token client-side</li>
-                <li><strong>success:</strong> redirects after success</li>
-                <li><strong>fallback:</strong> redirect to /login</li>
-                <li><strong>compatibility:</strong> no SSR dependency required (works in SPA + Next.js)</li>
+                <li><strong>action:</strong> extracts token once, stores client-side</li>
+                <li><strong>fallback:</strong> redirect to /login on failure</li>
             </ul>
             <div class="code-wrap" data-lang="React">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
@@ -266,7 +260,7 @@
     <span class="kw">const</span> <span class="var">router</span> <span class="op">=</span> <span class="fn">useRouter</span>();
 
     <span class="fn">useEffect</span>(() <span class="kw">=></span> {
-        <span class="cmt">// read and store token instantly on mount</span>
+        <span class="cmt">// read and store token instantly</span>
         <span class="kw">const</span> <span class="var">token</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">URLSearchParams</span>(<span class="var">window</span>.<span class="var">location</span>.<span class="var">hash</span>.<span class="fn">substring</span>(<span class="var">1</span>)).<span class="fn">get</span>(<span class="str">'token'</span>);
         <span class="kw">if</span> (<span class="var">token</span>) {
             <span class="var">localStorage</span>.<span class="fn">setItem</span>(<span class="str">'ax_token'</span>, <span class="var">token</span>);
@@ -285,12 +279,8 @@
             <h1>Node.js / Express</h1>
             <ul class="dense-list">
                 <li><strong>pattern:</strong> middleware-based protection</li>
-                <li><strong>execution:</strong> runs before route handler</li>
-                <li><strong>action:</strong> extracts token from headers, calls Ageinx API</li>
-                <li><strong>success:</strong> attaches req.user</li>
-                <li><strong>failure:</strong> blocks request if invalid</li>
+                <li><strong>action:</strong> calls Ageinx API, attaches req.user</li>
                 <li><strong>security:</strong> fail closed (secure by default)</li>
-                <li><strong>optional:</strong> cache userinfo (Redis 5–10 min)</li>
             </ul>
             <div class="code-wrap" data-lang="Node.js">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
@@ -302,14 +292,14 @@
     <span class="kw">if</span> (<span class="op">!</span><span class="var">token</span>) <span class="kw">return</span> <span class="var">res</span>.<span class="fn">status</span>(<span class="var">401</span>).<span class="fn">json</span>({ <span class="var">error</span>: <span class="str">"Denied"</span> });
 
     <span class="kw">try</span> {
-        <span class="cmt">// call Ageinx API to attach req.user</span>
+        <span class="cmt">// hit Ageinx API to validate</span>
         <span class="kw">const</span> { <span class="var">data</span> } <span class="op">=</span> <span class="kw">await</span> <span class="var">axios</span>.<span class="fn">get</span>(<span class="str">'https://ageinx.vercel.app/auth/userinfo'</span>, {
             <span class="var">headers</span>: { <span class="str">'Authorization'</span>: <span class="str">`Bearer ${token}`</span> }
         });
         <span class="var">req</span>.<span class="var">user</span> <span class="op">=</span> <span class="var">data</span>; 
         <span class="fn">next</span>();
     } <span class="kw">catch</span> (<span class="var">error</span>) {
-        <span class="cmt">// fail closed (secure by default)</span>
+        <span class="cmt">// reject if invalid</span>
         <span class="kw">return</span> <span class="var">res</span>.<span class="fn">status</span>(<span class="var">401</span>).<span class="fn">json</span>({ <span class="var">error</span>: <span class="str">"Invalid token"</span> });
     }
 }</code></pre>
@@ -319,11 +309,8 @@
         <section id="python" class="section">
             <h1>Python / FastAPI</h1>
             <ul class="dense-list">
-                <li><strong>pattern:</strong> dependency injection (FastAPI Depends)</li>
-                <li><strong>network:</strong> async HTTP call (httpx)</li>
-                <li><strong>handling:</strong> automatic 401 handling</li>
-                <li><strong>DX:</strong> clean route-level protection, reusable across endpoints</li>
-                <li><strong>perf:</strong> minimal overhead</li>
+                <li><strong>pattern:</strong> dependency injection</li>
+                <li><strong>handling:</strong> automatic 401 rejection</li>
             </ul>
             <div class="code-wrap" data-lang="Python">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
@@ -336,7 +323,6 @@
 
 <span class="kw">async def</span> <span class="fn">verify_user</span>(<span class="var">credentials</span> <span class="op">=</span> <span class="fn">Depends</span>(<span class="var">security</span>)):
     <span class="kw">async with</span> <span class="var">httpx</span>.<span class="fn">AsyncClient</span>() <span class="kw">as</span> <span class="var">client</span>:
-        <span class="cmt"># verify token async</span>
         <span class="var">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="var">client</span>.<span class="fn">get</span>(
             <span class="str">"https://ageinx.vercel.app/auth/userinfo"</span>,
             <span class="var">headers</span><span class="op">=</span>{<span class="str">"Authorization"</span>: <span class="str">f"Bearer {credentials.credentials}"</span>}
@@ -348,28 +334,34 @@
         </section>
 
         <section id="security" class="section">
-            <h1>Security</h1>
+            <h1>Security Model</h1>
             <ul class="dense-list">
-                <li><strong>hashing:</strong> bcrypt / argon2</li>
-                <li><strong>tokens:</strong> signed JWT (HS256/RS256)</li>
-                <li><strong>storage:</strong> no plaintext passwords</li>
-                <li><strong>isolation:</strong> app never sees credentials</li>
-                <li><strong>replay attacks:</strong> mitigated server-side</li>
-                <li><strong>rate limiting:</strong> built-in (no need to implement)</li>
-                <li><strong>brute force:</strong> blocked automatically</li>
-                <li><strong>XSS risk:</strong> localStorage unsafe (prod warning)</li>
+                <li><strong>passwords:</strong> NEVER exposed to your app</li>
+                <li><strong>storage:</strong> hashed + salted</li>
+                <li><strong>tokens:</strong> short-lived (limits damage)</li>
+                <li><strong>backend:</strong> must verify every request</li>
+                <li><strong>frontend:</strong> never trusted</li>
+                <li><strong>replay attacks:</strong> handled server-side</li>
+                <li><strong>WARNING:</strong> If you skip backend verification → your app is insecure.</li>
+            </ul>
+
+            <h3>Production Best Practices</h3>
+            <ul class="dense-list">
+                <li><strong>DO NOT</strong> store tokens forever</li>
+                <li><strong>handle token expiry</strong> (redirect to login)</li>
+                <li><strong>use HTTPS always</strong></li>
+                <li><strong>for production:</strong> exchange token → store in HTTP-only cookie, avoid localStorage if possible</li>
             </ul>
         </section>
 
         <section id="mistakes" class="section">
-            <h1>Common Mistakes</h1>
+            <h1>Common Failures</h1>
             <ul class="dense-list">
-                <li><strong>storing token forever:</strong> bad (handle expiry)</li>
-                <li><strong>not handling 401:</strong> user stuck</li>
-                <li><strong>trusting client:</strong> insecure</li>
-                <li><strong>exposing token in URL:</strong> major leak</li>
-                <li><strong>skipping backend:</strong> fake auth possible</li>
-                <li><strong>not using HTTPS:</strong> insecure transport</li>
+                <li><strong>trusting frontend token</strong> → WRONG</li>
+                <li><strong>not verifying</strong> → security broken</li>
+                <li><strong>not clearing URL</strong> → token leak</li>
+                <li><strong>ignoring 401</strong> → bad UX</li>
+                <li><strong>using HTTP</strong> → insecure</li>
             </ul>
         </section>
 
@@ -419,4 +411,3 @@
     </script>
 </body>
 </html>
-
