@@ -374,17 +374,19 @@ async def limit_body_size(request: Request, call_next):
 @app.get("/api/oauth/{provider}")
 async def oauth_login(provider: str, request: Request, type: str, slug: str = ""):
     ip = get_client_ip(request)
-    await rate_limit(f"oauth:{ip}", limit=20, window=300)  # 20 OAuth initiations per 5 min per IP
+    await rate_limit(f"oauth:{ip}", limit=20, window=300)
     nonce = secrets.token_urlsafe(32)
+    code_verifier = secrets.token_urlsafe(32)
+    code_challenge = base64.urlsafe_b64encode(hashlib.sha256(code_verifier.encode()).digest()).rstrip(b'=').decode()
     state_token = jwt.encode(
-        {"nonce": nonce, "type": type, "slug": slug, "exp": int(time.time()) + 600},
+        {"nonce": nonce, "type": type, "slug": slug, "code_verifier": code_verifier, "exp": int(time.time()) + 600},
         JWT_SECRET, algorithm=ALGORITHM
     )
     if provider == "google":
         oauth_url = (f"https://accounts.google.com/o/oauth2/v2/auth"
                      f"?client_id={GOOGLE_CLIENT_ID}&response_type=code"
                      f"&redirect_uri={APP_URL}/api/oauth/callback/google"
-                     f"&scope=email profile&state={state_token}")
+                     f"&scope=email profile&state={state_token}&code_challenge={code_challenge}&code_challenge_method=S256")
     elif provider == "github":
         oauth_url = (f"https://github.com/login/oauth/authorize"
                      f"?client_id={GITHUB_CLIENT_ID}"
@@ -418,10 +420,12 @@ async def oauth_callback(provider: str, request: Request, code: str, state: str)
     email = None
 
     if provider == "google":
+        code_verifier = state_data.get("code_verifier")
         token_res = await client.post("https://oauth2.googleapis.com/token", data={
             "client_id": GOOGLE_CLIENT_ID, "client_secret": GOOGLE_CLIENT_SECRET,
             "code": code, "grant_type": "authorization_code",
-            "redirect_uri": f"{APP_URL}/api/oauth/callback/google"
+            "redirect_uri": f"{APP_URL}/api/oauth/callback/google",
+            "code_verifier": code_verifier
         })
         at = token_res.json().get("access_token")
         if not at: raise HTTPException(status_code=400, detail="Google auth failed")
