@@ -116,12 +116,77 @@
 
         .kbd { background: var(--g50); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; font-family: monospace; color: var(--ink); }
 
+        /* ─── NEW CLEAN FOOTER ─── */
+        .site-footer {
+            margin-top: 48px;
+            padding: 40px 0;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-logo-wrap {
+            flex: 1;
+            display: flex;
+            justify-content: flex-start;
+        }
+        
+        .footer-logo {
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            font-size: 0.85rem;
+            color: var(--ink);
+            text-decoration: none;
+        }
+        
+        .footer-logo span {
+            color: var(--accent);
+        }
+        
+        .footer-copy {
+            flex: 1;
+            text-align: center;
+            color: var(--g400);
+            font-size: 0.75rem;
+        }
+        
+        .footer-links {
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
+            gap: 24px;
+        }
+        
+        .footer-links a {
+            color: var(--g400);
+            text-decoration: none;
+            font-size: 0.8rem;
+            transition: color 0.2s;
+        }
+        
+        .footer-links a:hover {
+            color: var(--ink);
+        }
+
         @media (max-width: 768px) {
             .mobile-header { display: flex; }
             .sidebar { transform: translateX(-100%); top: 60px; border-right: none; box-shadow: 4px 0 24px rgba(0,0,0,0.1); }
             .sidebar.open { transform: translateX(0); }
             .main-content { margin-left: 0; padding: 0 24px; padding-top: 60px; }
             .cta-box { flex-direction: column; align-items: flex-start; gap: 16px; }
+            
+            /* Mobile Footer Adjustments */
+            .site-footer {
+                flex-direction: column;
+                gap: 24px;
+                text-align: center;
+            }
+            .footer-logo-wrap, .footer-copy, .footer-links {
+                flex: unset;
+                justify-content: center;
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -318,9 +383,23 @@
             </ul>
         </section>
 
-        <footer style="margin-top: 32px; padding: 32px 0; font-size: 0.85rem; color: var(--g400); display: flex; justify-content: space-between; border-top: 1px solid var(--border);">
-            <a href="https://ageinx.vercel.app" style="color: var(--ink); text-decoration: none; font-weight: 500;">Nimboity Studio</a>
+        <footer class="site-footer">
+            <div class="footer-logo-wrap">
+                <a href="/#home" class="footer-logo">NIMBO<span>ITY</span></a>
+            </div>
+            
+            <div class="footer-copy">
+                © 2026 Nimboity. All rights reserved.
+            </div>
+            
+            <div class="footer-links">
+                <a href="#">Platform</a>
+                <a href="#">Pricing</a>
+                <a href="#">About</a>
+                <a href="#">Contact</a>
+            </div>
         </footer>
+
     </main>
 
     <script>
