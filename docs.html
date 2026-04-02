@@ -17,8 +17,8 @@
             --border-s: #d4d4d4;
             --g50: #fafafa;
             --g400: #888888; 
-            --g600: #666666; 
-            --sidebar-w: 240px;
+            --g600: #555555; 
+            --sidebar-w: 250px;
             --danger: #e11d48;
             --success: #10b981;
         }
@@ -27,11 +27,12 @@
             font-family: 'Geist', sans-serif; 
             background: #fff; 
             color: var(--ink); 
-            line-height: 1.5; 
+            line-height: 1.65; 
             display: flex;
             overflow-x: hidden;
         }
 
+        /* ─── SCROLL PROGRESS ─── */
         #progress-bar {
             position: fixed; top: 0; left: 0; height: 3px; 
             background: linear-gradient(90deg, #1b6ef2, #7dd3fc, #1b6ef2);
@@ -43,24 +44,24 @@
         /* ─── SIDEBAR ─── */
         .sidebar {
             width: var(--sidebar-w); background: #fff; border-right: 1px solid var(--border);
-            position: fixed; top: 0; left: 0; bottom: 0; padding: 24px 16px;
+            position: fixed; top: 0; left: 0; bottom: 0; padding: 32px 20px;
             overflow-y: auto; z-index: 100;
         }
         
         .logo { 
-            display: block; font-weight: 600; letter-spacing: 0.1em; margin-bottom: 24px; 
-            font-size: 1rem; color: var(--ink); text-decoration: none; padding: 8px 0;
+            display: block; font-weight: 600; letter-spacing: 0.1em; margin-bottom: 32px; 
+            font-size: 1rem; color: var(--ink); text-decoration: none; padding: 4px 0;
         }
         .logo span { color: var(--accent); }
-        .logo small { display: block; font-size: 0.7rem; color: var(--g400); letter-spacing: 0; margin-top: 2px; font-weight: 400; }
+        .logo small { display: block; font-size: 0.7rem; color: var(--g400); letter-spacing: 0; margin-top: 4px; font-weight: 400; }
 
-        .nav-group { margin-bottom: 16px; }
-        .nav-label { font-size: 0.65rem; font-weight: 600; color: var(--g400); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; padding-left: 8px; }
+        .nav-group { margin-bottom: 24px; }
+        .nav-label { font-size: 0.7rem; font-weight: 600; color: var(--g400); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; padding-left: 8px; }
         .nav-link {
             display: block; width: 100%; text-align: left; background: none; border: none;
-            padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; color: var(--g600);
-            cursor: pointer; transition: all 0.1s ease; font-family: 'Geist', sans-serif;
-            text-decoration: none;
+            padding: 6px 8px; border-radius: 6px; font-size: 0.9rem; color: var(--g600);
+            cursor: pointer; transition: all 0.15s ease; font-family: 'Geist', sans-serif;
+            text-decoration: none; margin-bottom: 2px;
         }
         .nav-link:hover { background: var(--g50); color: var(--ink); }
         .nav-link.active { background: #eff6ff; color: var(--accent); font-weight: 500; }
@@ -68,57 +69,59 @@
         /* ─── MOBILE HEADER ─── */
         .mobile-header {
             display: none; position: fixed; top: 0; left: 0; right: 0;
-            height: 50px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
+            height: 60px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
             border-bottom: 1px solid var(--border); z-index: 99; align-items: center; 
-            justify-content: space-between; padding: 0 16px;
+            justify-content: space-between; padding: 0 20px;
         }
         .hamburger { background: none; border: none; font-size: 1.5rem; color: var(--ink); cursor: pointer; }
 
         /* ─── MAIN CONTENT ─── */
-        .main-content { flex: 1; margin-left: var(--sidebar-w); padding: 0 40px; max-width: 800px; }
+        .main-content { flex: 1; margin-left: var(--sidebar-w); padding: 0 48px; max-width: 850px; }
 
-        .section {
-            padding-top: 40px; padding-bottom: 32px;
-            border-bottom: 1px solid var(--border);
-        }
+        .section { padding-top: 64px; padding-bottom: 48px; border-bottom: 1px solid var(--border); }
         .section:last-child { border-bottom: none; }
-        .section:first-child { padding-top: 60px; }
+        .section:first-child { padding-top: 80px; }
 
-        h1 { font-size: 1.8rem; margin-bottom: 16px; letter-spacing: -0.04em; font-weight: 600; }
-        h2 { font-size: 1.3rem; margin-top: 24px; margin-bottom: 8px; letter-spacing: -0.02em; font-weight: 600; }
-        h3 { font-size: 1.1rem; margin-top: 16px; margin-bottom: 8px; font-weight: 600; }
+        h1 { font-size: 2.2rem; margin-bottom: 16px; letter-spacing: -0.03em; font-weight: 600; }
+        h2 { font-size: 1.5rem; margin-top: 32px; margin-bottom: 12px; letter-spacing: -0.02em; font-weight: 600; }
+        h3 { font-size: 1.1rem; margin-top: 24px; margin-bottom: 8px; font-weight: 600; }
         
-        ul.dense-list { margin-bottom: 16px; margin-left: 20px; color: var(--ink); font-size: 0.95rem; }
-        ul.dense-list li { margin-bottom: 4px; }
-        ul.dense-list strong { font-weight: 600; }
+        p { margin-bottom: 20px; color: var(--g600); font-size: 1rem; max-width: 700px; }
+        .lead { font-size: 1.2rem; color: var(--ink); margin-bottom: 24px; font-weight: 400; max-width: 650px; }
+        
+        ul { margin-bottom: 24px; margin-left: 24px; color: var(--g600); }
+        ul li { margin-bottom: 8px; }
+        ul strong { color: var(--ink); font-weight: 600; }
         
         /* ─── CTA BOX ─── */
-        .cta-box { border: 1px solid var(--border); border-radius: 6px; padding: 16px; margin: 16px 0; background: var(--g50); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-        .cta-text h3 { margin: 0 0 2px 0; font-size: 1rem; }
-        .cta-text p { margin: 0; font-size: 0.8rem; color: var(--g600); }
-        .btn-primary { display: inline-flex; align-items: center; justify-content: center; background: var(--ink); color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 0.9rem; font-weight: 500; white-space: nowrap; box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.1); }
+        .cta-box { border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin: 32px 0; background: var(--g50); display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+        .cta-text h3 { margin: 0 0 4px 0; font-size: 1.1rem; }
+        .cta-text p { margin: 0; font-size: 0.9rem; color: var(--g600); }
+        .btn-primary { display: inline-flex; align-items: center; justify-content: center; background: var(--ink); color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-size: 0.95rem; font-weight: 500; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: all 0.2s; }
+        .btn-primary:hover { background: #333; transform: translateY(-1px); }
         
         /* ─── CODE BLOCKS ─── */
-        code:not(pre code) { background: var(--g50); padding: 2px 4px; border-radius: 4px; font-size: 0.85em; font-family: monospace; border: 1px solid var(--border); }
-        .code-wrap { position: relative; margin: 8px 0 16px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 6px; }
-        .code-wrap::before { content: attr(data-lang); position: absolute; top: 0; left: 0; background: rgba(255,255,255,0.1); color: #a1a1aa; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; padding: 2px 8px; border-radius: 6px 0 6px 0; }
-        pre { background: #0d0d0d; color: #ededed; padding: 28px 16px 16px; border-radius: 6px; overflow-x: auto; font-size: 0.9rem; line-height: 1.5; font-family: monospace; border: 1px solid #222; }
+        code:not(pre code) { background: var(--g50); padding: 2px 6px; border-radius: 4px; font-size: 0.85em; font-family: monospace; border: 1px solid var(--border); color: var(--ink); }
+        .code-wrap { position: relative; margin: 16px 0 24px 0; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border-radius: 8px; }
+        .code-wrap::before { content: attr(data-lang); position: absolute; top: 0; left: 0; background: rgba(255,255,255,0.1); color: #a1a1aa; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; padding: 4px 12px; border-radius: 8px 0 8px 0; }
+        pre { background: #0d0d0d; color: #ededed; padding: 32px 20px 20px; border-radius: 8px; overflow-x: auto; font-size: 0.9rem; line-height: 1.6; font-family: monospace; border: 1px solid #222; }
         
-        .copy-btn { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.65rem; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .copy-btn { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; transition: background 0.2s; }
+        .copy-btn:hover { background: rgba(255,255,255,0.2); }
         
         .kw { color: #ff7b72; } .fn { color: #d2a8ff; } .str { color: #a5d6ff; } .cmt { color: #8b949e; font-style: italic; } .op { color: #c9d1d9; } .var { color: #79c0ff; } .method { color: #7ee787; font-weight: 600; } .url { color: #f2cc60; }
 
-        #toast { position: fixed; bottom: 16px; right: 16px; background: var(--ink); color: #fff; padding: 8px 16px; border-radius: 6px; font-size: 0.8rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(100px); opacity: 0; transition: all 0.2s ease; z-index: 1000; font-weight: 500; }
+        #toast { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: #fff; padding: 12px 24px; border-radius: 6px; font-size: 0.9rem; box-shadow: 0 8px 24px rgba(0,0,0,0.15); transform: translateY(100px); opacity: 0; transition: all 0.3s ease; z-index: 1000; font-weight: 500; }
         #toast.show { transform: translateY(0); opacity: 1; }
 
-        .kbd { background: var(--g50); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 1px 4px; font-size: 0.7rem; font-family: monospace; color: var(--ink); }
+        .kbd { background: var(--g50); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; font-family: monospace; color: var(--ink); }
 
         @media (max-width: 768px) {
             .mobile-header { display: flex; }
-            .sidebar { transform: translateX(-100%); top: 50px; border-right: none; box-shadow: 4px 0 24px rgba(0,0,0,0.1); }
+            .sidebar { transform: translateX(-100%); top: 60px; border-right: none; box-shadow: 4px 0 24px rgba(0,0,0,0.1); }
             .sidebar.open { transform: translateX(0); }
-            .main-content { margin-left: 0; padding: 0 16px; padding-top: 50px; }
-            .cta-box { flex-direction: column; align-items: flex-start; gap: 12px; }
+            .main-content { margin-left: 0; padding: 0 24px; padding-top: 60px; }
+            .cta-box { flex-direction: column; align-items: flex-start; gap: 16px; }
         }
     </style>
 </head>
@@ -128,7 +131,7 @@
     <div id="toast">Copied to clipboard</div>
 
     <div class="mobile-header">
-        <a href="/#home" class="logo" style="margin:0; padding: 10px 0;">NIMBO<span>ITY</span></a>
+        <a href="/#home" class="logo" style="margin:0;">NIMBO<span>ITY</span></a>
         <button class="hamburger" onclick="toggleMenu()">☰</button>
     </div>
 
@@ -139,7 +142,6 @@
             <div class="nav-label">Start Here</div>
             <a href="#intro" class="nav-link active">Introduction</a>
             <a href="#flow" class="nav-link">How It Works</a>
-            <a href="#tokens" class="nav-link">Token System</a>
         </div>
 
         <div class="nav-group">
@@ -155,7 +157,7 @@
             <a href="#mistakes" class="nav-link">Common Failures</a>
         </div>
         
-        <div style="margin-top: auto; padding-top: 16px; font-size: 0.65rem; color: var(--g400);">
+        <div style="margin-top: auto; padding-top: 16px; font-size: 0.7rem; color: var(--g400);">
             Press <span class="kbd">j</span> / <span class="kbd">k</span> to scroll
         </div>
     </nav>
@@ -164,93 +166,61 @@
 
         <section id="intro" class="section">
             <h1>Auth in 5 minutes. No backend needed.</h1>
-            <ul class="dense-list">
-                <li><strong>What it is:</strong> Hosted auth service removing the need to build login systems.</li>
-                <li><strong>What you skip:</strong> No auth boilerplate, no session management, no password logic.</li>
-                <li><strong>Core flow:</strong> User → Redirect → Ageinx Login → Token → Your App → Backend Verification.</li>
-                <li><strong>Mental model:</strong> Ageinx = Auth Provider. Your App = Business Logic.</li>
-                <li><strong>CRITICAL:</strong> Frontend is ONLY for UX. Security is ALWAYS enforced on backend.</li>
-            </ul>
+            <p class="lead">Ageinx is a hosted authentication service that removes the need to build login systems from scratch. We handle identity so you can handle your business logic.</p>
+            
+            <p>Instead of managing passwords, sessions, hashing, and token logic yourself, you simply redirect users to Ageinx, and we handle the entire authentication flow. After a successful login, the user is redirected back to your app with a secure token.</p>
+            
+            <p><strong>The Golden Rule:</strong> The frontend is only used for user experience. Security is <em>always</em> enforced on your backend by verifying the token before granting access to sensitive data.</p>
 
             <div class="cta-box">
                 <div class="cta-text">
                     <h3>Ready to secure your app?</h3>
-                    <p>No credit card • Unlimited users • Under 5 mins</p>
+                    <p>No credit card • Unlimited users • Under 5 mins setup</p>
                 </div>
-                <a href="https://ageinx.vercel.app" class="btn-primary">Try it now (2 min setup)</a>
+                <a href="https://ageinx.vercel.app" class="btn-primary">Try it now</a>
             </div>
         </section>
 
         <section id="flow" class="section">
             <h1>How It Actually Works</h1>
+            <p>Integrating Ageinx requires no heavy SDKs or complex configuration. The entire authentication lifecycle is handled through three standard HTTP steps.</p>
 
-            <h3>Step 1: Redirect to Ageinx</h3>
+            <h3>1. Redirect to Ageinx</h3>
+            <p>Direct your users to your hosted Ageinx login page using your unique project slug. This single flow handles both login and signup dynamically.</p>
             <div class="code-wrap" data-lang="HTML">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
-                <pre><code><span class="cmt">&lt;!-- user clicks login → sent to Ageinx --&gt;</span>
+                <pre><code><span class="cmt">&lt;!-- Send the user to the Ageinx hosted auth UI --&gt;</span>
 <span class="op">&lt;</span><span class="var">a</span> <span class="fn">href</span><span class="op">=</span><span class="str">"https://ageinx.vercel.app/auth/YOUR_SLUG"</span><span class="op">&gt;</span>Login<span class="op">&lt;/</span><span class="var">a</span><span class="op">&gt;</span></code></pre>
             </div>
-            <ul class="dense-list">
-                <li><strong>slug:</strong> your project identifier</li>
-                <li><strong>supports:</strong> login + signup same flow</li>
-                <li><strong>no SDK:</strong> pure redirect-based</li>
-            </ul>
 
-            <h3>Step 2: User Authenticates</h3>
-            <ul class="dense-list">
-                <li><strong>Ageinx handles:</strong> UI, hashing (bcrypt/argon2), abuse protection.</li>
-                <li><strong>Privacy:</strong> You NEVER see user passwords.</li>
-            </ul>
-
-            <h3>Step 3 & 4: Callback & Extract</h3>
+            <h3>2. Callback & Extraction</h3>
+            <p>After a successful login, Ageinx securely redirects the user back to your app. The short-lived JWT is appended to the URL hash. You must extract this token immediately and remove it from the URL to prevent users from accidentally sharing it.</p>
             <div class="code-wrap" data-lang="JavaScript">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
-                <pre><code><span class="cmt">// user lands on: https://yourapp.com/#token=JWT_TOKEN</span>
+                <pre><code><span class="cmt">// 1. Extract the token from the hash</span>
 <span class="kw">const</span> <span class="var">token</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">URLSearchParams</span>(<span class="var">window</span>.<span class="var">location</span>.<span class="var">hash</span>.<span class="fn">substring</span>(<span class="var">1</span>)).<span class="fn">get</span>(<span class="str">'token'</span>);
 
 <span class="kw">if</span> (<span class="var">token</span>) {
     <span class="var">localStorage</span>.<span class="fn">setItem</span>(<span class="str">'token'</span>, <span class="var">token</span>);
-    <span class="cmt">// MUST remove from URL immediately to prevent token leak</span>
+    <span class="cmt">// 2. MUST clean the URL bar for security</span>
     <span class="var">window</span>.<span class="var">history</span>.<span class="fn">replaceState</span>(<span class="kw">null</span>, <span class="kw">null</span>, <span class="var">window</span>.<span class="var">location</span>.<span class="var">pathname</span>); 
 }</code></pre>
             </div>
-            <ul class="dense-list">
-                <li><strong>token location:</strong> in URL hash (#)</li>
-                <li><strong>must extract:</strong> manually, immediately on load</li>
-                <li><strong>risk:</strong> URL leak if not cleared</li>
-            </ul>
 
-            <h3>Step 5: Verify (Backend)</h3>
+            <h3>3. Verification</h3>
+            <p>Never trust the frontend alone. To secure your application, you must send the extracted token to your backend via the <code>Authorization</code> header and verify it against the Ageinx API on every protected request.</p>
             <div class="code-wrap" data-lang="HTTP">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
-                <pre><code><span class="cmt"># send token to backend for EVERY protected request</span>
+                <pre><code><span class="cmt"># Validate the token on your backend before granting access</span>
 <span class="method">GET</span> <span class="url">https://ageinx.vercel.app/auth/userinfo</span>
 <span class="kw">Authorization:</span> Bearer &lt;token&gt;</code></pre>
             </div>
-            <ul class="dense-list">
-                <li><strong>response:</strong> user id, email</li>
-                <li><strong>invalid/expired token:</strong> returns 401</li>
-            </ul>
-        </section>
-
-        <section id="tokens" class="section">
-            <h1>Token System</h1>
-            <ul class="dense-list">
-                <li><strong>format:</strong> JWT</li>
-                <li><strong>signed:</strong> secure (cannot be faked)</li>
-                <li><strong>expiry:</strong> ~60 minutes</li>
-                <li><strong>stateless:</strong> no session storage needed</li>
-                <li><strong>refresh:</strong> not supported yet (re-login required)</li>
-            </ul>
         </section>
 
         <section id="react" class="section">
             <h1>React / Next.js</h1>
-            <ul class="dense-list">
-                <li><strong>runs:</strong> on mount (useEffect)</li>
-                <li><strong>action:</strong> extracts token once, stores client-side</li>
-                <li><strong>fallback:</strong> redirect to /login on failure</li>
-            </ul>
+            <p>Handling the callback in modern frontend frameworks is easiest with a simple <code>useEffect</code> hook. This component mounts, silently extracts the token from the URL, stores it locally, and pushes the user to their protected dashboard.</p>
+            
             <div class="code-wrap" data-lang="React">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
                 <pre><code><span class="kw">import</span> { <span class="var">useEffect</span> } <span class="kw">from</span> <span class="str">'react'</span>;
@@ -260,7 +230,6 @@
     <span class="kw">const</span> <span class="var">router</span> <span class="op">=</span> <span class="fn">useRouter</span>();
 
     <span class="fn">useEffect</span>(() <span class="kw">=></span> {
-        <span class="cmt">// read and store token instantly</span>
         <span class="kw">const</span> <span class="var">token</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">URLSearchParams</span>(<span class="var">window</span>.<span class="var">location</span>.<span class="var">hash</span>.<span class="fn">substring</span>(<span class="var">1</span>)).<span class="fn">get</span>(<span class="str">'token'</span>);
         <span class="kw">if</span> (<span class="var">token</span>) {
             <span class="var">localStorage</span>.<span class="fn">setItem</span>(<span class="str">'ax_token'</span>, <span class="var">token</span>);
@@ -277,30 +246,24 @@
 
         <section id="node" class="section">
             <h1>Node.js / Express</h1>
-            <ul class="dense-list">
-                <li><strong>pattern:</strong> middleware-based protection</li>
-                <li><strong>action:</strong> calls Ageinx API, attaches req.user</li>
-                <li><strong>security:</strong> fail closed (secure by default)</li>
-            </ul>
+            <p>Protect your API routes using middleware. This function intercepts the incoming request, parses the Bearer token, and asks the Ageinx API if the token is legitimate. If it is, the user data is attached to the request; if not, the request fails closed.</p>
+            
             <div class="code-wrap" data-lang="Node.js">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
                 <pre><code><span class="kw">const</span> <span class="var">axios</span> <span class="op">=</span> <span class="fn">require</span>(<span class="str">'axios'</span>);
 
 <span class="kw">async function</span> <span class="fn">requireAuth</span>(<span class="var">req</span>, <span class="var">res</span>, <span class="var">next</span>) {
-    <span class="cmt">// extract token from headers</span>
     <span class="kw">const</span> <span class="var">token</span> <span class="op">=</span> <span class="var">req</span>.<span class="var">headers</span>.<span class="var">authorization</span>?.<span class="fn">split</span>(<span class="str">' '</span>)[<span class="var">1</span>];
-    <span class="kw">if</span> (<span class="op">!</span><span class="var">token</span>) <span class="kw">return</span> <span class="var">res</span>.<span class="fn">status</span>(<span class="var">401</span>).<span class="fn">json</span>({ <span class="var">error</span>: <span class="str">"Denied"</span> });
+    <span class="kw">if</span> (<span class="op">!</span><span class="var">token</span>) <span class="kw">return</span> <span class="var">res</span>.<span class="fn">status</span>(<span class="var">401</span>).<span class="fn">json</span>({ <span class="var">error</span>: <span class="str">"Access Denied"</span> });
 
     <span class="kw">try</span> {
-        <span class="cmt">// hit Ageinx API to validate</span>
         <span class="kw">const</span> { <span class="var">data</span> } <span class="op">=</span> <span class="kw">await</span> <span class="var">axios</span>.<span class="fn">get</span>(<span class="str">'https://ageinx.vercel.app/auth/userinfo'</span>, {
             <span class="var">headers</span>: { <span class="str">'Authorization'</span>: <span class="str">`Bearer ${token}`</span> }
         });
         <span class="var">req</span>.<span class="var">user</span> <span class="op">=</span> <span class="var">data</span>; 
         <span class="fn">next</span>();
     } <span class="kw">catch</span> (<span class="var">error</span>) {
-        <span class="cmt">// reject if invalid</span>
-        <span class="kw">return</span> <span class="var">res</span>.<span class="fn">status</span>(<span class="var">401</span>).<span class="fn">json</span>({ <span class="var">error</span>: <span class="str">"Invalid token"</span> });
+        <span class="kw">return</span> <span class="var">res</span>.<span class="fn">status</span>(<span class="var">401</span>).<span class="fn">json</span>({ <span class="var">error</span>: <span class="str">"Invalid or expired token"</span> });
     }
 }</code></pre>
             </div>
@@ -308,10 +271,8 @@
 
         <section id="python" class="section">
             <h1>Python / FastAPI</h1>
-            <ul class="dense-list">
-                <li><strong>pattern:</strong> dependency injection</li>
-                <li><strong>handling:</strong> automatic 401 rejection</li>
-            </ul>
+            <p>FastAPI’s dependency injection system makes securing routes incredibly clean. By passing this dependency to your protected routes, it will automatically handle unauthorized requests and raise clean 401 exceptions when tokens expire.</p>
+
             <div class="code-wrap" data-lang="Python">
                 <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
                 <pre><code><span class="kw">import</span> <span class="var">httpx</span>
@@ -335,37 +296,29 @@
 
         <section id="security" class="section">
             <h1>Security Model</h1>
-            <ul class="dense-list">
-                <li><strong>passwords:</strong> NEVER exposed to your app</li>
-                <li><strong>storage:</strong> hashed + salted</li>
-                <li><strong>tokens:</strong> short-lived (limits damage)</li>
-                <li><strong>backend:</strong> must verify every request</li>
-                <li><strong>frontend:</strong> never trusted</li>
-                <li><strong>replay attacks:</strong> handled server-side</li>
-                <li><strong>WARNING:</strong> If you skip backend verification → your app is insecure.</li>
-            </ul>
+            <p>Ageinx is designed to act as a strict, impenetrable boundary between user credentials and your application logic. Because we handle identity entirely, you never see or store user passwords. Everything is heavily hashed, salted, and rate-limited on our infrastructure.</p>
+            
+            <p>Ageinx issues secure, signed JWTs that expire in approximately 60 minutes. Because they are stateless, you don't need to maintain a complex session database. Currently, refresh tokens are not supported, meaning users will need to re-authenticate when their access window closes.</p>
 
             <h3>Production Best Practices</h3>
-            <ul class="dense-list">
-                <li><strong>DO NOT</strong> store tokens forever</li>
-                <li><strong>handle token expiry</strong> (redirect to login)</li>
-                <li><strong>use HTTPS always</strong></li>
-                <li><strong>for production:</strong> exchange token → store in HTTP-only cookie, avoid localStorage if possible</li>
+            <ul>
+                <li><strong>Do not store tokens forever:</strong> Always be prepared for a token to expire and gracefully redirect the user back to the login page.</li>
+                <li><strong>Enforce HTTPS:</strong> Always use HTTPS in production to prevent man-in-the-middle attacks from intercepting the Bearer token.</li>
+                <li><strong>Upgrade storage:</strong> For enterprise security, consider having your backend exchange the initial token and set a secure <code>HttpOnly</code> cookie, rather than relying on browser <code>localStorage</code>.</li>
             </ul>
         </section>
 
         <section id="mistakes" class="section">
             <h1>Common Failures</h1>
-            <ul class="dense-list">
-                <li><strong>trusting frontend token</strong> → WRONG</li>
-                <li><strong>not verifying</strong> → security broken</li>
-                <li><strong>not clearing URL</strong> → token leak</li>
-                <li><strong>ignoring 401</strong> → bad UX</li>
-                <li><strong>using HTTP</strong> → insecure</li>
+            <p>Auth is generally the easiest place to make a critical application error. Avoid these common implementation pitfalls:</p>
+            <ul>
+                <li><strong>Trusting the frontend:</strong> Checking if a token exists in <code>localStorage</code> does not make a route secure. Only a backend verification can grant true trust.</li>
+                <li><strong>Not clearing the URL:</strong> If you fail to remove the hash after extracting the token, users may copy and paste their URL to friends, accidentally leaking their active session.</li>
+                <li><strong>Ignoring 401s:</strong> Tokens will expire. If your frontend API calls fail with a 401 Unauthorized status, your app must catch it and prompt a re-login rather than failing silently.</li>
             </ul>
         </section>
 
-        <footer style="margin-top: 16px; padding: 16px 0; font-size: 0.75rem; color: var(--g400); display: flex; justify-content: space-between;">
+        <footer style="margin-top: 32px; padding: 32px 0; font-size: 0.85rem; color: var(--g400); display: flex; justify-content: space-between; border-top: 1px solid var(--border);">
             <a href="https://ageinx.vercel.app" style="color: var(--ink); text-decoration: none; font-weight: 500;">Nimboity Studio</a>
         </footer>
     </main>
@@ -383,7 +336,7 @@
             
             let current = "";
             sections.forEach(sec => {
-                if (window.scrollY >= sec.offsetTop - 100) { current = sec.getAttribute("id"); }
+                if (window.scrollY >= sec.offsetTop - 150) { current = sec.getAttribute("id"); }
             });
             navLinks.forEach(link => {
                 link.classList.remove("active");
