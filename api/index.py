@@ -465,8 +465,8 @@ async def oauth_callback(provider: str, request: Request, code: str, state: str)
                 api_key = f"ax_live_{secrets.token_urlsafe(24)}"
                 rand_slug = f"app-{secrets.token_hex(4)}"
                 dev_id = await conn.fetchval(
-                    "INSERT INTO developers (email,password_hash,api_key,slug,callback_url,is_active,email_verified) "
-                    "VALUES ($1,$2,$3,$4,$5,true,TRUE) RETURNING id",
+                    "INSERT INTO developers (email,password_hash,api_key,slug,callback_url,is_active,email_verified,onboarding_complete) "
+                    "VALUES ($1,$2,$3,$4,$5,true,TRUE,FALSE) RETURNING id",
                     email, dummy_hash, api_key, rand_slug, f"{APP_URL}/dashboard"
                 )
                 plan = "starter"
