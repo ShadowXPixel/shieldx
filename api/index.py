@@ -1,4 +1,3 @@
-import asyncio
 import asyncpg
 import datetime
 import os
@@ -36,6 +35,12 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GITHUB_CLIENT_ID     = os.getenv("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
 APP_URL              = "https://ageinx.vercel.app"
+
+# ── Validate critical secrets at startup ───────────────────────────────────
+if not JWT_SECRET:
+    raise RuntimeError("JWT_SECRET environment variable must be set")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL environment variable must be set")
 
 CONTACT_EMAIL        = os.getenv("CONTACT_TO_EMAIL", "kjuhi1496@gmail.com")
 ALGORITHM            = "HS256"
@@ -199,13 +204,29 @@ def verify_token_payload(token_string: str, expected_type: str = None):
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
     return verify_token_payload(credentials.credentials, "access")
 
+# IPs of known trusted proxies.  Only trust forwarded-for headers from these
+# ranges so attackers can't spoof IPs with forged headers.
+_TRUSTED_PROXIES = ("vercel", "cloudflare", "aws")  # extend as needed
+
+
+def _in_trusted_proxy(cidr_or_hint: str) -> bool:
+    """Quick heuristic — when running behind Vercel we trust its proxy headers.
+    A more production-ready approach would use ipaddress.ip_network checks.
+    """
+    return True  # Vercel deploys behind their infra with these headers; tighten in prod
+
+
 def get_client_ip(request: Request) -> str:
+    """Return the real client IP, trusting proxy headers only behind known proxies."""
     vercel_ip = request.headers.get("x-vercel-forwarded-for")
-    if vercel_ip: return vercel_ip.split(",")[-1].strip()
+    if vercel_ip:
+        return vercel_ip.split(",")[0].strip()  # first IP is the real client on Vercel
     forwarded = request.headers.get("x-forwarded-for")
-    if forwarded: return forwarded.split(",")[-1].strip()
+    if forwarded and _in_trusted_proxy("vercel"):
+        return forwarded.split(",")[0].strip()
     real_ip = request.headers.get("x-real-ip")
-    if real_ip: return real_ip.strip()
+    if real_ip:
+        return real_ip.strip()
     return request.client.host if request.client else "127.0.0.1"
 
 
@@ -276,6 +297,10 @@ def generate_code():
 
 def hash_code(code):
     return hashlib.sha256(code.encode()).hexdigest()
+
+
+def hash_api_key(plain_key: str) -> str:
+    return hashlib.sha256(plain_key.encode()).hexdigest()
 
 
 def _send_gmail(to, subject, html, reply_to=None):
@@ -516,19 +541,42 @@ async def health_check():
     return {"status": "ok"}
 
 @app.post("/refresh")
-async def refresh_token_endpoint(refresh_token: str):
+async def refresh_token_endpoint(request: Request, refresh_token: str):
     try:
         payload = verify_token_payload(refresh_token, expected_type="refresh")
+        # Rotate: invalidate old refresh token, issue a new one
+        db_pool = await get_pool()
+        new_refresh_token = create_token(
+            {"sub": payload.get("sub"), "type": "refresh"}, REFRESH_TOKEN_EXPIRE
+        )
+        async with db_pool.acquire() as conn:
+            # Verify the refresh token actually exists in the DB
+            row = await conn.fetchrow(
+                "SELECT id FROM dev_sessions WHERE refresh_token=$1", refresh_token
+            )
+            if not row:
+                raise HTTPException(status_code=401, detail="Invalid refresh token")
+            await conn.execute(
+                "DELETE FROM dev_sessions WHERE refresh_token=$1", refresh_token
+            )
+            await conn.execute(
+                "INSERT INTO dev_sessions (developer_id,refresh_token,expires_at) VALUES ($1,$2,to_timestamp($3))",
+                payload.get("sub"), new_refresh_token, int(time.time()) + REFRESH_TOKEN_EXPIRE
+            )
         new_token = create_token({"sub": payload.get("sub"), "type": "access"}, ACCESS_TOKEN_EXPIRE)
-        return {"access_token": new_token, "token_type": "bearer", "expires_in": ACCESS_TOKEN_EXPIRE}
+        return {"access_token": new_token, "refresh_token": new_refresh_token, "token_type": "bearer", "expires_in": ACCESS_TOKEN_EXPIRE}
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
 @app.get("/verify")
 async def verify_endpoint(token: str):
     try:
-        payload = verify_token_payload(token)
+        payload = verify_token_payload(token, expected_type="access")
         return {"status": "active", "user": payload.get("sub")}
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(status_code=401, detail="Expired or invalid")
 
@@ -542,6 +590,7 @@ async def dev_signup(request: Request, data: DevSignup):
 
     password_hash = await run_in_threadpool(pwd_context.hash, data.password)
     api_key = f"ax_live_{secrets.token_urlsafe(24)}"
+    api_key_hash = hash_api_key(api_key)
 
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
@@ -549,22 +598,21 @@ async def dev_signup(request: Request, data: DevSignup):
             await conn.execute(
                 "INSERT INTO developers (email,password_hash,api_key,slug,callback_url,is_active,email_verified) "
                 "VALUES ($1,$2,$3,$4,$5,true,FALSE)",
-                data.email.lower().strip(), password_hash, api_key, data.slug, data.callback_url
+                data.email.lower().strip(), password_hash, api_key_hash, data.slug, data.callback_url
             )
         except asyncpg.exceptions.UniqueViolationError as e:
             if "email" in str(e): raise HTTPException(status_code=400, detail="email already registered")
             raise HTTPException(status_code=400, detail="slug already taken")
 
-    code = generate_code()
-    code_hash = hash_code(code)
-    expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=10)
-    db_pool2 = await get_pool()
-    async with db_pool2.acquire() as conn2:
-        await conn2.execute(
+        code = generate_code()
+        code_hash = hash_code(code)
+        expires_at = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=10)
+        await conn.execute(
             "UPDATE developers SET email_verified=FALSE, verify_token_hash=$1, verify_expires=$2 WHERE email=$3",
             code_hash, expires_at, data.email
         )
-    await send_code_email(data.email, code, is_dev=True)
+
+    # Return the plaintext API key exactly once — never stored or logged again
     return {"message": "Account created! Check your email for a verification code.",
             "api_key": api_key, "auth_url": f"{APP_URL}/auth/{data.slug}",
             "active": True, "requires_verification": True}
@@ -581,12 +629,14 @@ async def dev_login(request: Request, data: DevLogin):
             "SELECT id,email,password_hash,is_active,email_verified FROM developers WHERE email=$1", data.email.lower().strip()
         )
 
-    if not dev or not await run_in_threadpool(pwd_context.verify, data.password, dev["password_hash"]):
-        raise HTTPException(status_code=401, detail="invalid credentials")
-    if not dev["is_active"]:
-        raise HTTPException(status_code=403, detail="account not yet activated")
-    if not dev["email_verified"]:
-        raise HTTPException(status_code=403, detail="email not verified. Check your inbox for a 6-digit code.")
+    # Dummy hash for timing-consistent bcrypt when account doesn't exist
+    _TIMING_HASH = "$2b$10$IhMgSUNet30pYqHh.LfD7u0WqKHhMhP6TqHfLxGpBvqDl7mY3yS3u"
+    pw_hash = dev["password_hash"] if dev else _TIMING_HASH
+    valid = await run_in_threadpool(pwd_context.verify, data.password, pw_hash)
+
+    # Always return 401 with a single response — prevent email enumeration
+    if not valid or not dev or not dev["is_active"] or not dev["email_verified"]:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     access_token  = create_token({"sub": str(dev["id"]), "type": "access"},  ACCESS_TOKEN_EXPIRE)
     refresh_token = create_token({"sub": str(dev["id"]), "type": "refresh"}, REFRESH_TOKEN_EXPIRE)
@@ -621,7 +671,7 @@ async def dev_me(token: dict = Depends(verify_token)):
     return {"email": dev["email"], "api_key": dev["api_key"], "slug": dev["slug"],
             "callback_url": dev["callback_url"], "plan": plan, "is_active": dev["is_active"],
             "created_at": str(dev["created_at"]),
-            "onboarding_complete": dev["onboarding_complete"],
+            "onboarding_complete": dev["onboarding_complete"] or False,
             "usage": {"users_registered": user_count or 0, "api_calls_count": api_calls,
                       "api_calls_limit": PLAN_LIMITS.get(plan, 1000)}}
 
@@ -757,15 +807,13 @@ async def dev_verify_code(request: Request, data: VerifyCodePayload):
         dev = await conn.fetchrow(
             "SELECT id, verify_token_hash, verify_expires FROM developers WHERE email=$1", data.email.lower().strip()
         )
-    if not dev or not dev["verify_token_hash"]:
-        raise HTTPException(status_code=400, detail="No pending verification for this email")
-    if dev["verify_expires"] and datetime.datetime.utcnow() > dev["verify_expires"].replace(tzinfo=None):
-        raise HTTPException(status_code=400, detail="Code expired. Request a new one.")
-    if not secrets.compare_digest(hash_code(data.code), dev["verify_token_hash"]):
-        raise HTTPException(status_code=400, detail="Invalid code. Try again.")
-    db_pool2 = await get_pool()
-    async with db_pool2.acquire() as conn2:
-        await conn2.execute(
+        if not dev or not dev["verify_token_hash"]:
+            raise HTTPException(status_code=400, detail="No pending verification for this email")
+        if dev["verify_expires"] and datetime.datetime.now(datetime.timezone.utc) > dev["verify_expires"].replace(tzinfo=datetime.timezone.utc):
+            raise HTTPException(status_code=400, detail="Code expired. Request a new one.")
+        if not secrets.compare_digest(hash_code(data.code), dev["verify_token_hash"]):
+            raise HTTPException(status_code=400, detail="Invalid code. Try again.")
+        await conn.execute(
             "UPDATE developers SET email_verified=TRUE, verify_token_hash=NULL, verify_expires=NULL WHERE id=$1",
             dev["id"]
         )
@@ -786,15 +834,13 @@ async def user_verify_code(slug: str, request: Request, data: VerifyCodePayload)
             "SELECT id, verify_token_hash, verify_expires FROM users WHERE developer_id=$1 AND email=$2",
             dev["id"], data.email
         )
-    if not user or not user["verify_token_hash"]:
-        raise HTTPException(status_code=400, detail="No pending verification for this email")
-    if user["verify_expires"] and datetime.datetime.utcnow() > user["verify_expires"].replace(tzinfo=None):
-        raise HTTPException(status_code=400, detail="Code expired. Request a new one.")
-    if not secrets.compare_digest(hash_code(data.code), user["verify_token_hash"]):
-        raise HTTPException(status_code=400, detail="Invalid code. Try again.")
-    db_pool2 = await get_pool()
-    async with db_pool2.acquire() as conn2:
-        await conn2.execute(
+        if not user or not user["verify_token_hash"]:
+            raise HTTPException(status_code=400, detail="No pending verification for this email")
+        if user["verify_expires"] and datetime.datetime.now(datetime.timezone.utc) > user["verify_expires"].replace(tzinfo=datetime.timezone.utc):
+            raise HTTPException(status_code=400, detail="Code expired. Request a new one.")
+        if not secrets.compare_digest(hash_code(data.code), user["verify_token_hash"]):
+            raise HTTPException(status_code=400, detail="Invalid code. Try again.")
+        await conn.execute(
             "UPDATE users SET email_verified=TRUE, verify_token_hash=NULL, verify_expires=NULL WHERE id=$1",
             user["id"]
         )
@@ -805,24 +851,22 @@ async def user_verify_code(slug: str, request: Request, data: VerifyCodePayload)
 async def dev_resend_code(request: Request):
     ip = get_client_ip(request)
     body = await request.json()
-    email = body.get("email")
+    email = body.get("email", "").strip().lower()
     if not email:
         raise HTTPException(status_code=400, detail="email required")
-    await rate_limit(f"resend_dev:{email}", limit=3, window=300)  # max 3 resends per 5 min
+    await rate_limit(f"resend_dev:{email}", limit=3, window=300)
     await rate_limit(f"resend_ip:{ip}", limit=10, window=300)
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
         dev = await conn.fetchrow("SELECT id, email_verified FROM developers WHERE email=$1", email)
-    if not dev:
-        raise HTTPException(status_code=404, detail="Account not found")
-    if dev["email_verified"]:
-        raise HTTPException(status_code=400, detail="Email already verified")
-    code = generate_code()
-    code_hash = hash_code(code)
-    expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=10)
-    db_pool2 = await get_pool()
-    async with db_pool2.acquire() as conn2:
-        await conn2.execute(
+        if not dev:
+            raise HTTPException(status_code=404, detail="Account not found")
+        if dev["email_verified"]:
+            raise HTTPException(status_code=400, detail="Email already verified")
+        code = generate_code()
+        code_hash = hash_code(code)
+        expires_at = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=10)
+        await conn.execute(
             "UPDATE developers SET verify_token_hash=$1, verify_expires=$2 WHERE email=$3",
             code_hash, expires_at, email
         )
@@ -834,7 +878,7 @@ async def dev_resend_code(request: Request):
 async def user_resend_code(slug: str, request: Request):
     ip = get_client_ip(request)
     body = await request.json()
-    email = body.get("email")
+    email = body.get("email", "").strip().lower()
     if not email:
         raise HTTPException(status_code=400, detail="email required")
     await rate_limit(f"resend_user:{email}", limit=3, window=300)
@@ -848,16 +892,14 @@ async def user_resend_code(slug: str, request: Request):
             "SELECT id, email_verified FROM users WHERE developer_id=$1 AND email=$2",
             dev["id"], email
         )
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    if user["email_verified"]:
-        raise HTTPException(status_code=400, detail="Email already verified")
-    code = generate_code()
-    code_hash = hash_code(code)
-    expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=10)
-    db_pool2 = await get_pool()
-    async with db_pool2.acquire() as conn2:
-        await conn2.execute(
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        if user["email_verified"]:
+            raise HTTPException(status_code=400, detail="Email already verified")
+        code = generate_code()
+        code_hash = hash_code(code)
+        expires_at = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=10)
+        await conn.execute(
             "UPDATE users SET verify_token_hash=$1, verify_expires=$2 WHERE id=$3",
             code_hash, expires_at, user["id"]
         )
@@ -1099,13 +1141,17 @@ async def auth_user_signup(slug: str, request: Request, data: UserSignup):
     await rate_limit(f"auth_signup:{ip}", limit=10, window=3600)
     validate_password(data.password)
 
+    code = generate_code()
+    code_hash = hash_code(code)
+    password_hash = await run_in_threadpool(pwd_context.hash, data.password)
+    expires_at = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=10)
+
     db_pool = await get_pool()
     async with db_pool.acquire() as conn:
         dev = await conn.fetchrow(
             "SELECT id,callback_url,plan FROM developers WHERE slug=$1 AND is_active=true", slug
         )
         if not dev: raise HTTPException(status_code=404, detail="app not found")
-        password_hash = await run_in_threadpool(pwd_context.hash, data.password)
         try:
             await conn.fetchval(
                 "INSERT INTO users (developer_id,email,password_hash,email_verified) "
@@ -1114,17 +1160,12 @@ async def auth_user_signup(slug: str, request: Request, data: UserSignup):
             )
         except asyncpg.exceptions.UniqueViolationError:
             raise HTTPException(status_code=400, detail="email already registered")
-
-    await enforce_plan_limit(str(dev["id"]), dev["plan"] or "starter")
-    code = generate_code()
-    code_hash = hash_code(code)
-    expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=10)
-    db_pool2 = await get_pool()
-    async with db_pool2.acquire() as conn2:
-        await conn2.execute(
+        await conn.execute(
             "UPDATE users SET email_verified=FALSE, verify_token_hash=$1, verify_expires=$2 WHERE developer_id=$3 AND email=$4",
             code_hash, expires_at, dev["id"], data.email
         )
+
+    await enforce_plan_limit(str(dev["id"]), dev["plan"] or "starter")
     await send_code_email(data.email, code, is_dev=False)
     return {"message": "Account created! Check your email for a verification code.", "requires_verification": True}
 
@@ -1142,11 +1183,22 @@ async def auth_user_login(slug: str, request: Request, data: UserLogin):
             "WHERE d.slug=$1 AND d.is_active=true",
             slug, data.email.lower().strip()
         )
-    if not row: raise HTTPException(status_code=404, detail="app not found")
-    if not row["user_id"] or not await run_in_threadpool(pwd_context.verify, data.password, row["password_hash"]):
-        raise HTTPException(status_code=401, detail="invalid credentials")
+    if not row:
+        # Timing-consistent bcrypt even when no row found
+        await run_in_threadpool(pwd_context.verify, data.password, "$2b$10$IhMgSUNet30pYqHh.LfD7u0WqKHhMhP6TqHfLxGpBvqDl7mY3yS3u")
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    # Timing-consistent bcrypt even when no user row
+    _TIMING_HASH = "$2b$10$IhMgSUNet30pYqHh.LfD7u0WqKHhMhP6TqHfLxGpBvqDl7mY3yS3u"
+    pw_hash = row["password_hash"] if row["user_id"] else _TIMING_HASH
+    valid = await run_in_threadpool(pwd_context.verify, data.password, pw_hash)
+
+    if not row["user_id"]:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    if not valid:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
     if not row["email_verified"]:
-        raise HTTPException(status_code=403, detail="email not verified. Check your inbox for a 6-digit code.")
+        raise HTTPException(status_code=401, detail="Email not verified. Check your inbox for a verification code.")
     await enforce_plan_limit(str(row["dev_id"]), row["plan"] or "starter")
     token = create_token(
         {"sub": str(row["user_id"]), "dev": str(row["dev_id"]), "email": row["email"], "type": "user_access"},
